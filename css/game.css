@@ -7,6 +7,11 @@
 .game-page {
     background: radial-gradient(ellipse at center, #4A2976 0%, #2D1950 100%);
     overflow: hidden;
+    /* Override body styles from style.css */
+    padding: 0 !important;
+    justify-content: stretch !important;
+    align-items: stretch !important;
+    display: block !important;
 }
 
 /* Game Container */
@@ -212,6 +217,20 @@
 
 .deck-area:active, .discard-area:active {
     transform: translateY(-2px);
+}
+
+/* Deck Count Display */
+.deck-count {
+    background: rgba(0, 0, 0, 0.6);
+    color: var(--royal-gold);
+    font-weight: 700;
+    font-size: 14px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 2px solid var(--royal-gold);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    margin-top: 4px;
+    display: none;
 }
 
 /* Card Stack Effect */
@@ -495,11 +514,20 @@
 .player-hand-section {
     background: linear-gradient(0deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 100%);
     border-top: 2px solid rgba(255, 215, 0, 0.3);
-    padding: 16px 32px;
+    padding: 12px 4px;
     flex: 0 0 auto;
     box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
     display: flex;
     flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+}
+
+.player-hand-section > * {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 4px;
+    box-sizing: border-box;
 }
 
 .hand-header {
@@ -522,40 +550,69 @@
     font-weight: 600;
 }
 
-/* Stacks Container - Horizontal Scrollable */
+/* Stacks Container - Vertical layout for mobile-first */
 .hand-cards-container {
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     margin-bottom: 12px;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-    flex: 0 0 auto;
-    min-height: 0;
+    flex: 1 1 auto;
+    max-height: 400px;
+    padding-right: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Custom Scrollbar Styling */
+.hand-cards-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+.hand-cards-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 215, 0, 0.1);
+}
+
+.hand-cards-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.6) 0%, rgba(255, 215, 0, 0.4) 100%);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    transition: background 0.3s ease;
+}
+
+.hand-cards-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.8) 0%, rgba(255, 215, 0, 0.6) 100%);
+}
+
+.hand-cards-container::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(180deg, var(--royal-gold) 0%, rgba(255, 215, 0, 0.7) 100%);
+}
+
+/* Firefox Scrollbar */
+.hand-cards-container {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 215, 0, 0.5) rgba(0, 0, 0, 0.3);
 }
 
 .stacks-container {
     display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    padding: 10px 0;
-    min-width: min-content;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-/* Individual Stack Wrapper */
+/* Individual Stack Wrapper - Full width vertical layout */
 .card-stack-wrapper {
     flex-shrink: 0;
-    min-width: 280px;
+    width: 100% !important;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 12px;
     border: 2px solid rgba(255, 255, 255, 0.1);
     padding: 10px;
     transition: all 0.3s ease;
-}
-
-/* When there's only one stack, make it full width */
-/* Only applies when NOT dragging (hover zone is display:none) */
-.card-stack-wrapper:only-child {
-    flex: 1;
+    box-sizing: border-box;
 }
 
 .card-stack-wrapper:hover {
@@ -617,7 +674,7 @@
 /* Stack Cards Container */
 .stack-cards {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 0;
     min-height: 110px;
     padding: 20px 30px;
@@ -625,8 +682,7 @@
     position: relative;
     align-content: flex-start;
     touch-action: none;
-    overflow-x: auto;
-    overflow-y: visible;
+    overflow: visible;
     align-items: center;
 }
 
@@ -648,7 +704,7 @@
     border: 3px solid rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
     will-change: transform;
-    margin-left: -45px;
+    margin-left: -35px;
     z-index: 1;
 }
 
@@ -691,8 +747,7 @@
 
 .hand-card.selected {
     transform: translateY(-25px) scale(1.1) !important;
-    border-color: var(--royal-gold);
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 8px 16px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
     z-index: 100 !important; /* Selected cards should be on top */
 }
 
@@ -775,63 +830,69 @@
     }
 }
 
-/* New Stack Hover Zone - Hidden by default, only visible when dragging */
-.new-stack-hover-zone {
-    display: none;
-    background: transparent;
+/* New Stack Button - Always visible at bottom */
+.new-stack-button {
+    display: flex;
+    width: 100%;
+    background: rgba(255, 215, 0, 0.1);
     border-radius: 12px;
-    border: 2px dashed transparent;
-    flex-direction: column;
+    border: 2px dashed rgba(255, 215, 0, 0.4);
+    padding: 16px;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
+    gap: 10px;
     transition: all 0.3s ease;
-    opacity: 0;
-    position: relative;
-    overflow: hidden;
-    order: 999; /* Always appear at the end */
-}
-
-/* Show only when body has dragging class (set when dragging starts) */
-body.card-dragging .new-stack-hover-zone {
-    display: flex;
+    cursor: pointer;
     flex-shrink: 0;
-    width: 80px;
-    align-self: stretch;
-    opacity: 0.6;
-    border-color: rgba(255, 215, 0, 0.3);
-    padding: 8px;
 }
 
-.new-stack-hover-zone:hover,
-.new-stack-hover-zone.drop-zone-active {
-    opacity: 1 !important;
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--royal-gold) !important;
+.new-stack-button:hover {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: var(--royal-gold);
+    transform: translateY(-2px);
+}
+
+.new-stack-button:active {
+    transform: translateY(0);
+}
+
+/* When dragging, highlight the button */
+body.card-dragging .new-stack-button {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: var(--royal-gold);
+    animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+body.card-dragging .new-stack-button.drop-zone-active {
+    background: rgba(255, 215, 0, 0.3);
+    border-color: var(--royal-gold);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
 }
 
 .new-stack-indicator {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 4px;
+    gap: 10px;
 }
 
 .new-stack-icon {
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 215, 0, 0.2);
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 215, 0, 0.3);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 24px;
     color: var(--royal-gold);
     font-weight: 600;
 }
 
 .new-stack-text {
-    font-size: 10px;
-    color: var(--light-purple);
+    font-size: 14px;
+    color: var(--white);
     font-weight: 600;
     text-align: center;
     line-height: 1.2;
@@ -880,6 +941,17 @@ body.card-dragging .new-stack-hover-zone {
     padding: 12px;
     font-size: 14px;
     font-weight: 600;
+}
+
+.hand-actions .btn.btn-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(50%);
+}
+
+.hand-actions .btn.btn-disabled:hover {
+    transform: none;
+    box-shadow: var(--shadow-md);
 }
 
 /* ========================================
@@ -981,15 +1053,16 @@ body.card-dragging .new-stack-hover-zone {
         padding: 10px;
     }
 
-    /* Mobile-optimized stacks */
+    /* Mobile-optimized stacks - vertical layout remains full width */
     .card-stack-wrapper {
-        min-width: 240px;
+        width: 100%;
+        padding: 8px;
     }
 
     .hand-card {
         width: 60px;
         height: 85px;
-        margin-left: -35px;
+        margin-left: -25px;
     }
 
     .hand-card:first-child {
@@ -1013,9 +1086,18 @@ body.card-dragging .new-stack-hover-zone {
     .stack-cards .hand-card:nth-child(8) { transform: rotate(6deg); }
     .stack-cards .hand-card:nth-child(n+9) { transform: rotate(6deg); }
 
-    .new-stack-btn {
-        width: 100px;
-        min-height: 120px;
+    .new-stack-button {
+        padding: 12px;
+    }
+
+    .new-stack-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 20px;
+    }
+
+    .new-stack-text {
+        font-size: 13px;
     }
 }
 
@@ -1033,16 +1115,16 @@ body.card-dragging .new-stack-hover-zone {
         font-size: 22px;
     }
 
-    /* Smaller stacks on very small screens */
+    /* Very small screens - vertical layout remains full width */
     .card-stack-wrapper {
-        min-width: 200px;
+        width: 100%;
         padding: 8px;
     }
 
     .hand-card {
         width: 50px;
         height: 72px;
-        margin-left: -30px;
+        margin-left: -20px;
     }
 
     .hand-card:first-child {
@@ -1076,19 +1158,18 @@ body.card-dragging .new-stack-hover-zone {
         font-size: 10px;
     }
 
-    .new-stack-btn {
-        width: 80px;
-        min-height: 100px;
+    .new-stack-button {
+        padding: 10px;
     }
 
     .new-stack-icon {
-        width: 32px;
-        height: 32px;
-        font-size: 20px;
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
     }
 
     .new-stack-text {
-        font-size: 11px;
+        font-size: 12px;
     }
 }
 
@@ -1124,4 +1205,365 @@ body.card-dragging .new-stack-hover-zone {
 
 .card.drawing {
     animation: drawCard 0.3s ease-out;
+}
+
+/* ========================================
+   DRAW MECHANIC STYLES
+   ======================================== */
+
+/* Drawable Deck State */
+.deck-area.drawable {
+    cursor: pointer;
+}
+
+.deck-area.drawable:hover {
+    transform: translateY(-8px);
+    filter: brightness(1.1);
+}
+
+/* Draggable Discard State */
+.discard-area.draggable {
+    cursor: grab;
+}
+
+.discard-area.draggable:active {
+    cursor: grabbing;
+}
+
+/* Dragging Source (semi-transparent) */
+.discard-area.dragging-source .discard-pile {
+    opacity: 0.5;
+    filter: blur(1px);
+}
+
+/* Ghost Card During Drag */
+.ghost-card {
+    opacity: 0.9;
+    transform-origin: center;
+    transition: none !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.4));
+}
+
+/* Drop Target States */
+.hand-cards-container.drop-target {
+    background: rgba(255, 215, 0, 0.2);
+    border: 3px solid var(--royal-gold);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+    animation: pulseGold 1s ease-in-out infinite;
+}
+
+.discard-area.drop-target {
+    background: rgba(46, 204, 113, 0.2);
+    border: 3px solid #2ecc71;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+    animation: pulseGreen 1s ease-in-out infinite;
+}
+
+/* Cancel Zone (drag back to discard) */
+.discard-area.cancel-zone {
+    background: rgba(231, 76, 60, 0.2);
+    border: 3px solid #e74c3c;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(231, 76, 60, 0.4);
+    animation: pulseRed 1s ease-in-out infinite;
+}
+
+/* Pulse Animations */
+@keyframes pulseGold {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+    }
+}
+
+@keyframes pulseGreen {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(46, 204, 113, 0.6);
+    }
+}
+
+@keyframes pulseRed {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(231, 76, 60, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(231, 76, 60, 0.6);
+    }
+}
+
+/* ========================================
+   SCORE TABLE STYLES
+   ======================================== */
+
+.score-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.score-table thead {
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.1) 100%);
+}
+
+.score-table th {
+    padding: 12px 16px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 14px;
+    border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.score-table th:first-child {
+    text-align: left;
+}
+
+.score-table td {
+    padding: 14px 16px;
+    color: var(--white);
+    font-size: 15px;
+    text-align: center;
+}
+
+.score-table td:first-child {
+    text-align: left;
+}
+
+.score-table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.2s;
+}
+
+.score-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.score-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.score-table .player-name {
+    font-weight: 500;
+}
+
+.score-table .player-name.you {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.score-table .score-value {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.score-table .went-out {
+    color: #4ade80;
+}
+
+.score-table .total-row {
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.08) 100%);
+    border-top: 2px solid rgba(255, 215, 0, 0.4);
+}
+
+.score-table .total-row td {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 17px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+.score-table .rank-badge {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 8px;
+}
+
+.score-table .rank-1 {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+.score-table .rank-2 {
+    background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
+    color: #000;
+}
+
+.score-table .rank-3 {
+    background: linear-gradient(135deg, #CD7F32, #B87333);
+    color: #000;
+}
+
+.score-table .rank-other {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--white);
+}
+
+/* Score cell hover tooltip */
+.score-table .score-value {
+    position: relative;
+    cursor: pointer;
+}
+
+.score-tooltip {
+    position: fixed !important;
+    background: rgba(0, 0, 0, 0.98);
+    border: 2px solid rgba(255, 215, 0, 0.8);
+    border-radius: 8px;
+    padding: 12px;
+    width: 280px;
+    max-width: 90vw;
+    z-index: 999999 !important;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9);
+}
+
+.score-tooltip.show {
+    opacity: 1;
+}
+
+.score-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: rgba(255, 215, 0, 0.8);
+}
+
+.score-tooltip.below::after {
+    bottom: auto;
+    top: -8px;
+    border-top-color: transparent;
+    border-bottom-color: rgba(255, 215, 0, 0.8);
+}
+
+.score-tooltip-title {
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.score-tooltip-group {
+    margin: 6px 0;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.score-tooltip-group-title {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+.score-tooltip-cards {
+    color: var(--white);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.score-tooltip-pts {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    font-weight: 400;
+}
+
+.score-tooltip-ungrouped {
+    color: #f87171;
+    font-weight: 600;
+}
+
+.score-tooltip-total {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    font-weight: 600;
+    color: var(--accent);
+}
+
+/* ========================================
+   OTHER PLAYERS DISPLAY
+   ======================================== */
+
+.other-players {
+    display: flex;
+    gap: 8px;
+    padding: 8px 16px;
+    overflow-x: auto;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    flex-shrink: 0;
+}
+
+.other-player-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    min-width: 140px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.other-player-card.active-turn {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.other-player-avatar {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.other-player-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.other-player-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+}
+
+.other-player-cards {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.turn-indicator {
+    font-size: 16px;
+    line-height: 1;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.2); }
 }

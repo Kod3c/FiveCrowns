@@ -1,7 +1,7 @@
 // Five Crowns - Lobby Page JavaScript
 // Handles real-time player management, game settings, and game start
 
-console.log('Lobby page loaded!');
+console.log('🏠 LOBBY.JS LOADED - You are on lobby.html');
 
 // Get game code from URL
 const urlParams = new URLSearchParams(window.location.search);
@@ -36,6 +36,12 @@ const leaveModal = document.getElementById('leaveModal');
 const hostWarning = document.getElementById('hostWarning');
 const cancelLeaveBtn = document.getElementById('cancelLeaveBtn');
 const confirmLeaveBtn = document.getElementById('confirmLeaveBtn');
+
+// Error Modal Elements
+const errorModal = document.getElementById('errorModal');
+const errorMessage = document.getElementById('errorMessage');
+const errorDetails = document.getElementById('errorDetails');
+const errorOkBtn = document.getElementById('errorOkBtn');
 
 // Firebase References
 const gameRef = database.ref('games/' + gameCode);
@@ -80,11 +86,18 @@ function setupEventListeners() {
     leaveBtn.addEventListener('click', showLeaveModal);
     cancelLeaveBtn.addEventListener('click', hideLeaveModal);
     confirmLeaveBtn.addEventListener('click', handleLeaveGame);
+    errorOkBtn.addEventListener('click', hideErrorModal);
 
     // Close modal when clicking outside
     leaveModal.addEventListener('click', (e) => {
         if (e.target === leaveModal) {
             hideLeaveModal();
+        }
+    });
+
+    errorModal.addEventListener('click', (e) => {
+        if (e.target === errorModal) {
+            hideErrorModal();
         }
     });
 }
@@ -93,11 +106,34 @@ function setupEventListeners() {
  * Listen to real-time game data changes
  */
 function listenToGameChanges() {
+    console.log('Setting up listener for game:', gameCode);
+    console.log('Full game path:', 'games/' + gameCode);
+
     gameRef.on('value', (snapshot) => {
+        console.log('Game snapshot received, exists?', snapshot.exists());
+
         if (!snapshot.exists()) {
-            console.error('Game not found');
-            alert('Game no longer exists. Returning to home.');
-            window.location.href = 'index.html';
+            console.error('❌ Game not found in Firebase');
+            console.error('Checking path: games/' + gameCode);
+            console.error('Session playerId:', sessionStorage.getItem('playerId'));
+            console.error('Session gameCode:', sessionStorage.getItem('gameCode'));
+            console.error('URL gameCode:', gameCode);
+
+            // Double-check by trying to read directly
+            database.ref('games').once('value').then(allGames => {
+                const allGameCodes = Object.keys(allGames.val() || {});
+                console.error('All games in database:', allGameCodes);
+                console.error('Looking for game code:', gameCode);
+
+                // Show error modal with details
+                const details = {
+                    'Game Code': gameCode,
+                    'Session Game Code': sessionStorage.getItem('gameCode'),
+                    'Player ID': sessionStorage.getItem('playerId'),
+                    'All Games': allGameCodes.join(', ') || 'None'
+                };
+                showErrorModal('Game no longer exists', details);
+            });
             return;
         }
 
@@ -113,8 +149,11 @@ function listenToGameChanges() {
         // Check if game has started
         if (currentGameData.status === 'playing') {
             console.log('Game is starting!');
-            // Redirect to game page
-            window.location.href = 'game.html?code=' + gameCode;
+            // Wait a moment before redirecting to ensure Firebase has propagated
+            setTimeout(() => {
+                console.log('Redirecting to game page...');
+                window.location.href = 'game.html?code=' + gameCode;
+            }, 150);
         }
     });
 }
@@ -338,6 +377,9 @@ function handleStartGame() {
     let shuffledDeck = shuffleDeck(deck);
     console.log('Deck created and shuffled:', shuffledDeck.length, 'cards');
 
+    // Get player IDs
+    const playerIds = Object.keys(players);
+
     // Initialize game state
     const gameState = {
         currentRound: 1,
@@ -346,13 +388,17 @@ function handleStartGame() {
         discardPile: [],
         playerHands: {},
         playerScores: {},
-        roundScores: {}
+        roundScores: {},
+        firstPlayerOut: null, // Track who went out first
+        playersRemaining: [], // Track players who still need their final turn after someone goes out
+        playerIds: playerIds, // Store player IDs in gameState for reference
+        playerNames: {} // Store player names for easy access during gameplay
     };
 
-    // Initialize player scores
-    const playerIds = Object.keys(players);
+    // Initialize player scores and names
     playerIds.forEach(playerId => {
         gameState.playerScores[playerId] = 0;
+        gameState.playerNames[playerId] = players[playerId]?.name || `Player ${playerId.substring(0, 4)}`;
     });
 
     // Deal cards for Round 1 (3 cards per player)
@@ -380,18 +426,26 @@ function handleStartGame() {
     gameState.deck = shuffledDeck;
     console.log('Cards remaining in deck:', gameState.deck.length);
 
-    // Set first player (host goes first)
-    gameState.currentPlayer = currentGameData.host;
-    console.log('First player:', gameState.currentPlayer);
+    // Set first player (random for round 1)
+    const randomIndex = Math.floor(Math.random() * playerIds.length);
+    gameState.currentPlayer = playerIds[randomIndex];
+    gameState.firstPlayerThisRound = playerIds[randomIndex]; // Track for rotation
+    console.log('First player (randomly selected):', gameState.currentPlayer);
 
-    // Update game status and game state
+    // Set initial turn phase
+    gameState.turnPhase = 'WAITING_FOR_DRAW';
+    console.log('Initial turn phase:', gameState.turnPhase);
+
+    // Update game status and game state (keep players object intact)
     gameRef.update({
         status: 'playing',
         startedAt: firebase.database.ServerValue.TIMESTAMP,
         gameState: gameState
+        // Note: players object is NOT modified here, so it persists from lobby
     })
     .then(() => {
         console.log('Game started successfully with dealt cards!');
+        console.log('Player data preserved:', players);
         // The listener will automatically redirect all players
     })
     .catch((error) => {
@@ -402,17 +456,17 @@ function handleStartGame() {
 
 /**
  * Create a Five Crowns deck
- * Five Crowns has 116 cards:
- * - 5 suits: Spades, Hearts, Diamonds, Clubs, Stars
- * - Ranks: 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K (no 2s or Aces)
- * - 2 copies of each card (58 unique cards x 2 = 116 total)
+ * Five Crowns has 116 cards total:
+ * - 5 suits (spades, hearts, diamonds, clubs, stars) × 11 ranks (3-K) × 2 copies = 110 cards
+ * - 6 Jokers (always wild, worth 50 points each)
+ * Total: 116 cards
  */
 function createFiveCrownsDeck() {
     const suits = ['spades', 'hearts', 'diamonds', 'clubs', 'stars'];
     const ranks = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     const deck = [];
 
-    // Create 2 copies of each card
+    // Add regular cards (2 copies of each)
     for (let copy = 0; copy < 2; copy++) {
         for (const suit of suits) {
             for (const rank of ranks) {
@@ -425,7 +479,16 @@ function createFiveCrownsDeck() {
         }
     }
 
-    console.log('Created Five Crowns deck with', deck.length, 'cards');
+    // Add 6 Jokers (always wild, worth 50 points)
+    for (let i = 0; i < 6; i++) {
+        deck.push({
+            rank: 'Joker',
+            suit: 'joker',  // Special suit for jokers
+            id: `joker-${i}`
+        });
+    }
+
+    console.log('Created Five Crowns deck with', deck.length, 'cards (110 regular + 6 jokers)');
     return deck;
 }
 
@@ -470,6 +533,35 @@ function hideLeaveModal() {
 }
 
 /**
+ * Show error modal
+ */
+function showErrorModal(message, details = null) {
+    errorMessage.textContent = message;
+
+    if (details) {
+        let detailsHtml = '';
+        for (const [key, value] of Object.entries(details)) {
+            detailsHtml += `<strong>${key}:</strong> ${value}<br>`;
+        }
+        errorDetails.innerHTML = detailsHtml;
+        errorDetails.style.display = 'block';
+    } else {
+        errorDetails.style.display = 'none';
+    }
+
+    errorModal.classList.add('active');
+}
+
+/**
+ * Hide error modal
+ */
+function hideErrorModal() {
+    errorModal.classList.remove('active');
+    // Redirect to home after closing
+    window.location.href = 'index.html';
+}
+
+/**
  * Handle leave game
  */
 function handleLeaveGame() {
@@ -506,13 +598,25 @@ function handleLeaveGame() {
  * Set up disconnect handler
  */
 function setupDisconnectHandler() {
-    // When player disconnects (closes browser/tab), remove them from game
-    playerRef.onDisconnect().remove();
+    // Only remove players on disconnect if the game is still in waiting state
+    // This allows players to rejoin if they disconnect during an active game
+    gameRef.once('value').then((snapshot) => {
+        if (snapshot.exists()) {
+            const gameData = snapshot.val();
 
-    // If host disconnects, delete the entire game
-    if (isHost) {
-        gameRef.onDisconnect().remove();
-    }
+            // Only set up auto-removal if game is still in waiting state
+            if (gameData.status === 'waiting') {
+                playerRef.onDisconnect().remove();
+
+                // If host disconnects, delete the entire game
+                if (isHost) {
+                    gameRef.onDisconnect().remove();
+                }
+            }
+            // If game has started, don't auto-remove players on disconnect
+            // They can rejoin using their original name and game code
+        }
+    });
 }
 
 /**

@@ -52,6 +52,7 @@
                             <div class="card-back stack-card"></div>
                             <div class="card-back stack-card"></div>
                         </div>
+                        <div class="deck-count" id="deckCount">0</div>
                     </div>
 
                     <!-- Discard Pile -->
@@ -91,10 +92,10 @@
 
             <!-- Action Buttons -->
             <div class="hand-actions">
-                <button class="btn btn-secondary" id="discardBtn" disabled>
+                <button class="btn btn-secondary" id="discardBtn">
                     Discard Selected
                 </button>
-                <button class="btn btn-primary" id="goOutBtn" disabled>
+                <button class="btn btn-primary" id="goOutBtn">
                     👑 Go Out
                 </button>
             </div>
@@ -123,6 +124,63 @@
         </div>
     </div>
 
+    <!-- Round End Score Modal -->
+    <div class="modal" id="roundEndModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="roundEndTitle">🏁 Round Complete!</h2>
+            </div>
+            <div class="modal-body">
+                <div id="roundEndContent" style="margin-bottom: 20px;">
+                    <!-- Score table will be inserted here -->
+                </div>
+                <div id="roundEndMessage" style="text-align: center; color: var(--accent); font-size: 18px; font-weight: 600; margin: 20px 0; white-space: nowrap;">
+                    <!-- Next round message will be inserted here -->
+                </div>
+                <button class="btn btn-primary" id="continueRoundBtn" style="width: 100%; display: none;">
+                    Continue to Next Round
+                </button>
+                <p id="waitingMessage" style="text-align: center; color: var(--text-muted); font-size: 14px; margin-top: 10px; display: none;">
+                    Waiting for host to continue...
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game End Modal -->
+    <div class="modal" id="gameEndModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎉 Game Over!</h2>
+            </div>
+            <div class="modal-body">
+                <div id="winnerMessage" style="text-align: center; font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 30px;">
+                    <!-- Winner announcement will be inserted here -->
+                </div>
+                <div id="finalScores" style="margin-bottom: 20px;">
+                    <!-- Final scores table will be inserted here -->
+                </div>
+                <button class="btn btn-primary" id="returnHomeBtn" style="width: 100%;">
+                    Return to Home
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal" id="errorModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h2>⚠️ Error</h2>
+                <button class="close-btn" id="closeErrorBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="errorMessage" style="text-align: center; color: var(--white); font-size: 16px; margin: 20px 0;"></p>
+                <button class="btn btn-primary" id="errorOkBtn" style="width: 100%;">OK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs (CDN) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -131,9 +189,12 @@
     <script src="js/firebase-config.js"></script>
 
     <!-- Card Hand Manager -->
-    <script src="js/cardHand.js"></script>
+    <script src="js/cardHand.js?v=3"></script>
+
+    <!-- Deck/Discard Manager -->
+    <script src="js/deckDiscard.js?v=3"></script>
 
     <!-- Game Logic -->
-    <script src="js/game.js"></script>
+    <script src="js/game.js?v=3"></script>
 </body>
 </html>

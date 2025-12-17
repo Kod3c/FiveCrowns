@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Five Crowns - Validation Tests</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        .test {
+            margin: 10px 0;
+            padding: 10px;
+            background: #16213e;
+            border-radius: 5px;
+        }
+        .pass { color: #4ade80; }
+        .fail { color: #f87171; }
+    </style>
+</head>
+<body>
+    <h1>Five Crowns Validation Tests</h1>
+    <div id="results"></div>
+
+    <script>
+        // Copy the validation functions from game.js
+        function isValidSet(cards, wildRank) {
+            if (!cards || cards.length < 3) return false;
+
+            const wilds = cards.filter(card => card.rank === wildRank || card.rank === 'Joker');
+            const nonWilds = cards.filter(card => card.rank !== wildRank && card.rank !== 'Joker');
+
+            if (nonWilds.length === 0) return true;
+
+            const firstRank = nonWilds[0].rank;
+            const allSameRank = nonWilds.every(card => card.rank === firstRank);
+
+            return allSameRank;
+        }
+
+        function isValidRun(cards, wildRank) {
+            if (!cards || cards.length < 3) return false;
+
+            const rankOrder = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+            const wilds = cards.filter(card => card.rank === wildRank || card.rank === 'Joker');
+            const nonWilds = cards.filter(card => card.rank !== wildRank && card.rank !== 'Joker');
+
+            if (nonWilds.length === 0) return true;
+
+            const firstSuit = nonWilds[0].suit;
+            const allSameSuit = nonWilds.every(card => card.suit === firstSuit);
+            if (!allSameSuit) return false;
+
+            const rankIndices = nonWilds.map(card => rankOrder.indexOf(card.rank)).sort((a, b) => a - b);
+
+            const minIndex = rankIndices[0];
+            const maxIndex = rankIndices[rankIndices.length - 1];
+            const spanLength = maxIndex - minIndex + 1;
+
+            let gapsNeeded = 0;
+            for (let i = minIndex; i <= maxIndex; i++) {
+                if (!rankIndices.includes(i)) {
+                    gapsNeeded++;
+                }
+            }
+
+            if (wilds.length < gapsNeeded) {
+                return false;
+            }
+
+            const wildsRemaining = wilds.length - gapsNeeded;
+            const expectedTotalCards = spanLength + wildsRemaining;
+
+            return cards.length === expectedTotalCards;
+        }
+
+        function isValidGroup(cards, wildRank) {
+            if (!cards || cards.length < 3) return false;
+            return isValidSet(cards, wildRank) || isValidRun(cards, wildRank);
+        }
+
+        function getCardPointValue(card, wildRank) {
+            if (card.rank === 'Joker') return 50;
+            if (card.rank === wildRank) return 20;
+            if (card.rank === 'J') return 11;
+            if (card.rank === 'Q') return 12;
+            if (card.rank === 'K') return 13;
+            return parseInt(card.rank, 10);
+        }
+
+        function findOptimalGrouping(cards, wildRank) {
+            if (!cards || cards.length === 0) {
+                return { groups: [], ungroupedCards: [], score: 0 };
+            }
+
+            let bestSolution = {
+                groups: [],
+                ungroupedCards: [...cards],
+                score: cards.reduce((sum, card) => sum + getCardPointValue(card, wildRank), 0)
+            };
+
+            function backtrack(remainingCards, currentGroups) {
+                if (remainingCards.length === 0) {
+                    if (0 < bestSolution.score) {
+                        bestSolution = {
+                            groups: [...currentGroups],
+                            ungroupedCards: [],
+                            score: 0
+                        };
+                    }
+                    return;
+                }
+
+                const currentScore = remainingCards.reduce((sum, card) => sum + getCardPointValue(card, wildRank), 0);
+
+                if (currentScore < bestSolution.score) {
+                    bestSolution = {
+                        groups: [...currentGroups],
+                        ungroupedCards: [...remainingCards],
+                        score: currentScore
+                    };
+                }
+
+                if (remainingCards.length < 3) {
+                    return;
+                }
+
+                const firstCard = remainingCards[0];
+
+                for (let groupSize = 3; groupSize <= remainingCards.length; groupSize++) {
+                    const combinations = getCombinations(remainingCards, groupSize, firstCard);
+
+                    for (const combo of combinations) {
+                        if (isValidGroup(combo, wildRank)) {
+                            const newRemaining = remainingCards.filter(c => !combo.includes(c));
+                            backtrack(newRemaining, [...currentGroups, combo]);
+                        }
+                    }
+                }
+            }
+
+            function getCombinations(array, k, requiredElement) {
+                const results = [];
+                if (!array.includes(requiredElement)) return results;
+                const reqIndex = array.indexOf(requiredElement);
+
+                function combine(start, combo) {
+                    if (combo.length === k) {
+                        results.push([...combo]);
+                        return;
+                    }
+                    for (let i = start; i < array.length; i++) {
+                        combo.push(array[i]);
+                        combine(i + 1, combo);
+                        combo.pop();
+                    }
+                }
+
+                combine(reqIndex + 1, [requiredElement]);
+                return results;
+            }
+
+            backtrack(cards, []);
+            return bestSolution;
+        }
+
+        // Test cases
+        const tests = [
+            {
+                name: "Valid set of 6s (your hand)",
+                cards: [
+                    {rank: '6', suit: 'hearts'},
+                    {rank: '6', suit: 'clubs'},
+                    {rank: '6', suit: 'diamonds'}
+                ],
+                wildRank: '3',
+                expectedSet: true,
+                expectedRun: false,
+                expectedGroup: true
+            },
+            {
+                name: "Valid run (3-4-5 of hearts)",
+                cards: [
+                    {rank: '3', suit: 'hearts'},
+                    {rank: '4', suit: 'hearts'},
+                    {rank: '5', suit: 'hearts'}
+                ],
+                wildRank: '3',
+                expectedSet: false,
+                expectedRun: true,
+                expectedGroup: true
+            },
+            {
+                name: "Invalid - only 2 cards",
+                cards: [
+                    {rank: '6', suit: 'hearts'},
+                    {rank: '6', suit: 'clubs'}
+                ],
+                wildRank: '3',
+                expectedSet: false,
+                expectedRun: false,
+                expectedGroup: false
+            },
+            {
+                name: "Invalid - mixed ranks not consecutive",
+                cards: [
+                    {rank: '3', suit: 'hearts'},
+                    {rank: '5', suit: 'hearts'},
+                    {rank: '7', suit: 'hearts'}
+                ],
+                wildRank: '10',
+                expectedSet: false,
+                expectedRun: false,
+                expectedGroup: false
+            },
+            {
+                name: "Valid set with wild card (6-6-3 where 3 is wild)",
+                cards: [
+                    {rank: '6', suit: 'hearts'},
+                    {rank: '6', suit: 'clubs'},
+                    {rank: '3', suit: 'diamonds'}
+                ],
+                wildRank: '3',
+                expectedSet: true,
+                expectedRun: false,
+                expectedGroup: true
+            },
+            {
+                name: "Valid run with wild card (4-3-6 where 3 is wild, fills 5)",
+                cards: [
+                    {rank: '4', suit: 'hearts'},
+                    {rank: '3', suit: 'clubs'},
+                    {rank: '6', suit: 'hearts'}
+                ],
+                wildRank: '3',
+                expectedSet: false,
+                expectedRun: true,
+                expectedGroup: true
+            },
+            {
+                name: "Invalid - different suits not a set",
+                cards: [
+                    {rank: '4', suit: 'hearts'},
+                    {rank: '5', suit: 'clubs'},
+                    {rank: '6', suit: 'diamonds'}
+                ],
+                wildRank: '3',
+                expectedSet: false,
+                expectedRun: false,
+                expectedGroup: false
+            },
+            {
+                name: "Valid - all wild cards",
+                cards: [
+                    {rank: '3', suit: 'hearts'},
+                    {rank: '3', suit: 'clubs'},
+                    {rank: '3', suit: 'diamonds'}
+                ],
+                wildRank: '3',
+                expectedSet: true,
+                expectedRun: true,
+                expectedGroup: true
+            },
+            {
+                name: "Valid set with Joker",
+                cards: [
+                    {rank: '6', suit: 'hearts'},
+                    {rank: '6', suit: 'clubs'},
+                    {rank: 'Joker', suit: 'joker'}
+                ],
+                wildRank: '3',
+                expectedSet: true,
+                expectedRun: false,
+                expectedGroup: true
+            },
+            {
+                name: "Valid run with Joker (4-Joker-6)",
+                cards: [
+                    {rank: '4', suit: 'hearts'},
+                    {rank: 'Joker', suit: 'joker'},
+                    {rank: '6', suit: 'hearts'}
+                ],
+                wildRank: '10',
+                expectedSet: false,
+                expectedRun: true,
+                expectedGroup: true
+            }
+        ];
+
+        // Optimal grouping test cases
+        const optimalGroupingTests = [
+            {
+                name: "User's example hand: JJJ + 345 run + 6",
+                cards: [
+                    {rank: 'J', suit: 'hearts', id: 'Jh'},
+                    {rank: 'J', suit: 'diamonds', id: 'Jd'},
+                    {rank: '5', suit: 'hearts', id: '5h'},
+                    {rank: 'J', suit: 'spades', id: 'Js'},
+                    {rank: '3', suit: 'hearts', id: '3h'},
+                    {rank: '4', suit: 'hearts', id: '4h'},
+                    {rank: '6', suit: 'spades', id: '6s'}
+                ],
+                wildRank: '10',
+                expectedScore: 6,
+                expectedGroups: 2
+            },
+            {
+                name: "All cards can be grouped (perfect hand)",
+                cards: [
+                    {rank: '5', suit: 'hearts', id: '5h'},
+                    {rank: '5', suit: 'clubs', id: '5c'},
+                    {rank: '5', suit: 'diamonds', id: '5d'},
+                    {rank: '6', suit: 'spades', id: '6s'},
+                    {rank: '7', suit: 'spades', id: '7s'},
+                    {rank: '8', suit: 'spades', id: '8s'}
+                ],
+                wildRank: '3',
+                expectedScore: 0,
+                expectedGroups: 2
+            },
+            {
+                name: "No valid groups (all ungrouped)",
+                cards: [
+                    {rank: '3', suit: 'hearts', id: '3h'},
+                    {rank: '7', suit: 'clubs', id: '7c'}
+                ],
+                wildRank: '10',
+                expectedScore: 10, // 3 + 7
+                expectedGroups: 0
+            },
+            {
+                name: "One group with wild card",
+                cards: [
+                    {rank: '5', suit: 'hearts', id: '5h'},
+                    {rank: '5', suit: 'clubs', id: '5c'},
+                    {rank: '3', suit: 'diamonds', id: '3d'},
+                    {rank: '7', suit: 'spades', id: '7s'}
+                ],
+                wildRank: '3',
+                expectedScore: 7, // Only 7 is ungrouped
+                expectedGroups: 1
+            }
+        ];
+
+        // Run validation tests
+        const resultsDiv = document.getElementById('results');
+        let passed = 0;
+        let failed = 0;
+
+        resultsDiv.innerHTML = '<h2>Validation Tests</h2>';
+
+        tests.forEach(test => {
+            const setResult = isValidSet(test.cards, test.wildRank);
+            const runResult = isValidRun(test.cards, test.wildRank);
+            const groupResult = isValidGroup(test.cards, test.wildRank);
+
+            const setPass = setResult === test.expectedSet;
+            const runPass = runResult === test.expectedRun;
+            const groupPass = groupResult === test.expectedGroup;
+            const allPass = setPass && runPass && groupPass;
+
+            if (allPass) passed++;
+            else failed++;
+
+            const div = document.createElement('div');
+            div.className = 'test';
+            div.innerHTML = `
+                <strong class="${allPass ? 'pass' : 'fail'}">${allPass ? '✓' : '✗'} ${test.name}</strong><br>
+                Cards: ${test.cards.map(c => c.rank + c.suit[0]).join(', ')} (wild: ${test.wildRank})<br>
+                Set: ${setResult} ${setPass ? '✓' : '✗ (expected ' + test.expectedSet + ')'}<br>
+                Run: ${runResult} ${runPass ? '✓' : '✗ (expected ' + test.expectedRun + ')'}<br>
+                Group: ${groupResult} ${groupPass ? '✓' : '✗ (expected ' + test.expectedGroup + ')'}
+            `;
+            resultsDiv.appendChild(div);
+        });
+
+        // Run optimal grouping tests
+        const optHeader = document.createElement('h2');
+        optHeader.textContent = 'Optimal Grouping Tests';
+        optHeader.style.marginTop = '30px';
+        resultsDiv.appendChild(optHeader);
+
+        optimalGroupingTests.forEach(test => {
+            const result = findOptimalGrouping(test.cards, test.wildRank);
+
+            const scorePass = result.score === test.expectedScore;
+            const groupsPass = result.groups.length === test.expectedGroups;
+            const allPass = scorePass && groupsPass;
+
+            if (allPass) passed++;
+            else failed++;
+
+            const div = document.createElement('div');
+            div.className = 'test';
+
+            let groupsStr = '';
+            if (result.groups.length > 0) {
+                groupsStr = result.groups.map((g, i) =>
+                    `Group ${i+1}: ${g.map(c => c.rank + c.suit[0]).join(' ')}`
+                ).join('<br>    ');
+            }
+
+            let ungroupedStr = '';
+            if (result.ungroupedCards.length > 0) {
+                ungroupedStr = `Ungrouped: ${result.ungroupedCards.map(c => c.rank + c.suit[0]).join(', ')}`;
+            }
+
+            div.innerHTML = `
+                <strong class="${allPass ? 'pass' : 'fail'}">${allPass ? '✓' : '✗'} ${test.name}</strong><br>
+                Cards: ${test.cards.map(c => c.rank + c.suit[0]).join(', ')} (wild: ${test.wildRank})<br>
+                ${groupsStr ? groupsStr + '<br>' : ''}
+                ${ungroupedStr ? ungroupedStr + '<br>' : ''}
+                Score: ${result.score} ${scorePass ? '✓' : '✗ (expected ' + test.expectedScore + ')'}<br>
+                Groups: ${result.groups.length} ${groupsPass ? '✓' : '✗ (expected ' + test.expectedGroups + ')'}
+            `;
+            resultsDiv.appendChild(div);
+        });
+
+        // Summary
+        const summary = document.createElement('div');
+        summary.style.marginTop = '20px';
+        summary.style.fontSize = '20px';
+        summary.innerHTML = `<strong>Tests: ${passed} passed, ${failed} failed</strong>`;
+        resultsDiv.appendChild(summary);
+    </script>
+</body>
+</html>

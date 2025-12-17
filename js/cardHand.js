@@ -22,6 +22,7 @@ class CardHandManager {
         this.selectedCards = new Set();
         this.dragState = null;
         this.currentWildRank = null;
+        this.autoScrollInterval = null;
 
         // Callbacks
         this.onSelectionChange = options.onSelectionChange || (() => {});
@@ -316,10 +317,10 @@ class CardHandManager {
             stacksContainer.appendChild(stackEl);
         });
 
-        // Add hover zone for new stack on the right edge (only if multi-stack enabled)
+        // Add persistent "New Group" button at bottom (only if multi-stack enabled)
         if (this.options.enableMultiStack && this.stacks.length < this.options.maxStacks) {
-            const hoverZone = this.createNewStackHoverZone();
-            stacksContainer.appendChild(hoverZone);
+            const newStackBtn = this.createNewStackButton();
+            stacksContainer.appendChild(newStackBtn);
         }
 
         this.container.appendChild(stacksContainer);
@@ -420,30 +421,46 @@ class CardHandManager {
             cardEl.classList.add('wild');
         }
 
-        // Corner rank (top-left)
-        const cornerRank = document.createElement('div');
-        cornerRank.className = `card-corner ${card.suit}`;
-        cornerRank.innerHTML = `
-            <span class="corner-rank">${card.rank}</span>
-            <span class="corner-suit">${this.getSuitSymbol(card.suit)}</span>
-        `;
-        cardEl.appendChild(cornerRank);
+        // Special handling for Joker cards
+        if (card.rank === 'Joker') {
+            // For jokers, just show the joker emoji centered
+            const content = document.createElement('div');
+            content.className = 'card-content';
 
-        // Center content
-        const content = document.createElement('div');
-        content.className = 'card-content';
+            const jokerSymbol = document.createElement('span');
+            jokerSymbol.className = 'card-suit joker';
+            jokerSymbol.textContent = '🃏';
+            jokerSymbol.style.fontSize = '48px'; // Make it larger
 
-        const rank = document.createElement('span');
-        rank.className = `card-rank ${card.suit}`;
-        rank.textContent = card.rank;
+            content.appendChild(jokerSymbol);
+            cardEl.appendChild(content);
+        } else {
+            // Regular cards
+            // Corner rank (top-left)
+            const cornerRank = document.createElement('div');
+            cornerRank.className = `card-corner ${card.suit}`;
+            cornerRank.innerHTML = `
+                <span class="corner-rank">${card.rank}</span>
+                <span class="corner-suit">${this.getSuitSymbol(card.suit)}</span>
+            `;
+            cardEl.appendChild(cornerRank);
 
-        const suit = document.createElement('span');
-        suit.className = `card-suit ${card.suit}`;
-        suit.textContent = this.getSuitSymbol(card.suit);
+            // Center content
+            const content = document.createElement('div');
+            content.className = 'card-content';
 
-        content.appendChild(rank);
-        content.appendChild(suit);
-        cardEl.appendChild(content);
+            const rank = document.createElement('span');
+            rank.className = `card-rank ${card.suit}`;
+            rank.textContent = card.rank;
+
+            const suit = document.createElement('span');
+            suit.className = `card-suit ${card.suit}`;
+            suit.textContent = this.getSuitSymbol(card.suit);
+
+            content.appendChild(rank);
+            content.appendChild(suit);
+            cardEl.appendChild(content);
+        }
 
         // Attach event listeners
         this.attachCardEventListeners(cardEl, card);
@@ -460,7 +477,8 @@ class CardHandManager {
             'hearts': '♥',
             'diamonds': '♦',
             'clubs': '♣',
-            'stars': '⭐'
+            'stars': '⭐',
+            'joker': '🃏'  // Joker symbol
         };
         return symbols[suit] || '?';
     }
@@ -550,6 +568,9 @@ class CardHandManager {
             this.selectedCards.delete(card.id);
             cardEl.classList.remove('selected');
         } else {
+            // Clear all previous selections
+            this.clearSelection();
+            // Select only this card
             this.selectedCards.add(card.id);
             cardEl.classList.add('selected');
         }
@@ -631,6 +652,9 @@ class CardHandManager {
         // Move ghost to follow cursor (always smooth)
         this.dragState.ghost.style.left = (event.clientX - 35) + 'px';
         this.dragState.ghost.style.top = (event.clientY - 50) + 'px';
+
+        // Handle auto-scrolling when near edges
+        this.handleAutoScroll(event.clientY);
 
         // Throttle placeholder updates to reduce jumpiness
         const now = Date.now();
@@ -732,6 +756,9 @@ class CardHandManager {
         // Remove dragging class from body
         document.body.classList.remove('card-dragging');
 
+        // Stop auto-scrolling
+        this.stopAutoScroll();
+
         // Emit drag end for cleanup
         this.emitDragCleanup();
 
@@ -747,16 +774,16 @@ class CardHandManager {
         const { stackId, insertIndex } = dropInfo;
 
         // Clear all drop zone highlights first
-        const allZones = this.container.querySelectorAll('.new-stack-hover-zone');
+        const allZones = this.container.querySelectorAll('.new-stack-button');
         allZones.forEach(z => z.classList.remove('drop-zone-active'));
 
-        // Handle new stack zone
+        // Handle new stack button
         if (stackId === '__NEW_STACK__') {
-            const newStackZone = this.container.querySelector('.new-stack-hover-zone');
-            if (newStackZone) {
-                newStackZone.classList.add('drop-zone-active');
+            const newStackButton = this.container.querySelector('.new-stack-button');
+            if (newStackButton) {
+                newStackButton.classList.add('drop-zone-active');
             }
-            // Hide placeholder when over new stack zone
+            // Hide placeholder when over new stack button
             if (this.dragState.placeholder.parentNode) {
                 this.dragState.placeholder.style.display = 'none';
             }
@@ -840,6 +867,80 @@ class CardHandManager {
     }
 
     /**
+     * Handle auto-scrolling when dragging near edges
+     */
+    handleAutoScroll(cursorY) {
+        const scrollContainer = this.container;
+        const rect = scrollContainer.getBoundingClientRect();
+
+        const scrollZoneSize = 80; // pixels from edge to trigger scroll
+        const maxScrollSpeed = 15; // pixels per frame
+
+        const distanceFromTop = cursorY - rect.top;
+        const distanceFromBottom = rect.bottom - cursorY;
+
+        let scrollSpeed = 0;
+
+        // Check if near top edge
+        if (distanceFromTop < scrollZoneSize && distanceFromTop > 0) {
+            // Scroll up - speed increases as cursor gets closer to edge
+            const intensity = 1 - (distanceFromTop / scrollZoneSize);
+            scrollSpeed = -intensity * maxScrollSpeed;
+        }
+        // Check if near bottom edge
+        else if (distanceFromBottom < scrollZoneSize && distanceFromBottom > 0) {
+            // Scroll down - speed increases as cursor gets closer to edge
+            const intensity = 1 - (distanceFromBottom / scrollZoneSize);
+            scrollSpeed = intensity * maxScrollSpeed;
+        }
+
+        // Start or update scrolling
+        if (scrollSpeed !== 0) {
+            this.startAutoScroll(scrollSpeed);
+        } else {
+            this.stopAutoScroll();
+        }
+    }
+
+    /**
+     * Start auto-scrolling
+     */
+    startAutoScroll(speed) {
+        // If already scrolling at this speed, don't restart
+        if (this.autoScrollInterval && this.autoScrollSpeed === speed) {
+            return;
+        }
+
+        this.stopAutoScroll();
+        this.autoScrollSpeed = speed;
+
+        this.autoScrollInterval = setInterval(() => {
+            const scrollContainer = this.container;
+            scrollContainer.scrollTop += speed;
+
+            // Update drop position while scrolling
+            if (this.dragState) {
+                const dropInfo = this.getDropPosition(this.dragState.currentX, this.dragState.currentY);
+                if (dropInfo && this.hasDropInfoChanged(dropInfo, this.dragState.currentDropInfo)) {
+                    this.movePhantomPlaceholder(dropInfo);
+                    this.dragState.currentDropInfo = dropInfo;
+                }
+            }
+        }, 16); // ~60fps
+    }
+
+    /**
+     * Stop auto-scrolling
+     */
+    stopAutoScroll() {
+        if (this.autoScrollInterval) {
+            clearInterval(this.autoScrollInterval);
+            this.autoScrollInterval = null;
+            this.autoScrollSpeed = 0;
+        }
+    }
+
+    /**
      * Get drop target at coordinates
      */
     getDropTarget(x, y) {
@@ -859,12 +960,12 @@ class CardHandManager {
      * Get precise drop position (stack and index) at coordinates
      */
     getDropPosition(x, y) {
-        // Check if hovering over new stack zone
-        const newStackZone = this.container.querySelector('.new-stack-hover-zone');
-        if (newStackZone) {
-            const rect = newStackZone.getBoundingClientRect();
+        // Check if hovering over new stack button
+        const newStackButton = this.container.querySelector('.new-stack-button');
+        if (newStackButton) {
+            const rect = newStackButton.getBoundingClientRect();
             if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-                // Hovering over new stack zone - return special indicator
+                // Hovering over new stack button - return special indicator
                 return { stackId: '__NEW_STACK__', insertIndex: 0 };
             }
         }
@@ -1067,21 +1168,27 @@ class CardHandManager {
     }
 
     /**
-     * Create new stack hover zone
+     * Create persistent "New Group" button
      */
-    createNewStackHoverZone() {
-        const zone = document.createElement('div');
-        zone.className = 'new-stack-hover-zone';
-        zone.dataset.isNewStackZone = 'true';
+    createNewStackButton() {
+        const button = document.createElement('div');
+        button.className = 'new-stack-button';
+        button.dataset.isNewStackZone = 'true';
 
-        zone.innerHTML = `
+        button.innerHTML = `
             <div class="new-stack-indicator">
                 <div class="new-stack-icon">+</div>
                 <div class="new-stack-text">New Group</div>
             </div>
         `;
 
-        return zone;
+        // Click handler - create new stack
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.createStackAuto();
+        });
+
+        return button;
     }
 
     /**

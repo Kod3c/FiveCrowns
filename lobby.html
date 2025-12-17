@@ -120,6 +120,23 @@
         </div>
     </div>
 
+    <!-- Error Modal -->
+    <div class="modal" id="errorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚠️ Error</h2>
+            </div>
+            <div class="modal-body">
+                <p id="errorMessage">An error occurred.</p>
+                <div id="errorDetails" style="margin-top: 15px; padding: 10px; background: #f5f5f5; border-radius: 8px; font-family: monospace; font-size: 0.85em; max-height: 200px; overflow-y: auto; display: none;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="errorOkBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs (CDN) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>

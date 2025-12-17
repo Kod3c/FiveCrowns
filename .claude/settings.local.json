@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//10.69.0.2/MEDIA/GitHub/FiveCrowns/js/**)",
+      "Read(//10.69.0.2/MEDIA/GitHub/FiveCrowns/**)",
+      "Bash(dir:*)",
+      "Bash(cat:*)",
+      "Bash(chmod:*)",
+      "Bash(md5sum:*)",
+      "Bash(node:*)",
+      "Bash(timeout:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

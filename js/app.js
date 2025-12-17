@@ -306,14 +306,40 @@ function createGameSession(gameCode, playerId, playerName) {
 
         // Save to Firebase
         console.log('Saving to Firebase...');
+        console.log('Game path: games/' + gameCode);
         gameRef.set(gameData)
             .then(() => {
                 console.log('✅ Game created successfully in Firebase!');
+                console.log('Verifying data was written...');
+
+                // Verify the write by reading it back
+                return gameRef.once('value');
+            })
+            .then((snapshot) => {
+                if (snapshot.exists()) {
+                    console.log('✅ Verified: Game data exists in Firebase');
+                    console.log('Game data:', snapshot.val());
+                } else {
+                    console.error('❌ WARNING: Game was written but cannot be read back!');
+                    throw new Error('Game data verification failed');
+                }
+
                 // Store player info in session
                 sessionStorage.setItem('playerId', playerId);
                 sessionStorage.setItem('gameCode', gameCode);
                 sessionStorage.setItem('playerName', playerName);
-                console.log('Session storage updated');
+                console.log('Session storage updated:', {
+                    playerId: playerId,
+                    gameCode: gameCode,
+                    playerName: playerName
+                });
+
+                // Wait a moment to ensure Firebase has propagated the data
+                // before redirecting. This prevents race condition where lobby
+                // loads before the game data is readable.
+                return new Promise(resolve => setTimeout(resolve, 100));
+            })
+            .then(() => {
                 // Redirect to lobby
                 console.log('Redirecting to lobby...');
                 window.location.href = 'lobby.html?code=' + gameCode;
@@ -341,9 +367,41 @@ function checkGameExists(gameCode, playerName) {
             if (snapshot.exists()) {
                 const gameData = snapshot.val();
 
-                // Check if game is still in waiting state
+                console.log('Game data:', gameData);
+                console.log('Looking for player name:', playerName);
+                console.log('Players in game:', gameData.players);
+
+                // For active games, check gameState.playerNames
+                // For waiting games, check players object
+                let existingPlayerId = null;
+                let playersList = null;
+
+                if (gameData.status === 'playing' && gameData.gameState && gameData.gameState.playerNames) {
+                    // Game is active - look in gameState
+                    console.log('Game is active, checking gameState.playerNames:', gameData.gameState.playerNames);
+                    existingPlayerId = findPlayerByNameInGameState(gameData.gameState.playerNames, playerName);
+                    playersList = Object.values(gameData.gameState.playerNames).join(', ');
+                } else {
+                    // Game is in lobby - look in players object
+                    existingPlayerId = findPlayerByName(gameData.players, playerName);
+                    playersList = gameData.players ?
+                        Object.values(gameData.players).map(p => p.name).join(', ') :
+                        'No players';
+                }
+
+                if (existingPlayerId) {
+                    // Player exists - allow rejoin
+                    console.log('Found existing player, rejoining:', existingPlayerId);
+                    rejoinExistingGame(gameCode, existingPlayerId, playerName);
+                    return;
+                }
+
+                console.log('No existing player found with name:', playerName);
+
+                // New player - check if game is still in waiting state
                 if (gameData.status !== 'waiting') {
-                    showJoinError('Game has already started');
+                    console.log('Available player names:', playersList);
+                    showJoinError('Game has already started. Use your original name to rejoin.\nAvailable names: ' + playersList);
                     return;
                 }
 
@@ -364,6 +422,95 @@ function checkGameExists(gameCode, playerName) {
         .catch((error) => {
             console.error('Error checking game:', error);
             showJoinError('Error connecting. Please try again.');
+        });
+}
+
+/**
+ * Find a player by their name in the players object (lobby state)
+ */
+function findPlayerByName(players, name) {
+    if (!players) {
+        console.log('No players object provided');
+        return null;
+    }
+
+    const normalizedName = name.trim().toLowerCase();
+    console.log('Searching for normalized name:', normalizedName);
+
+    for (const [playerId, playerData] of Object.entries(players)) {
+        const playerNormalizedName = playerData.name ? playerData.name.trim().toLowerCase() : '';
+        console.log(`Comparing with player ${playerId}: "${playerNormalizedName}" === "${normalizedName}"?`, playerNormalizedName === normalizedName);
+
+        if (playerData.name && playerNormalizedName === normalizedName) {
+            console.log('Match found! Player ID:', playerId);
+            return playerId;
+        }
+    }
+
+    console.log('No match found');
+    return null;
+}
+
+/**
+ * Find a player by their name in gameState.playerNames (active game)
+ */
+function findPlayerByNameInGameState(playerNames, name) {
+    if (!playerNames) {
+        console.log('No playerNames object provided');
+        return null;
+    }
+
+    const normalizedName = name.trim().toLowerCase();
+    console.log('Searching in gameState for normalized name:', normalizedName);
+
+    for (const [playerId, playerName] of Object.entries(playerNames)) {
+        const playerNormalizedName = playerName ? playerName.trim().toLowerCase() : '';
+        console.log(`Comparing with player ${playerId}: "${playerNormalizedName}" === "${normalizedName}"?`, playerNormalizedName === normalizedName);
+
+        if (playerName && playerNormalizedName === normalizedName) {
+            console.log('Match found in gameState! Player ID:', playerId);
+            return playerId;
+        }
+    }
+
+    console.log('No match found in gameState');
+    return null;
+}
+
+/**
+ * Rejoin an existing game with existing player ID
+ */
+function rejoinExistingGame(gameCode, playerId, playerName) {
+    console.log('Rejoining game:', gameCode, 'as player:', playerId);
+
+    // Store player info in session
+    sessionStorage.setItem('playerId', playerId);
+    sessionStorage.setItem('gameCode', gameCode);
+    sessionStorage.setItem('playerName', playerName);
+
+    // Check game status and redirect accordingly
+    const gameRef = database.ref('games/' + gameCode);
+    gameRef.once('value')
+        .then((snapshot) => {
+            if (snapshot.exists()) {
+                const gameData = snapshot.val();
+
+                if (gameData.status === 'playing') {
+                    // Game is in progress, go to game page
+                    console.log('Rejoining game in progress');
+                    window.location.href = 'game.html?code=' + gameCode;
+                } else {
+                    // Game is in lobby, go to lobby
+                    console.log('Rejoining game lobby');
+                    window.location.href = 'lobby.html?code=' + gameCode;
+                }
+            } else {
+                showJoinError('Game no longer exists.');
+            }
+        })
+        .catch((error) => {
+            console.error('Error rejoining game:', error);
+            showJoinError('Error rejoining game. Please try again.');
         });
 }
 
