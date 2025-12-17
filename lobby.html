@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Game Lobby - Five Crowns</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/lobby.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="lobby-page">
+    <div class="container">
+        <!-- Header -->
+        <div class="lobby-header">
+            <button class="back-btn" id="backBtn">
+                <span>← Back</span>
+            </button>
+            <h2 class="lobby-title">Game Lobby</h2>
+            <div class="lobby-status">
+                <span class="status-indicator" id="statusIndicator">Waiting</span>
+            </div>
+        </div>
+
+        <!-- Game Code Display -->
+        <div class="game-code-section">
+            <p class="code-label">Share this code:</p>
+            <div class="game-code-display" id="gameCodeDisplay">
+                <span class="code-value" id="codeValue">----</span>
+                <button class="copy-btn" id="copyCodeBtn" title="Copy code">
+                    📋
+                </button>
+            </div>
+            <p class="code-hint">Players can join at: <strong id="joinUrl">localhost/FiveCrowns</strong></p>
+            <div class="copy-toast" id="copyToast">Code copied! 📋</div>
+        </div>
+
+        <!-- Players List -->
+        <div class="players-section">
+            <div class="players-header">
+                <h3>Players <span class="player-count" id="playerCount">(0/6)</span></h3>
+            </div>
+            <div class="players-list" id="playersList">
+                <!-- Players will be dynamically added here -->
+                <div class="player-card skeleton">
+                    <div class="player-avatar">👤</div>
+                    <div class="player-info">
+                        <span class="player-name">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Settings (Host Only) -->
+        <div class="settings-section" id="settingsSection" style="display: none;">
+            <h3>Game Settings</h3>
+            <div class="setting-item">
+                <label for="maxPlayers">Max Players:</label>
+                <select id="maxPlayers" class="setting-select">
+                    <option value="2">2 Players</option>
+                    <option value="3">3 Players</option>
+                    <option value="4">4 Players</option>
+                    <option value="5">5 Players</option>
+                    <option value="6" selected>6 Players</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label for="highlightWilds">Highlight Wild Cards:</label>
+                <select id="highlightWilds" class="setting-select">
+                    <option value="true" selected>Yes</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="lobby-actions">
+            <!-- Host View: Start Game Button -->
+            <button class="btn btn-primary btn-large" id="startGameBtn" style="display: none;" disabled>
+                <span class="btn-icon">🎮</span>
+                Start Game
+            </button>
+
+            <!-- Leave Game Button -->
+            <button class="btn btn-danger" id="leaveBtn">
+                <span class="btn-icon">🚪</span>
+                Leave Game
+            </button>
+        </div>
+
+        <!-- Waiting Message for Players -->
+        <div class="waiting-message" id="waitingMessage" style="display: none;">
+            <p>⏳ Waiting for host to start the game...</p>
+        </div>
+    </div>
+
+    <!-- Leave Confirmation Modal -->
+    <div class="modal" id="leaveModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Leave Game?</h2>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to leave the game?</p>
+                <p class="warning-text" id="hostWarning" style="display: none;">
+                    ⚠️ You are the host. Leaving will end the game for all players.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelLeaveBtn">Cancel</button>
+                <button class="btn btn-danger" id="confirmLeaveBtn">Leave</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- Firebase Config -->
+    <script src="js/firebase-config.js"></script>
+
+    <!-- Lobby Logic -->
+    <script src="js/lobby.js"></script>
+</body>
+</html>

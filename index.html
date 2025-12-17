@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Five Crowns - Mobile Card Game</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Google Fonts - Poppins for friendly, rounded look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Logo and Title -->
+        <div class="logo-section">
+            <h1 class="game-title">
+                <span class="crown-icon">👑</span>
+                Five Crowns
+                <span class="crown-icon">👑</span>
+            </h1>
+            <p class="tagline">Five-Suited Rummy Card Game</p>
+            <div class="suits-display">
+                <span class="suit spade">♠</span>
+                <span class="suit heart">♥</span>
+                <span class="suit diamond">♦</span>
+                <span class="suit club">♣</span>
+                <span class="suit star">⭐</span>
+            </div>
+        </div>
+
+        <!-- Main Menu Buttons -->
+        <div class="menu-section">
+            <button class="btn btn-primary btn-large" id="createGameBtn">
+                <span class="btn-icon">👑</span>
+                Create Game
+            </button>
+
+            <button class="btn btn-secondary btn-large" id="joinGameBtn">
+                <span class="btn-icon">🎴</span>
+                Join Game
+            </button>
+        </div>
+
+        <!-- How to Play Link -->
+        <div class="footer-section">
+            <a href="#" class="link-text" id="howToPlayBtn">How to Play</a>
+        </div>
+    </div>
+
+    <!-- Name Input Modal -->
+    <div class="modal" id="nameModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Enter Your Name</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-instruction">What should we call you?</p>
+                <input
+                    type="text"
+                    id="playerNameInput"
+                    class="player-name-input"
+                    maxlength="20"
+                    placeholder="Your Name"
+                    autocomplete="off"
+                >
+                <p class="error-message" id="nameError"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="nameSubmitBtn">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Join Game Modal -->
+    <div class="modal" id="joinModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Join Game</h2>
+                <button class="close-btn" id="closeJoinModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-instruction">What's your name?</p>
+                <input
+                    type="text"
+                    id="joinNameInput"
+                    class="player-name-input"
+                    maxlength="20"
+                    placeholder="Your Name"
+                    autocomplete="off"
+                >
+                <p class="modal-instruction" style="margin-top: 20px;">Enter the 4-digit game code:</p>
+                <input
+                    type="text"
+                    id="gameCodeInput"
+                    class="game-code-input"
+                    maxlength="4"
+                    placeholder="0000"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                >
+                <p class="error-message" id="joinError"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="joinSubmitBtn">Join Game</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- Firebase Config -->
+    <script src="js/firebase-config.js"></script>
+
+    <!-- Main App Logic -->
+    <script src="js/app.js"></script>
+</body>
+</html>

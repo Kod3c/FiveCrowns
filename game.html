@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Playing - Five Crowns</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/game.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="game-page">
+    <!-- Game Board Container -->
+    <div class="game-container">
+
+        <!-- Top Bar: Game Info -->
+        <div class="game-header">
+            <div class="round-info">
+                <span class="round-number">Round <strong id="roundNumber">1</strong></span>
+                <span class="wild-indicator">
+                    <span id="wildCard">3s</span> are wild ⭐
+                </span>
+            </div>
+            <div class="player-score">
+                Score: <strong id="yourScore">0</strong>
+            </div>
+            <button class="menu-btn" id="menuBtn">⋮</button>
+        </div>
+
+        <!-- Main Game Table -->
+        <div class="game-table">
+
+            <!-- Center Area: Deck and Discard -->
+            <div class="table-center">
+                <div class="center-cards">
+                    <!-- Deck -->
+                    <div class="deck-area" id="deckArea">
+                        <div class="card-stack">
+                            <div class="card-back stack-card"></div>
+                            <div class="card-back stack-card"></div>
+                            <div class="card-back stack-card"></div>
+                            <div class="card-back stack-card"></div>
+                            <div class="card-back stack-card"></div>
+                            <div class="card-back stack-card"></div>
+                            <div class="card-back stack-card"></div>
+                            <div class="card-back stack-card"></div>
+                        </div>
+                    </div>
+
+                    <!-- Discard Pile -->
+                    <div class="discard-area" id="discardArea">
+                        <div class="discard-pile" id="discardPile">
+                            <div class="card">
+                                <div class="card-content">
+                                    <span class="card-rank">9</span>
+                                    <span class="card-suit hearts">♥</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Turn Instruction -->
+                <div class="turn-instruction" id="turnInstruction">
+                    <p>Tap deck or discard to draw</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom: Your Hand -->
+        <div class="player-hand-section">
+            <div class="hand-header">
+                <span class="hand-title">Your Hand</span>
+                <span class="hand-count">(<span id="handCount">0</span> cards)</span>
+            </div>
+
+            <!-- Scrollable Card Container -->
+            <div class="hand-cards-container" id="handCardsContainer">
+                <div class="hand-cards" id="handCards">
+                    <!-- Cards will be dynamically added here by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="hand-actions">
+                <button class="btn btn-secondary" id="discardBtn" disabled>
+                    Discard Selected
+                </button>
+                <button class="btn btn-primary" id="goOutBtn" disabled>
+                    👑 Go Out
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Game Menu Modal -->
+    <div class="modal" id="gameMenuModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h2>Game Menu</h2>
+                <button class="close-btn" id="closeMenuBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <button class="menu-option-btn" id="viewScoresBtn">
+                    📊 View Scores
+                </button>
+                <button class="menu-option-btn" id="viewRulesBtn">
+                    📖 Game Rules
+                </button>
+                <button class="menu-option-btn danger" id="leaveGameBtn">
+                    🚪 Leave Game
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- Firebase Config -->
+    <script src="js/firebase-config.js"></script>
+
+    <!-- Card Hand Manager -->
+    <script src="js/cardHand.js"></script>
+
+    <!-- Game Logic -->
+    <script src="js/game.js"></script>
+</body>
+</html>
