@@ -5,6 +5,8 @@
 /* Lobby Page Background */
 .lobby-page {
     background: linear-gradient(135deg, var(--dark-purple) 0%, var(--darker-purple) 100%);
+    overflow-x: hidden;
+    width: 100%;
 }
 
 /* Lobby Header */
@@ -13,7 +15,8 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
-    gap: 12px;
+    gap: 8px;
+    flex-wrap: nowrap;
 }
 
 .back-btn {
@@ -41,6 +44,10 @@
     color: var(--white);
     flex: 1;
     text-align: center;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .lobby-status {
@@ -94,6 +101,7 @@
     letter-spacing: 12px;
     text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
     user-select: all;
+    word-break: break-all;
 }
 
 .copy-btn {
@@ -127,11 +135,14 @@
     font-size: 13px;
     color: var(--gray);
     margin-top: 8px;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-hint strong {
     color: var(--light-purple);
     font-weight: 600;
+    word-break: break-all;
 }
 
 /* Copy Toast Notification */
@@ -337,6 +348,8 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .setting-item:last-child {
@@ -347,6 +360,8 @@
     font-size: 14px;
     color: var(--light-purple);
     font-weight: 500;
+    flex: 1 1 auto;
+    min-width: 120px;
 }
 
 .setting-select {
@@ -361,6 +376,8 @@
     cursor: pointer;
     outline: none;
     transition: all 0.3s ease;
+    flex-shrink: 0;
+    min-width: 120px;
 }
 
 .setting-select:hover {
@@ -446,15 +463,16 @@
 @media (max-width: 480px) {
     .lobby-header {
         margin-bottom: 20px;
+        gap: 6px;
     }
 
     .lobby-title {
-        font-size: 20px;
+        font-size: 18px;
     }
 
     .code-value {
-        font-size: 44px;
-        letter-spacing: 8px;
+        font-size: 40px;
+        letter-spacing: 6px;
     }
 
     .copy-btn {
@@ -464,7 +482,7 @@
     }
 
     .game-code-section {
-        padding: 20px;
+        padding: 16px;
     }
 
     .player-avatar {
@@ -476,21 +494,102 @@
     .player-name {
         font-size: 14px;
     }
-}
-
-@media (max-width: 360px) {
-    .code-value {
-        font-size: 36px;
-        letter-spacing: 6px;
-    }
 
     .back-btn {
-        padding: 8px 12px;
-        font-size: 12px;
+        padding: 8px 10px;
+        font-size: 13px;
     }
 
     .status-indicator {
-        font-size: 10px;
-        padding: 4px 8px;
+        padding: 5px 10px;
+        font-size: 11px;
+    }
+
+    .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .setting-select {
+        width: 100%;
+    }
+}
+
+@media (max-width: 360px) {
+    .lobby-header {
+        gap: 4px;
+    }
+
+    .lobby-title {
+        font-size: 16px;
+    }
+
+    .code-value {
+        font-size: 32px;
+        letter-spacing: 4px;
+    }
+
+    .copy-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+
+    .game-code-section {
+        padding: 12px;
+    }
+
+    .back-btn {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+
+    .back-btn span {
+        display: inline-block;
+        max-width: 60px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .status-indicator {
+        font-size: 9px;
+        padding: 4px 6px;
+    }
+
+    .code-hint {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 320px) {
+    .lobby-title {
+        font-size: 14px;
+    }
+
+    .code-value {
+        font-size: 28px;
+        letter-spacing: 3px;
+    }
+
+    .game-code-display {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .copy-btn {
+        width: 100%;
+        height: 40px;
+    }
+
+    .back-btn {
+        padding: 6px;
+        font-size: 11px;
+    }
+
+    .status-indicator {
+        font-size: 8px;
+        padding: 3px 5px;
     }
 }

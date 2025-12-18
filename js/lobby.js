@@ -52,6 +52,7 @@ const playerRef = playersRef.child(playerId);
 let currentGameData = null;
 let isHost = false;
 let maxPlayers = 6;
+let isGameStarting = false; // Flag to prevent disconnect handlers from being re-registered during game start
 
 // Initialize
 init();
@@ -148,12 +149,22 @@ function listenToGameChanges() {
 
         // Check if game has started
         if (currentGameData.status === 'playing') {
-            console.log('Game is starting!');
-            // Wait a moment before redirecting to ensure Firebase has propagated
-            setTimeout(() => {
-                console.log('Redirecting to game page...');
+            // CRITICAL: Set flag to prevent setupDisconnectHandler from re-registering handlers
+            isGameStarting = true;
+
+            // CRITICAL: Cancel disconnect handlers to prevent game deletion on redirect
+            Promise.all([
+                gameRef.onDisconnect().cancel(),
+                playerRef.onDisconnect().cancel()
+            ]).then(() => {
+                // Wait a moment for game state to be fully written
+                return new Promise(resolve => setTimeout(resolve, 300));
+            }).then(() => {
                 window.location.href = 'game.html?code=' + gameCode;
-            }, 150);
+            }).catch((error) => {
+                console.error('Error cancelling disconnect handlers:', error);
+                window.location.href = 'game.html?code=' + gameCode;
+            });
         }
     });
 }
@@ -363,11 +374,15 @@ function handleHighlightWildsChange(e) {
 function handleStartGame() {
     console.log('Starting game...');
 
+    // CRITICAL: Set flag to prevent setupDisconnectHandler from re-registering handlers
+    isGameStarting = true;
+
     const players = currentGameData.players || {};
     const playerCountNum = Object.values(players).length;
 
     if (playerCountNum < 2) {
         alert('Need at least 2 players to start the game!');
+        isGameStarting = false; // Reset flag
         return;
     }
 
@@ -436,21 +451,29 @@ function handleStartGame() {
     gameState.turnPhase = 'WAITING_FOR_DRAW';
     console.log('Initial turn phase:', gameState.turnPhase);
 
-    // Update game status and game state (keep players object intact)
-    gameRef.update({
-        status: 'playing',
-        startedAt: firebase.database.ServerValue.TIMESTAMP,
-        gameState: gameState
-        // Note: players object is NOT modified here, so it persists from lobby
+    // CRITICAL: Cancel disconnect handlers BEFORE changing status
+    // Otherwise, when we redirect to game.html, Firebase will delete the game!
+    Promise.all([
+        gameRef.onDisconnect().cancel(),
+        playerRef.onDisconnect().cancel()
+    ]).then(() => {
+        // Update game status and game state (keep players object intact)
+        const updateData = {
+            status: 'playing',
+            startedAt: firebase.database.ServerValue.TIMESTAMP,
+            gameState: gameState
+            // Note: players object is NOT modified here, so it persists from lobby
+        };
+
+        return gameRef.update(updateData);
     })
     .then(() => {
-        console.log('Game started successfully with dealt cards!');
-        console.log('Player data preserved:', players);
+        console.log('Game started successfully!');
         // The listener will automatically redirect all players
     })
     .catch((error) => {
         console.error('Error starting game:', error);
-        alert('Failed to start game. Please try again.');
+        alert('Failed to start game: ' + error.message);
     });
 }
 
@@ -601,6 +624,12 @@ function setupDisconnectHandler() {
     // Only remove players on disconnect if the game is still in waiting state
     // This allows players to rejoin if they disconnect during an active game
     gameRef.once('value').then((snapshot) => {
+        // CRITICAL: Check if game is starting - if so, don't register disconnect handlers
+        // This prevents a race condition where handlers are registered after being cancelled
+        if (isGameStarting) {
+            return;
+        }
+
         if (snapshot.exists()) {
             const gameData = snapshot.val();
 

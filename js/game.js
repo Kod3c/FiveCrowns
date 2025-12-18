@@ -270,14 +270,42 @@ function setupEventListeners() {
  * Listen to real-time game state changes
  */
 function listenToGameState() {
+    let isFirstLoad = true;
+    let retryCount = 0;
+    const MAX_RETRIES = 5;
+
     gameRef.on('value', (snapshot) => {
         if (!snapshot.exists()) {
             console.error('Game not found');
-            alert('Game no longer exists. Returning to home.');
-            window.location.href = 'index.html';
+
+            // On first load, retry multiple times before showing error
+            // This handles race conditions when redirecting from lobby
+            if (isFirstLoad && retryCount < MAX_RETRIES) {
+                const delay = Math.min(1000 * Math.pow(1.5, retryCount), 3000); // Exponential backoff, max 3s
+                retryCount++;
+
+                setTimeout(() => {
+                    gameRef.once('value').then((retrySnapshot) => {
+                        if (!retrySnapshot.exists() && retryCount >= MAX_RETRIES) {
+                            console.error('Game not found after retries');
+                            showErrorAndRedirect('Game no longer exists. Returning to home.');
+                        } else if (retrySnapshot.exists()) {
+                            isFirstLoad = false;
+                        }
+                    });
+                }, delay);
+                return;
+            }
+
+            // If not first load or exhausted retries, game was deleted
+            if (!isFirstLoad || retryCount >= MAX_RETRIES) {
+                showErrorAndRedirect('Game no longer exists. Returning to home.');
+            }
             return;
         }
 
+        isFirstLoad = false;
+        retryCount = 0; // Reset retry count on successful connection
         const gameData = snapshot.val();
         currentGameState = gameData.gameState;
         currentGameData = gameData; // Store full game data for access to players
@@ -2644,6 +2672,31 @@ function showError(message) {
  */
 function closeErrorModal() {
     errorModal.classList.remove('active');
+}
+
+/**
+ * Show error modal and redirect to home after user acknowledges
+ */
+function showErrorAndRedirect(message) {
+    errorMessage.textContent = message;
+    errorModal.classList.add('active');
+
+    // Set up one-time event listener for OK button
+    const handleRedirect = () => {
+        errorModal.classList.remove('active');
+        window.location.href = 'index.html';
+    };
+
+    const errorOkBtn = document.getElementById('errorOkBtn');
+    const closeErrorBtn = document.getElementById('closeErrorBtn');
+
+    // Remove any existing listeners
+    errorOkBtn.replaceWith(errorOkBtn.cloneNode(true));
+    closeErrorBtn.replaceWith(closeErrorBtn.cloneNode(true));
+
+    // Add new listeners
+    document.getElementById('errorOkBtn').addEventListener('click', handleRedirect, { once: true });
+    document.getElementById('closeErrorBtn').addEventListener('click', handleRedirect, { once: true });
 }
 
 console.log('Game board initialized!');
