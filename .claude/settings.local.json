@@ -8,7 +8,9 @@
       "Bash(chmod:*)",
       "Bash(md5sum:*)",
       "Bash(node:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Read(//10.69.0.2/GITHUB/FiveCrowns/**)",
+      "Read(//10.69.0.2/GITHUB/FiveCrowns/css/**)"
     ],
     "deny": [],
     "ask": []
