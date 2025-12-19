@@ -2,6 +2,17 @@
 // Note: Since we're using vanilla JS without modules, we'll use the CDN version
 // The Firebase initialization will happen in HTML files using script tags
 
+// ⚠️ SECURITY NOTE:
+// These API keys are intentionally public for Firebase web apps.
+// Firebase security is controlled through Database Rules, not by hiding API keys.
+// Before deploying to production:
+// 1. Set proper Firebase Realtime Database Rules
+// 2. Enable Firebase App Check
+// 3. Monitor usage in Firebase Console
+// 4. Consider rate limiting
+//
+// For your own deployment, replace these values with your Firebase project credentials.
+
 // Your Firebase configuration object
 const firebaseConfig = {
   apiKey: "AIzaSyCI2wnbwb7gRsrQ-DxF9Im8QJsQvAt4FuA",

@@ -3,16 +3,53 @@
 
 console.log('Five Crowns app loaded!');
 
+// Modal Helper Functions
+function showErrorModal(message) {
+    const errorModal = document.getElementById('errorModal');
+    const errorMessage = document.getElementById('errorMessage');
+    const errorOkBtn = document.getElementById('errorOkBtn');
+    const closeErrorBtn = document.getElementById('closeErrorBtn');
+
+    errorMessage.textContent = message;
+    errorModal.classList.add('active');
+
+    const closeModal = () => {
+        errorModal.classList.remove('active');
+    };
+
+    errorOkBtn.onclick = closeModal;
+    closeErrorBtn.onclick = closeModal;
+    errorModal.onclick = (e) => {
+        if (e.target === errorModal) closeModal();
+    };
+}
+
+function showRulesModal() {
+    const rulesModal = document.getElementById('rulesModal');
+    const closeRulesBtn = document.getElementById('closeRulesBtn');
+
+    rulesModal.classList.add('active');
+
+    const closeModal = () => {
+        rulesModal.classList.remove('active');
+    };
+
+    closeRulesBtn.onclick = closeModal;
+    rulesModal.onclick = (e) => {
+        if (e.target === rulesModal) closeModal();
+    };
+}
+
 // Check if Firebase is loaded
 if (typeof firebase === 'undefined') {
     console.error('Firebase not loaded! Check your internet connection and Firebase CDN links.');
-    alert('Error: Firebase failed to load. Please check your internet connection and refresh the page.');
+    showErrorModal('Error: Firebase failed to load. Please check your internet connection and refresh the page.');
 }
 
 // Check if database is initialized
 if (typeof database === 'undefined') {
     console.error('Firebase database not initialized!');
-    alert('Error: Database not initialized. Please refresh the page.');
+    showErrorModal('Error: Database not initialized. Please refresh the page.');
 }
 
 // DOM Elements
@@ -183,7 +220,7 @@ function handleCreateGame(playerName) {
         createGameSession(gameCode, playerId, playerName);
     } catch (error) {
         console.error('Error in handleCreateGame:', error);
-        alert('Error creating game: ' + error.message);
+        showErrorModal('Error creating game: ' + error.message);
     }
 }
 
@@ -246,15 +283,7 @@ function handleJoinGame() {
  */
 function showHowToPlay(e) {
     e.preventDefault();
-    alert('Five Crowns Rules:\n\n' +
-          '• 11 rounds (3s through Kings become wild)\n' +
-          '• Goal: Create sets (3+ same rank) and runs (3+ consecutive cards in same suit)\n' +
-          '• Each round deals more cards (Round 1 = 3 cards, Round 11 = 13 cards)\n' +
-          '• Draw from deck or discard pile\n' +
-          '• Discard one card per turn\n' +
-          '• "Go out" when all cards form valid sets/runs\n' +
-          '• Lowest score wins!\n\n' +
-          'Full rules coming soon...');
+    showRulesModal();
 }
 
 /**
@@ -348,11 +377,11 @@ function createGameSession(gameCode, playerId, playerName) {
                 console.error('❌ Firebase error:', error);
                 console.error('Error code:', error.code);
                 console.error('Error message:', error.message);
-                alert('Error creating game: ' + error.message + '\n\nPlease check:\n1. Firebase Realtime Database is enabled\n2. Database rules allow writes\n3. Internet connection is working');
+                showErrorModal('Error creating game: ' + error.message + '\n\nPlease check:\n1. Firebase Realtime Database is enabled\n2. Database rules allow writes\n3. Internet connection is working');
             });
     } catch (error) {
         console.error('❌ Exception in createGameSession:', error);
-        alert('Error: ' + error.message);
+        showErrorModal('Error: ' + error.message);
     }
 }
 

@@ -3,6 +3,31 @@
 
 console.log('🏠 LOBBY.JS LOADED - You are on lobby.html');
 
+// Modal Helper Function
+function showErrorModal(message, details = null) {
+    const errorModal = document.getElementById('errorModal');
+    const errorMessage = document.getElementById('errorMessage');
+    const errorDetails = document.getElementById('errorDetails');
+    const errorOkBtn = document.getElementById('errorOkBtn');
+
+    errorMessage.textContent = message;
+
+    if (details) {
+        errorDetails.textContent = details;
+        errorDetails.style.display = 'block';
+    } else {
+        errorDetails.style.display = 'none';
+    }
+
+    errorModal.classList.add('active');
+
+    const closeModal = () => {
+        errorModal.classList.remove('active');
+    };
+
+    errorOkBtn.onclick = closeModal;
+}
+
 // Get game code from URL
 const urlParams = new URLSearchParams(window.location.search);
 const gameCode = urlParams.get('code');
@@ -11,8 +36,10 @@ const playerId = sessionStorage.getItem('playerId');
 // Check if we have valid game info
 if (!gameCode || !playerId) {
     console.error('Missing game code or player ID');
-    alert('Invalid game session. Returning to home.');
-    window.location.href = 'index.html';
+    showErrorModal('Invalid game session. Returning to home.');
+    setTimeout(() => {
+        window.location.href = 'index.html';
+    }, 2000);
 }
 
 // DOM Elements
@@ -323,7 +350,7 @@ function fallbackCopy(text) {
         showCopyToast();
     } catch (err) {
         console.error('Fallback copy failed:', err);
-        alert('Code: ' + text);
+        showErrorModal('Code: ' + text);
     }
 
     document.body.removeChild(textArea);
@@ -381,7 +408,7 @@ function handleStartGame() {
     const playerCountNum = Object.values(players).length;
 
     if (playerCountNum < 2) {
-        alert('Need at least 2 players to start the game!');
+        showErrorModal('Need at least 2 players to start the game!');
         isGameStarting = false; // Reset flag
         return;
     }
@@ -473,7 +500,7 @@ function handleStartGame() {
     })
     .catch((error) => {
         console.error('Error starting game:', error);
-        alert('Failed to start game: ' + error.message);
+        showErrorModal('Failed to start game: ' + error.message);
     });
 }
 
@@ -600,7 +627,7 @@ function handleLeaveGame() {
             })
             .catch((error) => {
                 console.error('Error deleting game:', error);
-                alert('Error leaving game. Please try again.');
+                showErrorModal('Error leaving game. Please try again.');
             });
     } else {
         // Player leaving - remove from players list
@@ -612,7 +639,7 @@ function handleLeaveGame() {
             })
             .catch((error) => {
                 console.error('Error leaving game:', error);
-                alert('Error leaving game. Please try again.');
+                showErrorModal('Error leaving game. Please try again.');
             });
     }
 }

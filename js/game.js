@@ -3,6 +3,52 @@
 
 console.log('🎮 GAME.JS LOADED - You are on game.html');
 
+// Modal Helper Functions
+function showErrorModal(message) {
+    const errorModal = document.getElementById('errorModal');
+    const errorMessage = document.getElementById('errorMessage');
+    const errorOkBtn = document.getElementById('errorOkBtn');
+    const closeErrorBtn = document.getElementById('closeErrorBtn');
+
+    errorMessage.textContent = message;
+    errorModal.classList.add('active');
+
+    const closeModal = () => {
+        errorModal.classList.remove('active');
+    };
+
+    errorOkBtn.onclick = closeModal;
+    closeErrorBtn.onclick = closeModal;
+    errorModal.onclick = (e) => {
+        if (e.target === errorModal) closeModal();
+    };
+}
+
+function showConfirmModal(message, title = 'Confirm') {
+    return new Promise((resolve) => {
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmTitle = document.getElementById('confirmTitle');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmOkBtn = document.getElementById('confirmOkBtn');
+        const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
+        confirmTitle.textContent = title;
+        confirmMessage.textContent = message;
+        confirmModal.classList.add('active');
+
+        const closeModal = (result) => {
+            confirmModal.classList.remove('active');
+            resolve(result);
+        };
+
+        confirmOkBtn.onclick = () => closeModal(true);
+        confirmCancelBtn.onclick = () => closeModal(false);
+        confirmModal.onclick = (e) => {
+            if (e.target === confirmModal) closeModal(false);
+        };
+    });
+}
+
 // Get game info from URL and session
 const urlParams = new URLSearchParams(window.location.search);
 const gameCode = urlParams.get('code');
@@ -12,8 +58,10 @@ const playerName = sessionStorage.getItem('playerName');
 // Check if we have valid game info
 if (!gameCode || !playerId) {
     console.error('Missing game code or player ID');
-    alert('Invalid game session. Returning to home.');
-    window.location.href = 'index.html';
+    showErrorModal('Invalid game session. Returning to home.');
+    setTimeout(() => {
+        window.location.href = 'index.html';
+    }, 2000);
 }
 
 // DOM Elements
@@ -40,6 +88,9 @@ const closeMenuBtn = document.getElementById('closeMenuBtn');
 const viewScoresBtn = document.getElementById('viewScoresBtn');
 const viewRulesBtn = document.getElementById('viewRulesBtn');
 const leaveGameBtn = document.getElementById('leaveGameBtn');
+
+const rulesModal = document.getElementById('rulesModal');
+const closeRulesBtn = document.getElementById('closeRulesBtn');
 
 const errorModal = document.getElementById('errorModal');
 const closeErrorBtn = document.getElementById('closeErrorBtn');
@@ -239,6 +290,9 @@ function setupEventListeners() {
     // Hand Actions
     discardBtn.addEventListener('click', handleDiscardCard);
     goOutBtn.addEventListener('click', handleGoOut);
+
+    // Rules modal
+    closeRulesBtn.addEventListener('click', closeRulesModal);
 
     // Error modal
     closeErrorBtn.addEventListener('click', closeErrorModal);
@@ -1494,7 +1548,7 @@ function handleDrawFromDeck() {
         // Rollback on error
         myHand = myHand.slice(0, -1);
         renderMyHand();
-        alert('Error drawing card. Please try again.');
+        showErrorModal('Error drawing card. Please try again.');
     });
 }
 
@@ -1561,7 +1615,7 @@ function handleDrawFromDiscardPile() {
         // Rollback on error
         myHand = myHand.slice(0, -1);
         renderMyHand();
-        alert('Error drawing card. Please try again.');
+        showErrorModal('Error drawing card. Please try again.');
     });
 }
 
@@ -1696,7 +1750,7 @@ async function advanceTurn(discardedCard, newHand, newDiscardPile) {
                 return;
             } catch (error) {
                 console.error('Error advancing turn in POST_GO_OUT phase:', error);
-                alert('Error advancing turn. Please try again.');
+                showErrorModal('Error advancing turn. Please try again.');
                 return;
             }
         } else {
@@ -1740,7 +1794,7 @@ async function advanceTurn(discardedCard, newHand, newDiscardPile) {
                 return;
             } catch (error) {
                 console.error('❌ Error setting WAITING_FOR_GO_OUT phase:', error);
-                alert('Error advancing turn. Please try again.');
+                showErrorModal('Error advancing turn. Please try again.');
                 return;
             }
         }
@@ -1778,7 +1832,7 @@ async function advanceTurn(discardedCard, newHand, newDiscardPile) {
         console.log('Turn advanced successfully');
     } catch (error) {
         console.error('Error advancing turn:', error);
-        alert('Error advancing turn. Please try again.');
+        showErrorModal('Error advancing turn. Please try again.');
     }
 }
 
@@ -1806,7 +1860,7 @@ async function endRound() {
 
         if (!scores) {
             console.error('Failed to calculate scores');
-            alert('Error calculating scores');
+            showErrorModal('Error calculating scores');
             return;
         }
 
@@ -1823,7 +1877,7 @@ async function endRound() {
         console.log('Round ended - scores calculated and saved');
     } catch (error) {
         console.error('Error ending round:', error);
-        alert('Error ending round. Please try again.');
+        showErrorModal('Error ending round. Please try again.');
     }
 }
 
@@ -2422,7 +2476,7 @@ async function startNextRound() {
 
     if (!isHost) {
         console.error('Only host can start next round!');
-        alert('Only the host can start the next round.');
+        showErrorModal('Only the host can start the next round.');
         return;
     }
 
@@ -2470,7 +2524,7 @@ async function startNextRound() {
         console.error('❌ CRITICAL ERROR: No players found!');
         console.error('currentGameData:', currentGameData);
         console.error('currentGameState:', currentGameState);
-        alert('Error: No players found to deal cards to. Check console for details.');
+        showErrorModal('Error: No players found to deal cards to. Check console for details.');
         return;
     }
 
@@ -2545,7 +2599,7 @@ async function startNextRound() {
     } catch (error) {
         console.error('❌ ERROR starting next round:', error);
         console.error('Error details:', error.message, error.code);
-        alert('Error starting next round: ' + error.message);
+        showErrorModal('Error starting next round: ' + error.message);
     }
 }
 
@@ -2655,7 +2709,7 @@ function closeGameMenu() {
  */
 function showScores() {
     if (!currentGameState) {
-        alert('No game in progress');
+        showErrorModal('No game in progress');
         return;
     }
 
@@ -2691,23 +2745,35 @@ function showScores() {
 }
 
 /**
- * Show rules
+ * Show rules modal
  */
 function showRules() {
-    alert('Five Crowns Rules:\n\n' +
-          '• 11 rounds (3s through Kings become wild)\n' +
-          '• Draw from deck or discard pile\n' +
-          '• Discard one card per turn\n' +
-          '• Goal: Create sets (3+ same rank) or runs (3+ consecutive in same suit)\n' +
-          '• "Go out" when all cards form valid sets/runs\n' +
-          '• Lowest score wins!');
+    closeGameMenu();
+    rulesModal.style.display = 'flex';
+
+    // Add click handler to close when clicking outside
+    const closeHandler = (e) => {
+        if (e.target === rulesModal) {
+            closeRulesModal();
+            rulesModal.removeEventListener('click', closeHandler);
+        }
+    };
+    rulesModal.addEventListener('click', closeHandler);
+}
+
+/**
+ * Close rules modal
+ */
+function closeRulesModal() {
+    rulesModal.style.display = 'none';
 }
 
 /**
  * Confirm leave game
  */
-function confirmLeaveGame() {
-    if (confirm('Are you sure you want to leave the game?')) {
+async function confirmLeaveGame() {
+    const confirmed = await showConfirmModal('Are you sure you want to leave the game?', 'Leave Game');
+    if (confirmed) {
         // Remove player from game
         playersRef.child(playerId).remove()
             .then(() => {
@@ -2716,7 +2782,7 @@ function confirmLeaveGame() {
             })
             .catch((error) => {
                 console.error('Error leaving game:', error);
-                alert('Error leaving game. Please try again.');
+                showErrorModal('Error leaving game. Please try again.');
             });
     }
 }

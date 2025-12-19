@@ -1,0 +1,48 @@
+# Firebase
+.firebase/
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
+
+# Firebase config (uncomment if you move to env vars)
+# firebase-config.js
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Claude AI
+.claude/
+
+# Windows
+Thumbs.db
+Desktop.ini
+nul
+
+# XAMPP / Development
+*.log
+
+# Environment variables (if you add them later)
+.env
+.env.local
+
+# Test files (optional - uncomment to exclude from repo)
+# test.html
+# test-validation.html
+
+# Build artifacts
+dist/
+build/
+
+# Dependencies (if you add npm later)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Temporary files
+*.tmp
+*.temp

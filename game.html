@@ -13,7 +13,7 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="css/style.css?v=20250118h">
-    <link rel="stylesheet" href="css/game.css?v=20250118l">
+    <link rel="stylesheet" href="css/game.css?v=20250118t">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -171,6 +171,58 @@
         </div>
     </div>
 
+    <!-- Game Rules Modal -->
+    <div class="modal" id="rulesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📖 Five Crowns Rules</h2>
+                <button class="close-btn" id="closeRulesBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="rules-section">
+                    <h3>🎯 Objective</h3>
+                    <p>Be the player with the <strong>lowest score</strong> after 11 rounds!</p>
+                </div>
+
+                <div class="rules-section">
+                    <h3>🎮 Gameplay</h3>
+                    <ul>
+                        <li><strong>11 Rounds:</strong> Each round uses more cards (Round 1 = 3 cards, Round 11 = 13 cards)</li>
+                        <li><strong>Wild Cards:</strong> Each round has a different wild card (3s through Kings)</li>
+                        <li><strong>Your Turn:</strong> Draw one card (from deck or discard pile), then discard one card</li>
+                    </ul>
+                </div>
+
+                <div class="rules-section">
+                    <h3>🃏 Valid Groups</h3>
+                    <ul>
+                        <li><strong>Sets:</strong> 3 or more cards of the same rank (e.g., 7♥ 7♠ 7♦)</li>
+                        <li><strong>Runs:</strong> 3 or more consecutive cards in the same suit (e.g., 5♥ 6♥ 7♥)</li>
+                        <li><strong>Wild cards</strong> can substitute for any card</li>
+                    </ul>
+                </div>
+
+                <div class="rules-section">
+                    <h3>👑 Going Out</h3>
+                    <p>When all your cards form valid sets or runs, click <strong>"Go Out"</strong> to end the round. Other players get one more turn.</p>
+                </div>
+
+                <div class="rules-section">
+                    <h3>📊 Scoring</h3>
+                    <ul>
+                        <li>3-9: Face value (3 = 3 points, 9 = 9 points)</li>
+                        <li>10: 10 points</li>
+                        <li>Jack: 11 points</li>
+                        <li>Queen: 12 points</li>
+                        <li>King: 13 points</li>
+                        <li><strong>Wild cards (current round): 20 points</strong></li>
+                        <li><strong>Joker (always wild): 50 points</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Error Modal -->
     <div class="modal" id="errorModal">
         <div class="modal-content small">
@@ -181,6 +233,22 @@
             <div class="modal-body">
                 <p id="errorMessage" style="text-align: center; color: var(--white); font-size: 16px; margin: 20px 0;"></p>
                 <button class="btn btn-primary" id="errorOkBtn" style="width: 100%;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h2 id="confirmTitle">Confirm</h2>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage" style="text-align: center; color: var(--white); font-size: 16px; margin: 20px 0;"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="confirmCancelBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmOkBtn">OK</button>
             </div>
         </div>
     </div>
@@ -199,6 +267,6 @@
     <script src="js/deckDiscard.js?v=4"></script>
 
     <!-- Game Logic -->
-    <script src="js/game.js?v=4"></script>
+    <script src="js/game.js?v=5"></script>
 </body>
 </html>
