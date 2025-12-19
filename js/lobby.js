@@ -52,7 +52,6 @@ const joinUrl = document.getElementById('joinUrl');
 const playerCount = document.getElementById('playerCount');
 const playersList = document.getElementById('playersList');
 const settingsSection = document.getElementById('settingsSection');
-const maxPlayersSelect = document.getElementById('maxPlayers');
 const highlightWildsSelect = document.getElementById('highlightWilds');
 const startGameBtn = document.getElementById('startGameBtn');
 const leaveBtn = document.getElementById('leaveBtn');
@@ -108,7 +107,6 @@ function setupEventListeners() {
     backBtn.addEventListener('click', handleBack);
     copyCodeBtn.addEventListener('click', copyGameCode);
     codeValue.addEventListener('click', copyGameCode);
-    maxPlayersSelect.addEventListener('change', handleMaxPlayersChange);
     highlightWildsSelect.addEventListener('change', handleHighlightWildsChange);
     startGameBtn.addEventListener('click', handleStartGame);
     leaveBtn.addEventListener('click', showLeaveModal);
@@ -218,12 +216,6 @@ function updateUI() {
 
         // Enable start button if at least 2 players
         startGameBtn.disabled = playerCountNum < 2;
-
-        // Update max players from game data
-        if (currentGameData.maxPlayers) {
-            maxPlayers = currentGameData.maxPlayers;
-            maxPlayersSelect.value = maxPlayers;
-        }
 
         // Update highlight wilds from game data
         if (currentGameData.highlightWilds !== undefined) {
@@ -364,21 +356,6 @@ function showCopyToast() {
     setTimeout(() => {
         copyToast.classList.remove('show');
     }, 2000);
-}
-
-/**
- * Handle max players change (host only)
- */
-function handleMaxPlayersChange(e) {
-    const newMax = parseInt(e.target.value);
-    maxPlayers = newMax;
-
-    // Update in Firebase
-    gameRef.update({
-        maxPlayers: newMax
-    });
-
-    console.log('Max players updated to:', newMax);
 }
 
 /**
