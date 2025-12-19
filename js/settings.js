@@ -7,15 +7,22 @@ console.log('⚙️ SETTINGS.JS LOADED');
 const SETTINGS_CONFIG = {
     STORAGE_KEY: 'fiveCrownsSettings',
     DEFAULTS: {
-        cardDesign: 'classic'
+        cardDesign: 'classic',
+        highlightWilds: true
     },
     CARD_DESIGNS: [
         {
             id: 'classic',
             name: 'Classic',
             description: 'Traditional playing card design'
+        },
+        {
+            id: 'minimal',
+            name: 'Minimal',
+            description: 'Clean design with corner indicators only'
         }
-        // Future designs will be added here:
+        // Future designs:
+        // { id: 'realistic', name: 'Realistic', description: 'Authentic real-world playing card look' }
         // { id: 'modern', name: 'Modern', description: 'Sleek minimalist design' },
         // { id: 'vintage', name: 'Vintage', description: 'Old-world elegance' },
         // { id: 'neon', name: 'Neon', description: 'Vibrant glowing cards' }
@@ -91,6 +98,21 @@ class SettingsManager {
     // Get all available card designs
     getAvailableDesigns() {
         return SETTINGS_CONFIG.CARD_DESIGNS;
+    }
+
+    // Get wild highlighting setting
+    getHighlightWilds() {
+        return this.settings.highlightWilds !== undefined
+            ? this.settings.highlightWilds
+            : SETTINGS_CONFIG.DEFAULTS.highlightWilds;
+    }
+
+    // Set wild highlighting
+    setHighlightWilds(enabled) {
+        this.settings.highlightWilds = enabled;
+        this.saveSettings();
+        console.log(`🌟 Wild highlighting ${enabled ? 'enabled' : 'disabled'}`);
+        return true;
     }
 
     // Initialize settings on page load

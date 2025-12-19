@@ -48,7 +48,8 @@ const statusIndicator = document.getElementById('statusIndicator');
 const codeValue = document.getElementById('codeValue');
 const copyCodeBtn = document.getElementById('copyCodeBtn');
 const copyToast = document.getElementById('copyToast');
-const joinUrl = document.getElementById('joinUrl');
+const joinLinkValue = document.getElementById('joinLinkValue');
+const copyLinkBtn = document.getElementById('copyLinkBtn');
 const playerCount = document.getElementById('playerCount');
 const playersList = document.getElementById('playersList');
 const settingsSection = document.getElementById('settingsSection');
@@ -88,7 +89,11 @@ function init() {
 
     // Display game code
     codeValue.textContent = gameCode;
-    joinUrl.textContent = window.location.origin + window.location.pathname.replace('lobby.html', '');
+
+    // Generate and display join link
+    const baseUrl = window.location.origin + window.location.pathname.replace('lobby.html', 'index.html');
+    const joinLink = `${baseUrl}?join=${gameCode}`;
+    joinLinkValue.textContent = joinLink;
 
     // Set up event listeners
     setupEventListeners();
@@ -107,6 +112,8 @@ function setupEventListeners() {
     backBtn?.addEventListener('click', handleBack);
     copyCodeBtn?.addEventListener('click', copyGameCode);
     codeValue?.addEventListener('click', copyGameCode);
+    copyLinkBtn?.addEventListener('click', copyJoinLink);
+    joinLinkValue?.addEventListener('click', copyJoinLink);
     highlightWildsSelect?.addEventListener('change', handleHighlightWildsChange);
     startGameBtn?.addEventListener('click', handleStartGame);
     leaveBtn?.addEventListener('click', showLeaveModal);
@@ -315,21 +322,43 @@ function copyGameCode() {
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(code)
             .then(() => {
-                showCopyToast();
+                showCopyToast('Code copied! 📋');
             })
             .catch((err) => {
                 console.error('Failed to copy:', err);
-                fallbackCopy(code);
+                fallbackCopy(code, 'Code copied! 📋');
             });
     } else {
-        fallbackCopy(code);
+        fallbackCopy(code, 'Code copied! 📋');
+    }
+}
+
+/**
+ * Copy join link to clipboard
+ */
+function copyJoinLink() {
+    const baseUrl = window.location.origin + window.location.pathname.replace('lobby.html', 'index.html');
+    const joinLink = `${baseUrl}?join=${gameCode}`;
+
+    // Try using modern clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(joinLink)
+            .then(() => {
+                showCopyToast('Link copied! 🔗');
+            })
+            .catch((err) => {
+                console.error('Failed to copy:', err);
+                fallbackCopy(joinLink, 'Link copied! 🔗');
+            });
+    } else {
+        fallbackCopy(joinLink, 'Link copied! 🔗');
     }
 }
 
 /**
  * Fallback copy method for older browsers
  */
-function fallbackCopy(text) {
+function fallbackCopy(text, message) {
     const textArea = document.createElement('textarea');
     textArea.value = text;
     textArea.style.position = 'fixed';
@@ -339,10 +368,10 @@ function fallbackCopy(text) {
 
     try {
         document.execCommand('copy');
-        showCopyToast();
+        showCopyToast(message);
     } catch (err) {
         console.error('Fallback copy failed:', err);
-        showErrorModal('Code: ' + text);
+        showErrorModal('Could not copy. Value: ' + text);
     }
 
     document.body.removeChild(textArea);
@@ -351,7 +380,8 @@ function fallbackCopy(text) {
 /**
  * Show copy confirmation toast
  */
-function showCopyToast() {
+function showCopyToast(message = 'Copied! 📋') {
+    copyToast.textContent = message;
     copyToast.classList.add('show');
     setTimeout(() => {
         copyToast.classList.remove('show');

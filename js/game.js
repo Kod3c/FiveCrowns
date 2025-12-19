@@ -114,6 +114,7 @@ const settingsModal = document.getElementById('settingsModal');
 const closeSettingsBtn = document.getElementById('closeSettingsBtn');
 const closeSettingsOkBtn = document.getElementById('closeSettingsOkBtn');
 const cardDesignSelector = document.getElementById('cardDesignSelector');
+const wildHighlightToggle = document.getElementById('wildHighlightToggle');
 
 // Firebase References
 const gameRef = database.ref('games/' + gameCode);
@@ -167,6 +168,12 @@ function init() {
     console.log('Game Code:', gameCode);
     console.log('Player ID:', playerId);
     console.log('Player Name:', playerName);
+
+    // Load wild highlighting preference from settings
+    if (settingsManager) {
+        highlightWilds = settingsManager.getHighlightWilds();
+        console.log('Loaded wild highlighting preference:', highlightWilds);
+    }
 
     // Initialize buttons as disabled
     discardBtn.classList.add('btn-disabled');
@@ -2839,6 +2846,24 @@ function initializeSettingsUI() {
         });
 
         cardDesignSelector.appendChild(option);
+    });
+
+    // Initialize wild highlighting toggle
+    const highlightEnabled = settingsManager.getHighlightWilds();
+    wildHighlightToggle.checked = highlightEnabled;
+    highlightWilds = highlightEnabled;
+
+    // Add event listener for toggle
+    wildHighlightToggle.addEventListener('change', (e) => {
+        const enabled = e.target.checked;
+        settingsManager.setHighlightWilds(enabled);
+        highlightWilds = enabled;
+
+        // Update card hand manager if it exists
+        if (cardHandManager) {
+            cardHandManager.setHighlightWilds(enabled);
+            cardHandManager.renderHand();
+        }
     });
 
     console.log('Settings UI initialized with', designs.length, 'designs');

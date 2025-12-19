@@ -145,6 +145,36 @@
     word-break: break-all;
 }
 
+/* Join Link Display */
+.join-link-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 2px solid var(--primary-purple);
+}
+
+.join-link-value {
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: var(--light-purple);
+    user-select: all;
+    cursor: pointer;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+    transition: color 0.3s ease;
+}
+
+.join-link-value:hover {
+    color: var(--royal-gold);
+}
+
 /* Copy Toast Notification */
 .copy-toast {
     position: fixed;
@@ -483,6 +513,10 @@
         letter-spacing: 6px;
     }
 
+    .join-link-value {
+        font-size: 11px;
+    }
+
     .copy-btn {
         width: 40px;
         height: 40px;
@@ -548,6 +582,10 @@
         letter-spacing: 4px;
     }
 
+    .join-link-value {
+        font-size: 10px;
+    }
+
     .copy-btn {
         width: 36px;
         height: 36px;
@@ -601,9 +639,24 @@
         letter-spacing: 3px;
     }
 
+    .join-link-value {
+        font-size: 9px;
+    }
+
     .game-code-display {
         flex-direction: column;
         gap: 8px;
+    }
+
+    .join-link-display {
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .join-link-value {
+        width: 100%;
+        text-align: center;
     }
 
     .copy-btn {

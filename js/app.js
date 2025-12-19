@@ -74,12 +74,27 @@ const joinError = document.getElementById('joinError');
 // State
 let currentAction = null; // 'create' or 'join'
 
+// Check for join parameter in URL
+const urlParams = new URLSearchParams(window.location.search);
+const joinCode = urlParams.get('join');
+
 // Verify DOM elements loaded
 console.log('DOM elements:', {
     createGameBtn: !!createGameBtn,
     joinGameBtn: !!joinGameBtn,
     howToPlayBtn: !!howToPlayBtn
 });
+
+// If join code is in URL, auto-open join modal with prefilled code
+if (joinCode && joinCode.length === 4) {
+    console.log('Join code detected in URL:', joinCode);
+    // Wait for DOM to be fully ready
+    setTimeout(() => {
+        openJoinModal();
+        gameCodeInput.value = joinCode;
+        joinNameInput.focus();
+    }, 100);
+}
 
 // Event Listeners
 if (createGameBtn) {
