@@ -91,7 +91,7 @@ function init() {
     codeValue.textContent = gameCode;
 
     // Generate and display join link
-    const baseUrl = window.location.origin + window.location.pathname.replace('lobby.html', 'index.html');
+    const baseUrl = window.location.origin;
     const joinLink = `${baseUrl}?join=${gameCode}`;
     joinLinkValue.textContent = joinLink;
 
@@ -337,7 +337,7 @@ function copyGameCode() {
  * Copy join link to clipboard
  */
 function copyJoinLink() {
-    const baseUrl = window.location.origin + window.location.pathname.replace('lobby.html', 'index.html');
+    const baseUrl = window.location.origin;
     const joinLink = `${baseUrl}?join=${gameCode}`;
 
     // Try using modern clipboard API
