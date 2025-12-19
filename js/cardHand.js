@@ -1143,8 +1143,41 @@ class CardHandManager {
         // Position near button
         const rect = button.getBoundingClientRect();
         menu.style.position = 'fixed';
-        menu.style.top = rect.bottom + 5 + 'px';
-        menu.style.left = rect.left + 'px';
+
+        // Temporarily add to DOM to measure size
+        menu.style.visibility = 'hidden';
+        document.body.appendChild(menu);
+        const menuRect = menu.getBoundingClientRect();
+
+        // Calculate position with viewport boundary detection
+        let top = rect.bottom + 5;
+        let left = rect.left;
+
+        // Check if menu would overflow bottom of viewport
+        if (top + menuRect.height > window.innerHeight) {
+            // Position above button instead
+            top = rect.top - menuRect.height - 5;
+        }
+
+        // Check if menu would overflow right of viewport
+        if (left + menuRect.width > window.innerWidth) {
+            // Align right edge of menu with right edge of button
+            left = rect.right - menuRect.width;
+        }
+
+        // Ensure menu doesn't go off left edge
+        if (left < 0) {
+            left = 5;
+        }
+
+        // Ensure menu doesn't go off top edge
+        if (top < 0) {
+            top = 5;
+        }
+
+        menu.style.top = top + 'px';
+        menu.style.left = left + 'px';
+        menu.style.visibility = 'visible';
 
         // Add click handlers
         menu.querySelectorAll('.sort-option').forEach(option => {

@@ -1180,6 +1180,15 @@ async function calculateAllScores(updatedHands = {}) {
     // Get all player hands and hand states, merging in any updated hands
     const playerHands = { ...(currentGameState.playerHands || {}), ...updatedHands };
 
+    // For players who went out (empty hands), use their saved hands from before going out
+    const playerHandsBeforeGoOut = currentGameState.playerHandsBeforeGoOut || {};
+    for (const pid in playerHandsBeforeGoOut) {
+        if (!playerHands[pid] || playerHands[pid].length === 0) {
+            console.log(`Using saved hand for player ${pid} who went out`);
+            playerHands[pid] = playerHandsBeforeGoOut[pid];
+        }
+    }
+
     console.log('Players to score:', Object.keys(playerHands));
     console.log('Updated hands provided:', Object.keys(updatedHands));
 
@@ -1891,13 +1900,17 @@ async function handleGoOut() {
     if (turnPhase === 'WAITING_FOR_GO_OUT') {
         console.log('Last player going out in WAITING_FOR_GO_OUT phase - ending round immediately');
 
+        // Save current hand for scoring before clearing
+        const currentHand = currentGameState.playerHands[playerId] || [];
+
         // Clear this player's hand and end the round
         try {
             await gameStateRef.update({
-                [`playerHands/${playerId}`]: [] // Clear hand - player went out
+                [`playerHands/${playerId}`]: [], // Clear hand - player went out
+                [`playerHandsBeforeGoOut/${playerId}`]: currentHand // Save hand for scoring
             });
 
-            console.log('Hand cleared - now ending round');
+            console.log('Hand cleared and saved - now ending round');
             // End the round immediately
             await endRound();
             return;
@@ -1929,6 +1942,9 @@ async function handleGoOut() {
 
         console.log('Players remaining for final turns:', playersRemaining);
 
+        // Save current hand for scoring before clearing
+        const currentHand = currentGameState.playerHands[playerId] || [];
+
         // Update Firebase: mark this player as first out, set POST_GO_OUT phase
         gameStateRef.update({
             'firstPlayerOut': playerId,
@@ -1936,6 +1952,7 @@ async function handleGoOut() {
             'turnPhase': 'POST_GO_OUT',
             'currentPlayer': playersRemaining.length > 0 ? playersRemaining[0] : null,
             [`playerHands/${playerId}`]: [], // Clear hand - player went out
+            [`playerHandsBeforeGoOut/${playerId}`]: currentHand, // Save hand for scoring
             'previousPlayer': null // Clear previous player
         })
         .then(() => {
@@ -1948,9 +1965,13 @@ async function handleGoOut() {
     } else {
         console.log('Going out during POST_GO_OUT phase');
 
+        // Save current hand for scoring before clearing
+        const currentHand = currentGameState.playerHands[playerId] || [];
+
         // Another player already went out - just clear this player's hand
         gameStateRef.update({
-            [`playerHands/${playerId}`]: [] // Clear hand - player went out
+            [`playerHands/${playerId}`]: [], // Clear hand - player went out
+            [`playerHandsBeforeGoOut/${playerId}`]: currentHand // Save hand for scoring
         })
         .then(() => {
             console.log('Successfully went out during POST_GO_OUT phase');
@@ -2014,21 +2035,29 @@ function handleRoundEnd() {
 /**
  * Show hand tooltip when hovering over a score cell
  */
-async function showHandTooltip(cellElement, round, playerId) {
+async function showHandTooltip(cellElement, round, playerId, isPersistent = false) {
     // Only show tooltips for completed rounds
-    if (currentGameState && round >= currentGameState.currentRound) {
-        return; // Round hasn't completed yet, don't show tooltip
+    if (currentGameState && round > currentGameState.currentRound) {
+        return; // Round hasn't been played yet, don't show tooltip
     }
 
     // Remove any existing tooltip
-    const existingTooltip = cellElement.querySelector('.score-tooltip');
+    const existingTooltip = document.querySelector('.score-tooltip');
     if (existingTooltip) {
-        return; // Tooltip already exists
+        existingTooltip.remove();
+        // If clicking the same cell, just remove and return
+        if (isPersistent && existingTooltip.dataset.cellId === `${round}-${playerId}`) {
+            return;
+        }
     }
 
     // Create tooltip container
     const tooltip = document.createElement('div');
     tooltip.className = 'score-tooltip';
+    if (isPersistent) {
+        tooltip.classList.add('persistent');
+    }
+    tooltip.dataset.cellId = `${round}-${playerId}`;
     tooltip.innerHTML = '<div class="score-tooltip-title">Loading...</div>';
     document.body.appendChild(tooltip); // Append to body to avoid overflow issues
 
@@ -2083,6 +2112,9 @@ async function showHandTooltip(cellElement, round, playerId) {
         // Build tooltip content
         let tooltipContent = '<div class="score-tooltip-title">Hand Breakdown:</div>';
 
+        // Check if player went out (score of 0)
+        const wentOut = handData.score === 0;
+
         // Show groups
         if (handData.optimalGroups && handData.optimalGroups.length > 0) {
             handData.optimalGroups.forEach((group, i) => {
@@ -2097,10 +2129,12 @@ async function showHandTooltip(cellElement, round, playerId) {
                 tooltipContent += `<span class="score-tooltip-pts"> (0 pts)</span>`;
                 tooltipContent += `</div>`;
             });
-        } else if (handData.cards && handData.cards.length === 0) {
-            // Player went out
+        }
+
+        // Show "Went out" message if score is 0 (even if there are groups)
+        if (wentOut) {
             tooltipContent += `<div class="score-tooltip-group">`;
-            tooltipContent += `<span class="score-tooltip-group-title">Went out! 🎉</span>`;
+            tooltipContent += `<span class="score-tooltip-group-title">✨ Went out successfully! 🎉</span>`;
             tooltipContent += `</div>`;
         }
 
@@ -2130,10 +2164,37 @@ async function showHandTooltip(cellElement, round, playerId) {
         tooltip.innerHTML = `<div class="score-tooltip-title">Error loading hand data</div><div style="font-size: 10px; margin-top: 4px;">${error.message}</div>`;
     }
 
-    // Remove tooltip when mouse leaves
-    cellElement.addEventListener('mouseleave', () => {
-        tooltip.remove();
-    }, { once: true });
+    // Handle tooltip removal
+    if (isPersistent) {
+        // For persistent tooltips (from clicks), add close button and click-outside handler
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'tooltip-close-btn';
+        closeBtn.innerHTML = '×';
+        closeBtn.style.cssText = 'position: absolute; top: 5px; right: 5px; background: transparent; border: none; color: var(--white); font-size: 20px; cursor: pointer; padding: 0; width: 24px; height: 24px; line-height: 20px;';
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            tooltip.remove();
+        };
+        tooltip.appendChild(closeBtn);
+
+        // Click outside to close
+        setTimeout(() => {
+            const clickOutsideHandler = (e) => {
+                if (!tooltip.contains(e.target) && e.target !== cellElement) {
+                    tooltip.remove();
+                    document.removeEventListener('click', clickOutsideHandler);
+                }
+            };
+            document.addEventListener('click', clickOutsideHandler);
+        }, 100);
+    } else {
+        // For hover tooltips, remove when mouse leaves
+        cellElement.addEventListener('mouseleave', () => {
+            if (!tooltip.classList.contains('persistent')) {
+                tooltip.remove();
+            }
+        }, { once: true });
+    }
 }
 
 /**
@@ -2240,7 +2301,7 @@ function createScoreTable(roundScores, playerScores, currentRound) {
         playerIds.forEach(pid => {
             const score = normalizeScore(roundScoreData[pid]);
             const wentOut = score === 0;
-            html += `<td class="score-value${wentOut ? ' went-out' : ''}" data-round="${round}" data-player="${pid}" onmouseover="showHandTooltip(this, ${round}, '${pid}')">${score}</td>`;
+            html += `<td class="score-value${wentOut ? ' went-out' : ''}" data-round="${round}" data-player="${pid}" onmouseover="showHandTooltip(this, ${round}, '${pid}')" onclick="showHandTooltip(this, ${round}, '${pid}', true)">${score}</td>`;
         });
 
         html += '</tr>';
@@ -2468,7 +2529,8 @@ async function startNextRound() {
             'firstPlayerThisRound': nextFirstPlayer, // Track who starts this round for rotation
             'firstPlayerOut': null,
             'playersRemaining': [],
-            'previousPlayer': null
+            'previousPlayer': null,
+            'playerHandsBeforeGoOut': null // Clear saved hands from previous round
         });
 
         console.log('✅ Firebase update successful!');
