@@ -8,7 +8,7 @@ A mobile-first, multiplayer implementation of the classic Five Crowns card game 
 
 ## 🎮 Features
 
-- **Real-time Multiplayer**: Play with 2-4 players across different devices
+- **Real-time Multiplayer**: Play with 2-6 players across different devices
 - **Simple Join System**: Host creates a game, players join with a 4-digit code
 - **Mobile-First Design**: Optimized for phones and tablets
 - **Responsive UI**: Beautiful purple and gold themed interface
