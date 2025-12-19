@@ -42,7 +42,7 @@ Five Crowns is a rummy-style card game that uses a special 5-suited deck (includ
 
 #### Prerequisites
 
-- Web server (XAMPP, Live Server, or any HTTP server)
+- Web server (Live Server extension for VS Code, Python's http.server, or any HTTP server)
 - Firebase account (for database)
 - Modern web browser
 
@@ -51,22 +51,25 @@ Five Crowns is a rummy-style card game that uses a special 5-suited deck (includ
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd <repository-folder>
+   cd FiveCrowns
    ```
 
 2. **Set up Firebase**
    - Create a new Firebase project at [Firebase Console](https://console.firebase.google.com/)
    - Enable Realtime Database
-   - Update `js/firebase-config.js` with your Firebase credentials:
+   - Copy your Firebase configuration credentials
+   - The project is configured to use CDN-loaded Firebase libraries (no npm required)
+   - Update the `firebaseConfig` object in [js/firebase-config.js](js/firebase-config.js) with your credentials:
      ```javascript
      const firebaseConfig = {
        apiKey: "YOUR_API_KEY",
        authDomain: "YOUR_PROJECT.firebaseapp.com",
        databaseURL: "https://YOUR_PROJECT.firebaseio.com",
        projectId: "YOUR_PROJECT_ID",
-       storageBucket: "YOUR_PROJECT.appspot.com",
+       storageBucket: "YOUR_PROJECT.firebasestorage.app",
        messagingSenderId: "YOUR_SENDER_ID",
-       appId: "YOUR_APP_ID"
+       appId: "YOUR_APP_ID",
+       measurementId: "YOUR_MEASUREMENT_ID"
      };
      ```
 
@@ -92,9 +95,9 @@ Five Crowns is a rummy-style card game that uses a special 5-suited deck (includ
    ```
 
 4. **Run locally**
-   - **With XAMPP**: Place files in `htdocs` folder and access via `http://localhost/`
-   - **With Live Server**: Open in VS Code and run Live Server
-   - **With Python**: `python -m http.server 8000`
+   - **With VS Code Live Server**: Open folder in VS Code, right-click [index.html](index.html), select "Open with Live Server"
+   - **With Python**: `python -m http.server 8000` then visit `http://localhost:8000`
+   - **With Node.js**: `npx http-server` or `npx serve`
 
 5. **Deploy to Firebase Hosting** (Optional)
    ```bash
@@ -114,23 +117,31 @@ Five Crowns is a rummy-style card game that uses a special 5-suited deck (includ
 ├── css/
 │   ├── style.css          # Global styles
 │   ├── lobby.css          # Lobby-specific styles
-│   └── game.css           # Game board styles
+│   ├── game.css           # Game board styles
+│   └── card-designs.css   # Card styling and suit designs
 ├── js/
-│   ├── firebase-config.js # Firebase configuration
-│   ├── app.js            # Landing page logic
-│   ├── lobby.js          # Lobby logic
-│   ├── game.js           # Main game logic
-│   ├── cardHand.js       # Hand management
-│   └── deckDiscard.js    # Deck and discard pile logic
-├── firebase.json          # Firebase hosting config
-└── README.md             # This file
+│   ├── firebase-config.js # Firebase configuration & initialization
+│   ├── app.js             # Landing page logic
+│   ├── lobby.js           # Lobby logic
+│   ├── game.js            # Main game logic & state management
+│   ├── cardHand.js        # Hand management & card interactions
+│   ├── deckDiscard.js     # Deck and discard pile logic
+│   └── settings.js        # Game settings management
+├── assets/                # Images and other assets
+├── docs/
+│   └── design-guide.md    # Design specifications and guidelines
+├── tests/                 # Test files
+├── firebase.json          # Firebase hosting configuration
+├── LICENSE                # MIT License
+└── README.md              # This file
 ```
 
 ## 🛠️ Technology Stack
 
-- **Frontend**: Vanilla HTML, CSS, JavaScript (no frameworks)
+- **Frontend**: Vanilla HTML, CSS, JavaScript (no frameworks or build tools)
 - **Database**: Firebase Realtime Database
-- **Hosting**: Firebase Hosting (or any static host)
+- **Firebase SDK**: Loaded via CDN (no npm required)
+- **Hosting**: Firebase Hosting (or any static file host)
 - **Fonts**: Google Fonts (Poppins)
 
 ## 🎨 Design
@@ -143,7 +154,7 @@ The game features a beautiful purple and gold color scheme inspired by the Five 
 - Mobile-first responsive design
 - Touch-optimized card interactions
 
-For detailed design specifications, see [docs/design-guide.md](docs/design-guide.md).
+For detailed design specifications and card suit designs, see [docs/design-guide.md](docs/design-guide.md).
 
 ## 🔒 Security Notes
 
@@ -174,10 +185,9 @@ Contributions are welcome! Here's how you can help:
 
 ## 📝 Known Issues
 
-- Firebase API keys are currently hardcoded (see Security Notes)
 - Game state may desync if player loses connection during critical moments
 - No spectator mode yet
-- Limited to 4 players maximum
+- No player limit enforcement (recommended: 2-4 players for optimal experience)
 
 ## 🗺️ Roadmap
 
