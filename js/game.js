@@ -1472,7 +1472,11 @@ function updateTurnIndicator() {
     } else {
         // Not your turn - check if someone went out
         if (currentGameState?.firstPlayerOut && turnPhase === 'POST_GO_OUT') {
-            const message = '⏰ A player went out!<br>Others are taking their final turns...';
+            // Show different message depending on whether current player went out
+            const isPlayerWhoWentOut = (currentGameState.firstPlayerOut === playerId);
+            const message = isPlayerWhoWentOut
+                ? '⏰ Others are taking their final turns...'
+                : '⏰ A player went out!<br>Others are taking their final turns...';
             const instructionParagraph = turnInstruction?.querySelector('p');
             if (instructionParagraph) {
                 instructionParagraph.innerHTML = message;
