@@ -133,19 +133,18 @@ class DeckDiscardManager {
         let pointerStart = null;
         let isDragging = false;
         let dragGhost = null;
-        const touchThreshold = 3; // pixels before drag starts
+        const touchThreshold = 10; // pixels before drag starts (increased for better mobile behavior)
 
         this.deckArea.addEventListener('pointerdown', (e) => {
             if (!this.isDrawingEnabled || !this.options.canDraw()) return;
 
-            e.preventDefault();
+            // Don't prevent default yet - let the browser handle initial touch
             pointerStart = {
                 x: e.clientX,
                 y: e.clientY,
-                time: Date.now()
+                time: Date.now(),
+                pointerId: e.pointerId
             };
-
-            this.deckArea.setPointerCapture(e.pointerId);
         });
 
         this.deckArea.addEventListener('pointermove', (e) => {
@@ -157,13 +156,19 @@ class DeckDiscardManager {
 
             // Start drag if moved beyond threshold
             if (!isDragging && distance > touchThreshold) {
+                e.preventDefault(); // Now prevent default to avoid scrolling during drag
                 isDragging = true;
                 dragGhost = this.createDragGhost(this.deckArea, e);
+                // Capture pointer only after drag starts
+                this.deckArea.setPointerCapture(pointerStart.pointerId);
             }
 
-            if (isDragging && dragGhost) {
-                dragGhost.style.left = (e.clientX - 35) + 'px';
-                dragGhost.style.top = (e.clientY - 50) + 'px';
+            if (isDragging) {
+                e.preventDefault();
+                if (dragGhost) {
+                    dragGhost.style.left = (e.clientX - 35) + 'px';
+                    dragGhost.style.top = (e.clientY - 50) + 'px';
+                }
             }
         });
 
@@ -182,14 +187,18 @@ class DeckDiscardManager {
                     dragGhost.parentNode.removeChild(dragGhost);
                 }
                 dragGhost = null;
+
+                // Release pointer capture if we had it
+                if (this.deckArea.hasPointerCapture(e.pointerId)) {
+                    this.deckArea.releasePointerCapture(e.pointerId);
+                }
             }
 
             pointerStart = null;
             isDragging = false;
-            this.deckArea.releasePointerCapture(e.pointerId);
         });
 
-        this.deckArea.addEventListener('pointercancel', (e) => {
+        this.deckArea.addEventListener('pointercancel', () => {
             if (dragGhost && dragGhost.parentNode) {
                 dragGhost.parentNode.removeChild(dragGhost);
             }
@@ -203,19 +212,18 @@ class DeckDiscardManager {
         let pointerStart = null;
         let isDragging = false;
         let dragGhost = null;
-        const touchThreshold = 3; // pixels before drag starts
+        const touchThreshold = 10; // pixels before drag starts (increased for better mobile behavior)
 
         this.discardArea.addEventListener('pointerdown', (e) => {
             if (!this.isDrawingEnabled || !this.options.canDraw()) return;
 
-            e.preventDefault();
+            // Don't prevent default yet - let the browser handle initial touch
             pointerStart = {
                 x: e.clientX,
                 y: e.clientY,
-                time: Date.now()
+                time: Date.now(),
+                pointerId: e.pointerId
             };
-
-            this.discardArea.setPointerCapture(e.pointerId);
         });
 
         this.discardArea.addEventListener('pointermove', (e) => {
@@ -227,13 +235,19 @@ class DeckDiscardManager {
 
             // Start drag if moved beyond threshold
             if (!isDragging && distance > touchThreshold) {
+                e.preventDefault(); // Now prevent default to avoid scrolling during drag
                 isDragging = true;
                 dragGhost = this.createDragGhost(this.discardArea, e);
+                // Capture pointer only after drag starts
+                this.discardArea.setPointerCapture(pointerStart.pointerId);
             }
 
-            if (isDragging && dragGhost) {
-                dragGhost.style.left = (e.clientX - 35) + 'px';
-                dragGhost.style.top = (e.clientY - 50) + 'px';
+            if (isDragging) {
+                e.preventDefault();
+                if (dragGhost) {
+                    dragGhost.style.left = (e.clientX - 35) + 'px';
+                    dragGhost.style.top = (e.clientY - 50) + 'px';
+                }
             }
         });
 
@@ -252,11 +266,15 @@ class DeckDiscardManager {
                     dragGhost.parentNode.removeChild(dragGhost);
                 }
                 dragGhost = null;
+
+                // Release pointer capture if we had it
+                if (this.discardArea.hasPointerCapture(e.pointerId)) {
+                    this.discardArea.releasePointerCapture(e.pointerId);
+                }
             }
 
             pointerStart = null;
             isDragging = false;
-            this.discardArea.releasePointerCapture(e.pointerId);
         });
 
         this.discardArea.addEventListener('pointercancel', (e) => {
