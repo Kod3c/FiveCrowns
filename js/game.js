@@ -69,6 +69,7 @@ const roundNumber = document.getElementById('roundNumber');
 const wildCard = document.getElementById('wildCard');
 const yourScore = document.getElementById('yourScore');
 const menuBtn = document.getElementById('menuBtn');
+const settingsBtn = document.getElementById('settingsBtn');
 
 // const otherPlayers = document.getElementById('otherPlayers'); // Removed - not needed
 const deckArea = document.getElementById('deckArea');
@@ -108,6 +109,11 @@ const gameEndModal = document.getElementById('gameEndModal');
 const winnerMessage = document.getElementById('winnerMessage');
 const finalScores = document.getElementById('finalScores');
 const returnHomeBtn = document.getElementById('returnHomeBtn');
+
+const settingsModal = document.getElementById('settingsModal');
+const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+const closeSettingsOkBtn = document.getElementById('closeSettingsOkBtn');
+const cardDesignSelector = document.getElementById('cardDesignSelector');
 
 // Firebase References
 const gameRef = database.ref('games/' + gameCode);
@@ -294,6 +300,11 @@ function setupEventListeners() {
     // Rules modal
     closeRulesBtn.addEventListener('click', closeRulesModal);
 
+    // Settings modal
+    settingsBtn.addEventListener('click', openSettingsModal);
+    closeSettingsBtn.addEventListener('click', closeSettingsModal);
+    closeSettingsOkBtn.addEventListener('click', closeSettingsModal);
+
     // Error modal
     closeErrorBtn.addEventListener('click', closeErrorModal);
     errorOkBtn.addEventListener('click', closeErrorModal);
@@ -318,6 +329,15 @@ function setupEventListeners() {
             closeErrorModal();
         }
     });
+
+    settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+            closeSettingsModal();
+        }
+    });
+
+    // Initialize settings UI
+    initializeSettingsUI();
 }
 
 /**
@@ -2766,6 +2786,85 @@ function showRules() {
  */
 function closeRulesModal() {
     rulesModal.style.display = 'none';
+}
+
+/**
+ * Initialize Settings UI
+ */
+function initializeSettingsUI() {
+    if (!settingsManager) {
+        console.warn('Settings manager not initialized yet');
+        return;
+    }
+
+    // Get available card designs
+    const designs = settingsManager.getAvailableDesigns();
+    const currentDesign = settingsManager.getCardDesign();
+
+    // Clear existing options
+    cardDesignSelector.innerHTML = '';
+
+    // Create design options
+    designs.forEach(design => {
+        const option = document.createElement('div');
+        option.className = 'card-design-option';
+        if (design.id === currentDesign) {
+            option.classList.add('selected');
+        }
+
+        option.innerHTML = `
+            <div class="card-design-radio"></div>
+            <div class="card-design-info">
+                <div class="card-design-name">${design.name}</div>
+                <div class="card-design-description">${design.description}</div>
+            </div>
+        `;
+
+        option.addEventListener('click', () => {
+            selectCardDesign(design.id);
+        });
+
+        cardDesignSelector.appendChild(option);
+    });
+
+    console.log('Settings UI initialized with', designs.length, 'designs');
+}
+
+/**
+ * Select a card design
+ */
+function selectCardDesign(designId) {
+    // Update settings
+    if (settingsManager.setCardDesign(designId)) {
+        // Update UI selection
+        const options = cardDesignSelector.querySelectorAll('.card-design-option');
+        options.forEach((option, index) => {
+            const designs = settingsManager.getAvailableDesigns();
+            if (designs[index].id === designId) {
+                option.classList.add('selected');
+            } else {
+                option.classList.remove('selected');
+            }
+        });
+
+        console.log('Card design changed to:', designId);
+    }
+}
+
+/**
+ * Open settings modal
+ */
+function openSettingsModal() {
+    settingsModal.classList.add('active');
+    console.log('Settings modal opened');
+}
+
+/**
+ * Close settings modal
+ */
+function closeSettingsModal() {
+    settingsModal.classList.remove('active');
+    console.log('Settings modal closed');
 }
 
 /**
