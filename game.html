@@ -14,6 +14,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="css/style.css?v=20250118h">
     <link rel="stylesheet" href="css/game.css?v=20250118t">
+    <link rel="stylesheet" href="css/card-designs.css?v=1">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -121,9 +122,72 @@
                 <button class="menu-option-btn" id="viewRulesBtn">
                     📖 Game Rules
                 </button>
+                <button class="menu-option-btn" id="settingsMenuBtn">
+                    ⚙️ Settings
+                </button>
                 <button class="menu-option-btn danger" id="leaveGameBtn">
                     🚪 Leave Game
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h2>⚙️ Settings</h2>
+                <button class="close-btn" id="closeSettingsBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Card Design</h3>
+                    <p class="settings-section-description">Choose your preferred card face style</p>
+
+                    <div class="card-design-selector" id="cardDesignSelector">
+                        <!-- Card design options will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Card Preview -->
+                    <div class="card-preview-container">
+                        <p class="card-preview-label">Preview:</p>
+                        <div class="card-preview">
+                            <div class="card hand-card">
+                                <div class="card-corner hearts">
+                                    <span class="corner-rank">K</span>
+                                    <span class="corner-suit">♥</span>
+                                </div>
+                                <div class="card-content">
+                                    <span class="card-rank hearts">K</span>
+                                    <span class="card-suit hearts">♥</span>
+                                </div>
+                            </div>
+                            <div class="card hand-card">
+                                <div class="card-corner spades">
+                                    <span class="corner-rank">7</span>
+                                    <span class="corner-suit">♠</span>
+                                </div>
+                                <div class="card-content">
+                                    <span class="card-rank spades">7</span>
+                                    <span class="card-suit spades">♠</span>
+                                </div>
+                            </div>
+                            <div class="card hand-card">
+                                <div class="card-corner stars">
+                                    <span class="corner-rank">A</span>
+                                    <span class="corner-suit">⭐</span>
+                                </div>
+                                <div class="card-content">
+                                    <span class="card-rank stars">A</span>
+                                    <span class="card-suit stars">⭐</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="closeSettingsOkBtn">Done</button>
             </div>
         </div>
     </div>
@@ -259,6 +323,9 @@
 
     <!-- Firebase Config -->
     <script src="js/firebase-config.js"></script>
+
+    <!-- Settings Manager -->
+    <script src="js/settings.js?v=1"></script>
 
     <!-- Card Hand Manager -->
     <script src="js/cardHand.js?v=4"></script>

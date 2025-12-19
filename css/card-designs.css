@@ -1,0 +1,194 @@
+/* ========================================
+   Five Crowns - Card Design System
+   Modular card face designs
+   ======================================== */
+
+/* ========================================
+   BASE CARD STRUCTURE
+   Shared across all designs
+   ======================================== */
+
+/* Base card styles are already defined in game.css */
+/* This file contains design-specific overrides */
+
+/* ========================================
+   CLASSIC DESIGN (Default)
+   Traditional playing card appearance
+   ======================================== */
+
+body.card-design-classic .card {
+    /* Uses default styles from game.css */
+    /* No overrides needed - this is the base design */
+}
+
+body.card-design-classic .card-back {
+    /* Default card back design */
+    background: linear-gradient(135deg, var(--deep-purple) 0%, var(--primary-purple) 100%);
+    border: 3px solid var(--royal-gold);
+}
+
+body.card-design-classic .card-back::before {
+    content: '👑';
+    font-size: 32px;
+    opacity: 0.4;
+}
+
+body.card-design-classic .card-back::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255, 215, 0, 0.1) 10px,
+        rgba(255, 215, 0, 0.1) 20px
+    );
+}
+
+/* Small card back */
+body.card-design-classic .card-back.small::before {
+    font-size: 20px;
+}
+
+/* ========================================
+   FUTURE DESIGN TEMPLATES
+   Ready for easy addition of new designs
+   ======================================== */
+
+/* MODERN DESIGN - Minimalist, clean lines
+body.card-design-modern .card {
+    border-radius: 12px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.card-design-modern .card-rank {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 300;
+    font-size: 32px;
+}
+
+body.card-design-modern .card-suit {
+    font-size: 36px;
+    opacity: 0.9;
+}
+
+body.card-design-modern .card-back {
+    background: linear-gradient(135deg, #1a1a1a 0%, #3a3a3a 100%);
+    border: 2px solid #666;
+}
+
+body.card-design-modern .card-back::before {
+    content: '◆';
+    font-size: 40px;
+    opacity: 0.3;
+    color: #999;
+}
+*/
+
+/* VINTAGE DESIGN - Classic elegance
+body.card-design-vintage .card {
+    background: linear-gradient(135deg, #FFF8DC 0%, #FAEBD7 100%);
+    border: 3px solid #8B4513;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+}
+
+body.card-design-vintage .card-rank {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-weight: 700;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+body.card-design-vintage .card-back {
+    background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+    border: 3px solid #D4AF37;
+}
+
+body.card-design-vintage .card-back::before {
+    content: '✦';
+    font-size: 36px;
+    color: #D4AF37;
+    opacity: 0.6;
+}
+
+body.card-design-vintage .card-back::after {
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 8px,
+        rgba(212, 175, 55, 0.2) 8px,
+        rgba(212, 175, 55, 0.2) 16px
+    );
+}
+*/
+
+/* NEON DESIGN - Vibrant glowing aesthetic
+body.card-design-neon .card {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    border: 2px solid #00ffff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+body.card-design-neon .card-rank {
+    font-weight: 700;
+    color: #00ffff;
+    text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+}
+
+body.card-design-neon .card-suit {
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+body.card-design-neon .card-rank.hearts,
+body.card-design-neon .card-suit.hearts,
+body.card-design-neon .card-rank.diamonds,
+body.card-design-neon .card-suit.diamonds {
+    color: #ff0080;
+    text-shadow: 0 0 10px #ff0080, 0 0 20px #ff0080;
+}
+
+body.card-design-neon .card-rank.spades,
+body.card-design-neon .card-suit.spades,
+body.card-design-neon .card-rank.clubs,
+body.card-design-neon .card-suit.clubs {
+    color: #00ff00;
+    text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+}
+
+body.card-design-neon .card-rank.stars,
+body.card-design-neon .card-suit.stars {
+    color: #ffff00;
+    text-shadow: 0 0 10px #ffff00, 0 0 20px #ffff00;
+}
+
+body.card-design-neon .card-back {
+    background: linear-gradient(135deg, #000000 0%, #1a0033 100%);
+    border: 2px solid #ff00ff;
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.6);
+}
+
+body.card-design-neon .card-back::before {
+    content: '⚡';
+    font-size: 36px;
+    color: #ff00ff;
+    text-shadow: 0 0 15px #ff00ff;
+    opacity: 0.8;
+}
+*/
+
+/* ========================================
+   DESIGN-SPECIFIC WILD CARD EFFECTS
+   ======================================== */
+
+body.card-design-classic .card.wild {
+    border-color: var(--royal-gold);
+    background: linear-gradient(135deg, #FFFBEA 0%, #FFFFFF 100%);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+/* Future wild card design effects can be added here */

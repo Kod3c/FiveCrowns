@@ -1194,6 +1194,145 @@ body.card-dragging .new-stack-button.drop-zone-active {
 }
 
 /* ========================================
+   SETTINGS MODAL STYLES
+   ======================================== */
+
+.settings-section {
+    margin-bottom: 20px;
+}
+
+.settings-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--royal-gold);
+    margin-bottom: 8px;
+}
+
+.settings-section-description {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 16px;
+}
+
+/* Card Design Selector */
+.card-design-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.card-design-option {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.card-design-option:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+.card-design-option.selected {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: var(--royal-gold);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.card-design-radio {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    margin-right: 12px;
+    position: relative;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.card-design-option.selected .card-design-radio {
+    border-color: var(--royal-gold);
+    background: var(--royal-gold);
+}
+
+.card-design-option.selected .card-design-radio::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--dark-purple);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.card-design-info {
+    flex: 1;
+}
+
+.card-design-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 2px;
+}
+
+.card-design-description {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Card Preview */
+.card-preview-container {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.card-preview-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 12px;
+}
+
+.card-preview {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    background: radial-gradient(ellipse at center, rgba(74, 41, 118, 0.3) 0%, rgba(45, 25, 80, 0.3) 100%);
+    border-radius: 8px;
+}
+
+.card-preview .card {
+    transform: rotate(-5deg);
+    transition: all 0.3s ease;
+}
+
+.card-preview .card:nth-child(2) {
+    transform: rotate(0deg) translateY(-5px);
+    z-index: 2;
+}
+
+.card-preview .card:nth-child(3) {
+    transform: rotate(5deg);
+}
+
+.card-preview .card:hover {
+    transform: rotate(0deg) translateY(-10px) scale(1.05);
+    z-index: 10;
+}
+
+/* ========================================
    RESPONSIVE DESIGN
    ======================================== */
 
