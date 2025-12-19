@@ -514,6 +514,16 @@
     .setting-select {
         width: 100%;
     }
+
+    .lobby-actions .btn {
+        padding: 14px 20px;
+        font-size: 16px;
+    }
+
+    .lobby-actions .btn-large {
+        font-size: 18px;
+        min-height: 56px;
+    }
 }
 
 @media (max-width: 360px) {
@@ -561,6 +571,16 @@
     .code-hint {
         font-size: 11px;
     }
+
+    .lobby-actions .btn {
+        padding: 12px 16px;
+        font-size: 15px;
+    }
+
+    .lobby-actions .btn-large {
+        font-size: 16px;
+        min-height: 52px;
+    }
 }
 
 @media (max-width: 320px) {
@@ -591,5 +611,19 @@
     .status-indicator {
         font-size: 8px;
         padding: 3px 5px;
+    }
+
+    .lobby-actions .btn {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    .lobby-actions .btn-large {
+        font-size: 15px;
+        min-height: 48px;
+    }
+
+    .lobby-actions .btn .btn-icon {
+        font-size: 20px;
     }
 }

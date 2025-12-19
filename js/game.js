@@ -1472,6 +1472,13 @@ function handleDrawFromDeck() {
     console.log('Current hand size:', myHand.length);
     console.log('Deck size:', currentGameState?.deck?.length || 0);
 
+    // Validate game state
+    if (!currentGameState) {
+        console.error('BLOCKED: Game state not loaded');
+        showError('Game is still loading. Please wait...');
+        return;
+    }
+
     // Validate turn
     if (!isMyTurn) {
         console.warn('BLOCKED: Not your turn!');
@@ -1556,6 +1563,13 @@ function handleDrawFromDeck() {
  * Handle drawing from discard pile (called by DeckDiscardManager)
  */
 function handleDrawFromDiscardPile() {
+    // Validate game state
+    if (!currentGameState) {
+        console.error('BLOCKED: Game state not loaded');
+        showError('Game is still loading. Please wait...');
+        return;
+    }
+
     // Validate turn (already checked by DeckDiscardManager, but double-check)
     if (!isMyTurn) {
         showError('Not your turn!');

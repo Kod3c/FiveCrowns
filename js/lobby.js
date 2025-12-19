@@ -104,24 +104,24 @@ function init() {
  * Set up event listeners
  */
 function setupEventListeners() {
-    backBtn.addEventListener('click', handleBack);
-    copyCodeBtn.addEventListener('click', copyGameCode);
-    codeValue.addEventListener('click', copyGameCode);
-    highlightWildsSelect.addEventListener('change', handleHighlightWildsChange);
-    startGameBtn.addEventListener('click', handleStartGame);
-    leaveBtn.addEventListener('click', showLeaveModal);
-    cancelLeaveBtn.addEventListener('click', hideLeaveModal);
-    confirmLeaveBtn.addEventListener('click', handleLeaveGame);
-    errorOkBtn.addEventListener('click', hideErrorModal);
+    backBtn?.addEventListener('click', handleBack);
+    copyCodeBtn?.addEventListener('click', copyGameCode);
+    codeValue?.addEventListener('click', copyGameCode);
+    highlightWildsSelect?.addEventListener('change', handleHighlightWildsChange);
+    startGameBtn?.addEventListener('click', handleStartGame);
+    leaveBtn?.addEventListener('click', showLeaveModal);
+    cancelLeaveBtn?.addEventListener('click', hideLeaveModal);
+    confirmLeaveBtn?.addEventListener('click', handleLeaveGame);
+    errorOkBtn?.addEventListener('click', hideErrorModal);
 
     // Close modal when clicking outside
-    leaveModal.addEventListener('click', (e) => {
+    leaveModal?.addEventListener('click', (e) => {
         if (e.target === leaveModal) {
             hideLeaveModal();
         }
     });
 
-    errorModal.addEventListener('click', (e) => {
+    errorModal?.addEventListener('click', (e) => {
         if (e.target === errorModal) {
             hideErrorModal();
         }
