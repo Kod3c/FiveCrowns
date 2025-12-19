@@ -69,7 +69,6 @@ const roundNumber = document.getElementById('roundNumber');
 const wildCard = document.getElementById('wildCard');
 const yourScore = document.getElementById('yourScore');
 const menuBtn = document.getElementById('menuBtn');
-const settingsBtn = document.getElementById('settingsBtn');
 
 // const otherPlayers = document.getElementById('otherPlayers'); // Removed - not needed
 const deckArea = document.getElementById('deckArea');
@@ -88,6 +87,7 @@ const gameMenuModal = document.getElementById('gameMenuModal');
 const closeMenuBtn = document.getElementById('closeMenuBtn');
 const viewScoresBtn = document.getElementById('viewScoresBtn');
 const viewRulesBtn = document.getElementById('viewRulesBtn');
+const settingsMenuBtn = document.getElementById('settingsMenuBtn');
 const leaveGameBtn = document.getElementById('leaveGameBtn');
 
 const rulesModal = document.getElementById('rulesModal');
@@ -288,6 +288,7 @@ function setupEventListeners() {
     closeMenuBtn.addEventListener('click', closeGameMenu);
     viewScoresBtn.addEventListener('click', showScores);
     viewRulesBtn.addEventListener('click', showRules);
+    settingsMenuBtn.addEventListener('click', openSettingsFromMenu);
     leaveGameBtn.addEventListener('click', confirmLeaveGame);
 
     // Deck and Discard - now handled by DeckDiscardManager
@@ -301,7 +302,6 @@ function setupEventListeners() {
     closeRulesBtn.addEventListener('click', closeRulesModal);
 
     // Settings modal
-    settingsBtn.addEventListener('click', openSettingsModal);
     closeSettingsBtn.addEventListener('click', closeSettingsModal);
     closeSettingsOkBtn.addEventListener('click', closeSettingsModal);
 
@@ -2849,6 +2849,14 @@ function selectCardDesign(designId) {
 
         console.log('Card design changed to:', designId);
     }
+}
+
+/**
+ * Open settings modal from game menu
+ */
+function openSettingsFromMenu() {
+    closeGameMenu(); // Close the menu first
+    openSettingsModal();
 }
 
 /**
