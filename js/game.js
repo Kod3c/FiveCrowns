@@ -163,6 +163,9 @@ let deckDiscardManager = null;
 // Track the card drawn from discard pile (to prevent immediate re-discard)
 let cardDrawnFromDiscard = null;
 
+// Flag to show custom message and prevent turn indicator override
+let customTurnMessage = null;
+
 // Initialize
 init();
 
@@ -1429,6 +1432,17 @@ function updateGamePhase(newPhase) {
  * Update turn indicator
  */
 function updateTurnIndicator() {
+    // Check if there's a custom message to display (e.g., from discard prevention)
+    if (customTurnMessage) {
+        const instructionParagraph = turnInstruction?.querySelector('p');
+        if (instructionParagraph) {
+            instructionParagraph.textContent = customTurnMessage;
+            turnInstruction.style.display = 'block';
+        }
+        updateActionButtons();
+        return; // Don't override the custom message
+    }
+
     // Check for WAITING_FOR_GO_OUT phase first
     const wasPreviousPlayer = currentGameState && currentGameState.previousPlayer === playerId;
     if (turnPhase === 'WAITING_FOR_GO_OUT' && wasPreviousPlayer) {
@@ -1552,6 +1566,7 @@ function handleDrawFromDeck() {
 
     // Clear the discard pile tracking since drawing from deck
     cardDrawnFromDiscard = null;
+    customTurnMessage = null; // Clear any custom messages
 
     // Get card from deck
     const newDeck = [...currentGameState.deck];
@@ -1633,6 +1648,7 @@ function handleDrawFromDiscardPile() {
 
     // Track this card to prevent immediate re-discard
     cardDrawnFromDiscard = drawnCard;
+    customTurnMessage = null; // Clear any custom messages
 
     // Add to hand
     const newHand = [...myHand, drawnCard];
@@ -1733,10 +1749,13 @@ async function handleDiscardCardDrop(card) {
     if (cardDrawnFromDiscard && card.id === cardDrawnFromDiscard.id) {
         console.log('Player attempted to discard card from discard pile - resetting to draw phase');
 
+        // Set custom message to prevent it from being overridden
+        customTurnMessage = '⚠️ You cannot discard the card you just drew from the discard pile. You must now draw again.';
+
         // Show message to player
         const instructionParagraph = turnInstruction?.querySelector('p');
         if (instructionParagraph) {
-            instructionParagraph.textContent = '⚠️ You cannot discard the card you just drew from the discard pile. You must now draw again.';
+            instructionParagraph.textContent = customTurnMessage;
             turnInstruction.style.display = 'block';
         }
 
@@ -1775,12 +1794,8 @@ async function handleDiscardCardDrop(card) {
             });
 
             console.log('✅ Successfully reset to draw phase - player can draw again');
-            // Clear the message after a delay
-            setTimeout(() => {
-                if (turnInstruction) {
-                    turnInstruction.style.display = 'none';
-                }
-            }, 3000);
+            // Keep the custom message visible until they draw again
+            // (it will be cleared when they draw from deck or discard pile)
         } catch (error) {
             console.error('❌ Error resetting to draw phase:', error);
             // Rollback UI on error
