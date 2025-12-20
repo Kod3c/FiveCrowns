@@ -1633,24 +1633,12 @@ function handleDrawFromDiscardPile() {
 
     // Track this card to prevent immediate re-discard
     cardDrawnFromDiscard = drawnCard;
+    console.log('DEBUG: Set cardDrawnFromDiscard to:', cardDrawnFromDiscard);
 
     // Add to hand
     const newHand = [...myHand, drawnCard];
 
     console.log('Drew card from discard:', drawnCard);
-
-    // Show informational message about the rule
-    const instructionParagraph = turnInstruction?.querySelector('p');
-    if (instructionParagraph) {
-        instructionParagraph.textContent = 'ℹ️ Note: You cannot discard the card you just picked up';
-        turnInstruction.style.display = 'block';
-        // Clear message after 4 seconds
-        setTimeout(() => {
-            if (turnInstruction) {
-                turnInstruction.style.display = 'none';
-            }
-        }, 4000);
-    }
 
     // Optimistic UI update
     myHand = newHand;
@@ -1682,6 +1670,7 @@ function handleDrawFromDiscardPile() {
         // Rollback on error
         myHand = myHand.slice(0, -1);
         renderMyHand();
+        cardDrawnFromDiscard = null; // Clear tracking on rollback
         showErrorModal('Error drawing card. Please try again.');
     });
 }
@@ -1742,13 +1731,22 @@ async function handleDiscardCardDrop(card) {
     }
 
     // Check if player is trying to discard the card they just drew from the discard pile
+    console.log('DEBUG: Checking discard prevention');
+    console.log('  cardDrawnFromDiscard:', JSON.stringify(cardDrawnFromDiscard));
+    console.log('  card being discarded:', JSON.stringify(card));
+    if (cardDrawnFromDiscard) {
+        console.log('  cardDrawnFromDiscard.id:', cardDrawnFromDiscard.id);
+        console.log('  card.id:', card.id);
+        console.log('  IDs match?', card.id === cardDrawnFromDiscard.id);
+    }
+
     if (cardDrawnFromDiscard && card.id === cardDrawnFromDiscard.id) {
-        console.log('⚠️ Player trying to discard card drawn from discard pile - forcing deck draw instead');
+        console.log('⚠️ Player discarding card from discard pile - resetting to draw phase');
 
         // Show message to player
         const instructionParagraph = turnInstruction?.querySelector('p');
         if (instructionParagraph) {
-            instructionParagraph.textContent = '⚠️ You cannot discard the card you just drew from the discard pile. Drawing from deck instead...';
+            instructionParagraph.textContent = '⚠️ You cannot discard the card you just drew from the discard pile. You must now draw again.';
             turnInstruction.style.display = 'block';
         }
 
@@ -1759,44 +1757,11 @@ async function handleDiscardCardDrop(card) {
         const currentDiscard = currentGameState.discardPile || [];
         const restoredDiscardPile = [...currentDiscard, card];
 
-        // Check if deck is empty
-        if (!currentGameState.deck || currentGameState.deck.length === 0) {
-            // Need to reshuffle, but can't use the card we just put back
-            if (restoredDiscardPile.length <= 1) {
-                showError('No cards left to draw! Cannot draw from deck.');
-                return;
-            }
-        }
-
-        // Get card from deck
-        let newDeck = [...currentGameState.deck];
-
-        // Check if we need to reshuffle
-        if (newDeck.length === 0) {
-            // Reshuffle all but the top card of discard pile (which is the one we just put back)
-            const topCard = restoredDiscardPile[restoredDiscardPile.length - 1];
-            const cardsToReshuffle = restoredDiscardPile.slice(0, -1);
-
-            // Shuffle the cards
-            for (let i = cardsToReshuffle.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [cardsToReshuffle[i], cardsToReshuffle[j]] = [cardsToReshuffle[j], cardsToReshuffle[i]];
-            }
-
-            newDeck = cardsToReshuffle;
-            // Update discard pile to only have the top card
-            restoredDiscardPile.length = 0;
-            restoredDiscardPile.push(topCard);
-        }
-
-        const drawnCard = newDeck.pop();
-        const newHand = [...handWithoutCard, drawnCard];
-
         // Clear the tracking variable
         cardDrawnFromDiscard = null;
 
         // Optimistic UI update
-        myHand = newHand;
+        myHand = handWithoutCard;
         renderMyHand();
 
         // Update discard pile UI
@@ -1804,17 +1769,16 @@ async function handleDiscardCardDrop(card) {
             updateDiscardPile(restoredDiscardPile[restoredDiscardPile.length - 1]);
         }
 
-        // Update Firebase - back to CARD_DRAWN phase with new card from deck
-        const nextPhase = (turnPhase === 'POST_GO_OUT_CARD_DRAWN') ? 'POST_GO_OUT_CARD_DRAWN' : 'CARD_DRAWN';
+        // Go back to WAITING_FOR_DRAW phase - but player must draw from deck
+        const nextPhase = (turnPhase === 'POST_GO_OUT_CARD_DRAWN') ? 'POST_GO_OUT' : 'WAITING_FOR_DRAW';
 
         await gameStateRef.update({
-            'deck': newDeck,
             'discardPile': restoredDiscardPile,
-            [`playerHands/${playerId}`]: newHand,
+            [`playerHands/${playerId}`]: handWithoutCard,
             'turnPhase': nextPhase
         })
         .then(() => {
-            console.log('✅ Successfully switched to deck draw');
+            console.log('✅ Successfully reset to draw phase - player can draw again');
             // Clear the message after a delay
             setTimeout(() => {
                 if (turnInstruction) {
@@ -1823,8 +1787,8 @@ async function handleDiscardCardDrop(card) {
             }, 3000);
         })
         .catch((error) => {
-            console.error('❌ Error switching to deck draw:', error);
-            showErrorModal('Error drawing from deck. Please try again.');
+            console.error('❌ Error resetting to draw phase:', error);
+            showErrorModal('Error. Please try again.');
         });
 
         return;

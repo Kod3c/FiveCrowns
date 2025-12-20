@@ -31,7 +31,11 @@ body.card-design-classic .card-rank {
 }
 
 body.card-design-classic .card-suit {
-    filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.3));
+    filter:
+        drop-shadow(-0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(-0.5px 0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(0.5px 0.5px 0 rgba(0, 0, 0, 0.3));
 }
 
 body.card-design-classic .corner-rank {
@@ -43,7 +47,11 @@ body.card-design-classic .corner-rank {
 }
 
 body.card-design-classic .corner-suit {
-    filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.3));
+    filter:
+        drop-shadow(-0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(-0.5px 0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(0.5px 0.5px 0 rgba(0, 0, 0, 0.3));
 }
 
 body.card-design-classic .card-back {
@@ -112,7 +120,11 @@ body.card-design-minimal .corner-rank {
 body.card-design-minimal .corner-suit {
     font-size: 30px;
     margin-top: 4px;
-    filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.3));
+    filter:
+        drop-shadow(-0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(-0.5px 0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(0.5px 0.5px 0 rgba(0, 0, 0, 0.3));
 }
 
 /* Add bottom-right corner for better visibility */
@@ -148,7 +160,11 @@ body.card-design-minimal .hand-card .corner-rank {
 
 body.card-design-minimal .hand-card .corner-suit {
     font-size: 24px;
-    filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.3));
+    filter:
+        drop-shadow(-0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(-0.5px 0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(0.5px 0.5px 0 rgba(0, 0, 0, 0.3));
 }
 
 /* Discard pile cards - slightly larger */
@@ -163,7 +179,11 @@ body.card-design-minimal .discard-pile .corner-rank {
 
 body.card-design-minimal .discard-pile .corner-suit {
     font-size: 34px;
-    filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.3));
+    filter:
+        drop-shadow(-0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(-0.5px 0.5px 0 rgba(0, 0, 0, 0.3))
+        drop-shadow(0.5px 0.5px 0 rgba(0, 0, 0, 0.3));
 }
 
 /* Card back remains the same */
