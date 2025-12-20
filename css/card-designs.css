@@ -96,9 +96,14 @@ body.card-design-minimal .card {
     /* Keep base card structure */
 }
 
-/* Hide center content in minimal design */
+/* Hide center content in minimal design (except for jokers) */
 body.card-design-minimal .card-content {
     display: none;
+}
+
+/* Show center content for joker cards */
+body.card-design-minimal .card[data-rank="Joker"] .card-content {
+    display: flex;
 }
 
 /* Make corner indicators more prominent */
