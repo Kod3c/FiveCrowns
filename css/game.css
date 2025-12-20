@@ -726,7 +726,7 @@
     border-radius: 8px;
     position: relative;
     align-content: flex-start;
-    touch-action: none;
+    touch-action: pan-y; /* Allow vertical scrolling */
     overflow: visible;
     align-items: center;
     height: auto; /* Allow natural height based on content */
@@ -743,7 +743,7 @@
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     user-select: none;
-    touch-action: none;
+    touch-action: pan-y; /* Allow vertical scrolling */
     display: flex;
     align-items: center;
     justify-content: center;

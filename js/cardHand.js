@@ -493,13 +493,14 @@ class CardHandManager {
 
         // Pointer down - start tracking
         cardEl.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
+            // Don't prevent default immediately - allow scrolling to work
             pointerStart = {
                 x: e.clientX,
                 y: e.clientY,
                 time: Date.now(),
                 element: cardEl,
-                card: card
+                card: card,
+                pointerId: e.pointerId
             };
 
             // Start long-press timer for context menu (only if not already dragging)
@@ -523,12 +524,15 @@ class CardHandManager {
 
             // Start drag if moved beyond threshold
             if (!isDragging && distance > this.options.touchThreshold) {
+                // Now prevent default to stop scrolling during drag
+                e.preventDefault();
                 clearTimeout(longPressTimer);
                 isDragging = true;
                 this.startDrag(card, cardEl, e);
             }
 
             if (isDragging) {
+                e.preventDefault(); // Continue preventing default while dragging
                 this.updateDrag(e);
             }
         });
@@ -1238,14 +1242,8 @@ class CardHandManager {
      * Setup global event listeners
      */
     setupEventListeners() {
-        // Prevent default touch behaviors on the container
-        this.container.addEventListener('touchstart', (e) => {
-            // Allow scrolling on the stacks container
-            if (!e.target.closest('.hand-card')) {
-                return;
-            }
-            e.preventDefault();
-        }, { passive: false });
+        // Note: We no longer prevent touchstart by default to allow scrolling
+        // Individual card event listeners handle preventing default only when dragging
     }
 
     /**

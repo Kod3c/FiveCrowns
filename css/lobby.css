@@ -5,6 +5,7 @@
 /* Lobby Page Background */
 .lobby-page {
     background: linear-gradient(135deg, var(--dark-purple) 0%, var(--darker-purple) 100%);
+    background-attachment: fixed;
     overflow-x: hidden;
     overflow-y: auto;
     width: 100%;
