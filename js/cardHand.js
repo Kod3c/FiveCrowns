@@ -645,6 +645,9 @@ class CardHandManager {
     startDrag(card, cardEl, event) {
         console.log('Starting drag for card:', card.id);
 
+        // Clear any selected cards when starting a drag
+        this.clearSelection();
+
         this.dragState = {
             card: card,
             element: cardEl,

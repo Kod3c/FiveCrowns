@@ -30,7 +30,9 @@ body.card-design-classic .card-rank {
         0.5px 0.5px 0 rgba(0, 0, 0, 0.3);
 }
 
-body.card-design-classic .card-suit {
+body.card-design-classic .card-suit.hearts,
+body.card-design-classic .card-suit.diamonds,
+body.card-design-classic .card-suit.stars {
     filter:
         drop-shadow(-0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
         drop-shadow(0.5px -0.5px 0 rgba(0, 0, 0, 0.3))

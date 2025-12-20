@@ -336,7 +336,7 @@
 }
 
 .discard-pile .card-suit {
-    font-size: 38px;
+    font-size: 48px;
 }
 
 .discard-pile .card-corner {
@@ -455,7 +455,7 @@
 }
 
 .card-suit {
-    font-size: 32px;
+    font-size: 42px;
     line-height: 1;
 }
 
@@ -465,7 +465,7 @@
 }
 
 .hand-card .card-suit {
-    font-size: 26px; /* Reduced proportionally */
+    font-size: 34px; /* Reduced proportionally */
 }
 
 .hand-card .corner-rank {
