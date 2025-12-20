@@ -490,9 +490,22 @@ class CardHandManager {
         let pointerStart = null;
         let longPressTimer = null;
         let isDragging = false;
+        let hasCapture = false; // Track capture state explicitly
 
         // Pointer down - start tracking
         cardEl.addEventListener('pointerdown', (e) => {
+            // Defensive: Reset if already in a weird state
+            if (isDragging || pointerStart) {
+                console.warn('Card already in drag/pointer state, resetting');
+                if (hasCapture) {
+                    cardEl.releasePointerCapture(pointerStart.pointerId);
+                    hasCapture = false;
+                }
+                isDragging = false;
+                pointerStart = null;
+                clearTimeout(longPressTimer);
+            }
+
             // Don't prevent default immediately - allow scrolling to work
             pointerStart = {
                 x: e.clientX,
@@ -511,7 +524,8 @@ class CardHandManager {
                 }
             }, this.options.longPressDelay);
 
-            cardEl.setPointerCapture(e.pointerId);
+            // DON'T capture pointer yet - wait until drag actually starts
+            // This allows the browser to handle scrolling and tapping properly
         });
 
         // Pointer move - check if dragging
@@ -528,6 +542,15 @@ class CardHandManager {
                 e.preventDefault();
                 clearTimeout(longPressTimer);
                 isDragging = true;
+
+                // Capture pointer NOW when drag actually starts
+                try {
+                    cardEl.setPointerCapture(pointerStart.pointerId);
+                    hasCapture = true;
+                } catch (err) {
+                    console.warn('Failed to capture pointer:', err);
+                }
+
                 this.startDrag(card, cardEl, e);
             }
 
@@ -548,17 +571,41 @@ class CardHandManager {
                 this.toggleCardSelection(card, cardEl);
             }
 
+            // Release pointer capture if we have it
+            if (hasCapture && pointerStart) {
+                try {
+                    if (cardEl.hasPointerCapture(pointerStart.pointerId)) {
+                        cardEl.releasePointerCapture(pointerStart.pointerId);
+                    }
+                } catch (err) {
+                    console.warn('Failed to release pointer:', err);
+                }
+                hasCapture = false;
+            }
+
             pointerStart = null;
             isDragging = false;
-            cardEl.releasePointerCapture(e.pointerId);
         });
 
-        // Pointer cancel
+        // Pointer cancel - critical for handling interrupted drags
         cardEl.addEventListener('pointercancel', (e) => {
             clearTimeout(longPressTimer);
             if (isDragging) {
                 this.cancelDrag();
             }
+
+            // CRITICAL: Release pointer capture to prevent stuck state
+            if (hasCapture && pointerStart) {
+                try {
+                    if (cardEl.hasPointerCapture(pointerStart.pointerId)) {
+                        cardEl.releasePointerCapture(pointerStart.pointerId);
+                    }
+                } catch (err) {
+                    console.warn('Failed to release pointer on cancel:', err);
+                }
+                hasCapture = false;
+            }
+
             pointerStart = null;
             isDragging = false;
         });
