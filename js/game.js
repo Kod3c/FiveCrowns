@@ -1771,12 +1771,16 @@ async function handleDiscardCardDrop(card) {
 
         // Optimistic UI update
         myHand = handWithoutCard;
-        renderMyHand();
 
-        // Clear any card selection since we're resetting the turn
-        if (cardHandManager) {
-            cardHandManager.clearSelection();
-        }
+        // Delay render slightly to avoid interfering with drag cleanup
+        setTimeout(() => {
+            renderMyHand();
+
+            // Clear any card selection since we're resetting the turn
+            if (cardHandManager) {
+                cardHandManager.clearSelection();
+            }
+        }, 100);
 
         // Update discard pile UI
         if (restoredDiscardPile.length > 0) {
