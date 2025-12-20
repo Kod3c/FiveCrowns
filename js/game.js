@@ -881,10 +881,6 @@ function isValidGroup(cards, wildRank) {
 function canGoOut() {
     if (!cardHandManager || !currentGameState) return false;
 
-    // Get current hand organization
-    const handState = cardHandManager.getHandState();
-    if (!handState || !handState.stacks) return false;
-
     // Get current wild rank (Round 1 = 3s, Round 2 = 4s, ..., Round 11 = Ks)
     const wildRanks = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     const wildRank = wildRanks[currentGameState.currentRound - 1];
@@ -892,43 +888,97 @@ function canGoOut() {
     // Get all cards in hand
     const allCards = cardHandManager.getAllCards();
 
-    // Track which cards have been validated
-    const validatedCardIds = new Set();
+    if (allCards.length === 0) return true; // Empty hand = can go out
 
-    // Check each stack/group
-    for (const stack of handState.stacks) {
-        // Get actual card objects for this stack
-        const stackCards = stack.cardIds
-            .map(cardId => allCards.find(c => c.id === cardId))
-            .filter(card => card !== undefined);
+    // Try to find valid melds automatically, regardless of stack organization
+    return canFormValidMelds(allCards, wildRank);
+}
 
-        // Skip empty stacks
-        if (stackCards.length === 0) continue;
+/**
+ * Check if a set of cards can form valid melds (sets or runs of 3+)
+ * Uses a greedy algorithm to find valid groupings
+ */
+function canFormValidMelds(cards, wildRank) {
+    if (cards.length === 0) return true;
 
-        // Each non-empty stack must have at least 3 cards and be valid
-        if (stackCards.length < 3) {
-            console.log('Stack has less than 3 cards:', stack.name, stackCards.length);
-            return false;
+    const remainingCards = [...cards];
+    const usedIndices = new Set();
+
+    // Try to form melds greedily
+    while (remainingCards.some((_, idx) => !usedIndices.has(idx))) {
+        let foundMeld = false;
+
+        // Get unused cards
+        const unused = remainingCards.filter((_, idx) => !usedIndices.has(idx));
+
+        // Try to find a valid set (3+ cards of same rank)
+        for (let i = 0; i < unused.length && !foundMeld; i++) {
+            if (usedIndices.has(remainingCards.indexOf(unused[i]))) continue;
+
+            const baseRank = unused[i].rank === wildRank || unused[i].rank === 'Joker' ? null : unused[i].rank;
+            const meldCards = [];
+            const meldIndices = [];
+
+            for (let j = 0; j < unused.length; j++) {
+                const card = unused[j];
+                const origIdx = remainingCards.indexOf(card);
+                if (usedIndices.has(origIdx)) continue;
+
+                if (baseRank === null && (card.rank === wildRank || card.rank === 'Joker')) {
+                    meldCards.push(card);
+                    meldIndices.push(origIdx);
+                } else if (card.rank === baseRank || card.rank === wildRank || card.rank === 'Joker') {
+                    meldCards.push(card);
+                    meldIndices.push(origIdx);
+                }
+            }
+
+            if (meldCards.length >= 3 && isValidSet(meldCards, wildRank)) {
+                meldIndices.forEach(idx => usedIndices.add(idx));
+                foundMeld = true;
+                console.log('Found valid set:', meldCards.map(c => c.rank + c.suit));
+            }
         }
 
-        // Check if this group is valid
-        if (!isValidGroup(stackCards, wildRank)) {
-            console.log('Invalid group:', stack.name, stackCards.map(c => c.rank + c.suit));
-            return false;
+        // Try to find a valid run (3+ sequential cards of same suit)
+        if (!foundMeld) {
+            for (let i = 0; i < unused.length && !foundMeld; i++) {
+                if (usedIndices.has(remainingCards.indexOf(unused[i]))) continue;
+
+                const baseSuit = unused[i].suit;
+                const meldCards = [unused[i]];
+                const meldIndices = [remainingCards.indexOf(unused[i])];
+
+                // Try to build a run with this card as starting point
+                for (let j = 0; j < unused.length; j++) {
+                    if (i === j) continue;
+                    const card = unused[j];
+                    const origIdx = remainingCards.indexOf(card);
+                    if (usedIndices.has(origIdx)) continue;
+
+                    if (card.suit === baseSuit || card.rank === wildRank || card.rank === 'Joker') {
+                        meldCards.push(card);
+                        meldIndices.push(origIdx);
+                    }
+                }
+
+                if (meldCards.length >= 3 && isValidRun(meldCards, wildRank)) {
+                    meldIndices.forEach(idx => usedIndices.add(idx));
+                    foundMeld = true;
+                    console.log('Found valid run:', meldCards.map(c => c.rank + c.suit));
+                }
+            }
         }
 
-        // Mark these cards as validated
-        stackCards.forEach(card => validatedCardIds.add(card.id));
+        // If we couldn't find any meld, the hand is invalid
+        if (!foundMeld) {
+            const remaining = unused.filter(c => !usedIndices.has(remainingCards.indexOf(c)));
+            console.log('Cannot form valid melds with remaining cards:', remaining.map(c => c.rank + c.suit));
+            return false;
+        }
     }
 
-    // Ensure ALL cards are in valid groups (no leftover cards)
-    if (validatedCardIds.size !== allCards.length) {
-        console.log('Not all cards are in valid groups:', validatedCardIds.size, 'validated,', allCards.length, 'total');
-        return false;
-    }
-
-    // All checks passed!
-    console.log('Player can go out! All', allCards.length, 'cards are in valid groups');
+    console.log('All cards can form valid melds!');
     return true;
 }
 
