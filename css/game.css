@@ -564,8 +564,8 @@
     width: 100%;
     box-sizing: border-box;
     max-width: 100vw;
-    min-height: 240px; /* Minimum space for 1 group to be visible */
-    max-height: 68vh; /* Limit hand section to 68% of viewport height to ensure buttons visible */
+    min-height: 200px; /* Minimum space for 1 group to be visible */
+    max-height: 50vh; /* Limit hand section to 50% of viewport height to ensure deck always visible */
 }
 
 .player-hand-section > * {
@@ -601,7 +601,8 @@
     overflow-x: hidden;
     margin-bottom: 10px;
     flex: 1 1 auto; /* Allow natural growth and shrinking */
-    min-height: 120px; /* Ensure minimum space for cards to be visible */
+    min-height: 100px; /* Ensure minimum space for cards to be visible */
+    max-height: 100%; /* Ensure scrolling activates when needed */
     padding-right: 8px;
     width: 100%;
     box-sizing: border-box;
@@ -1618,6 +1619,7 @@ body.card-dragging .new-stack-button.drop-zone-active {
 
     .player-hand-section {
         padding: 28px 4px 6px 4px;
+        max-height: 45vh; /* More conservative on mobile to ensure deck visible */
     }
 
     .hand-header {
@@ -1880,6 +1882,7 @@ body.card-dragging .new-stack-button.drop-zone-active {
 
     .player-hand-section {
         padding: 24px 3px 5px 3px;
+        max-height: 42vh; /* Even more conservative on smaller screens */
     }
 
     .hand-header {
@@ -2112,6 +2115,7 @@ body.card-dragging .new-stack-button.drop-zone-active {
 
     .player-hand-section {
         padding: 20px 2px 4px 2px;
+        max-height: 40vh; /* Most conservative for very small screens */
     }
 
     .hand-header {
