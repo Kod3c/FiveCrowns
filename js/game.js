@@ -1633,7 +1633,6 @@ function handleDrawFromDiscardPile() {
 
     // Track this card to prevent immediate re-discard
     cardDrawnFromDiscard = drawnCard;
-    console.log('DEBUG: Set cardDrawnFromDiscard to:', cardDrawnFromDiscard);
 
     // Add to hand
     const newHand = [...myHand, drawnCard];
@@ -1731,17 +1730,8 @@ async function handleDiscardCardDrop(card) {
     }
 
     // Check if player is trying to discard the card they just drew from the discard pile
-    console.log('DEBUG: Checking discard prevention');
-    console.log('  cardDrawnFromDiscard:', JSON.stringify(cardDrawnFromDiscard));
-    console.log('  card being discarded:', JSON.stringify(card));
-    if (cardDrawnFromDiscard) {
-        console.log('  cardDrawnFromDiscard.id:', cardDrawnFromDiscard.id);
-        console.log('  card.id:', card.id);
-        console.log('  IDs match?', card.id === cardDrawnFromDiscard.id);
-    }
-
     if (cardDrawnFromDiscard && card.id === cardDrawnFromDiscard.id) {
-        console.log('⚠️ Player discarding card from discard pile - resetting to draw phase');
+        console.log('Player attempted to discard card from discard pile - resetting to draw phase');
 
         // Show message to player
         const instructionParagraph = turnInstruction?.querySelector('p');
@@ -1764,6 +1754,11 @@ async function handleDiscardCardDrop(card) {
         myHand = handWithoutCard;
         renderMyHand();
 
+        // Clear any card selection since we're resetting the turn
+        if (cardHandManager) {
+            cardHandManager.clearSelection();
+        }
+
         // Update discard pile UI
         if (restoredDiscardPile.length > 0) {
             updateDiscardPile(restoredDiscardPile[restoredDiscardPile.length - 1]);
@@ -1772,12 +1767,13 @@ async function handleDiscardCardDrop(card) {
         // Go back to WAITING_FOR_DRAW phase - but player must draw from deck
         const nextPhase = (turnPhase === 'POST_GO_OUT_CARD_DRAWN') ? 'POST_GO_OUT' : 'WAITING_FOR_DRAW';
 
-        await gameStateRef.update({
-            'discardPile': restoredDiscardPile,
-            [`playerHands/${playerId}`]: handWithoutCard,
-            'turnPhase': nextPhase
-        })
-        .then(() => {
+        try {
+            await gameStateRef.update({
+                'discardPile': restoredDiscardPile,
+                [`playerHands/${playerId}`]: handWithoutCard,
+                'turnPhase': nextPhase
+            });
+
             console.log('✅ Successfully reset to draw phase - player can draw again');
             // Clear the message after a delay
             setTimeout(() => {
@@ -1785,11 +1781,14 @@ async function handleDiscardCardDrop(card) {
                     turnInstruction.style.display = 'none';
                 }
             }, 3000);
-        })
-        .catch((error) => {
+        } catch (error) {
             console.error('❌ Error resetting to draw phase:', error);
+            // Rollback UI on error
+            myHand = myHand.concat([card]);
+            renderMyHand();
+            cardDrawnFromDiscard = card; // Restore tracking
             showErrorModal('Error. Please try again.');
-        });
+        }
 
         return;
     }
