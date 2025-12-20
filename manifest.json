@@ -1,0 +1,16 @@
+{
+  "name": "Five Crowns",
+  "short_name": "Five Crowns",
+  "description": "Five-Suited Rummy Card Game",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#7B3FF2",
+  "background_color": "#7B3FF2",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
