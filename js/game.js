@@ -1639,6 +1639,19 @@ function handleDrawFromDiscardPile() {
 
     console.log('Drew card from discard:', drawnCard);
 
+    // Show informational message about the rule
+    const instructionParagraph = turnInstruction?.querySelector('p');
+    if (instructionParagraph) {
+        instructionParagraph.textContent = 'ℹ️ Note: You cannot discard the card you just picked up';
+        turnInstruction.style.display = 'block';
+        // Clear message after 4 seconds
+        setTimeout(() => {
+            if (turnInstruction) {
+                turnInstruction.style.display = 'none';
+            }
+        }, 4000);
+    }
+
     // Optimistic UI update
     myHand = newHand;
     renderMyHand();
