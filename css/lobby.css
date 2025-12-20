@@ -6,7 +6,19 @@
 .lobby-page {
     background: linear-gradient(135deg, var(--dark-purple) 0%, var(--darker-purple) 100%);
     overflow-x: hidden;
+    overflow-y: auto;
     width: 100%;
+    min-height: 100vh;
+    height: auto;
+    display: block;
+    align-items: flex-start;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+/* Lobby Page Container Override */
+.lobby-page .container {
+    margin: 0 auto;
 }
 
 /* Lobby Header */
