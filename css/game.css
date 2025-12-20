@@ -231,6 +231,7 @@
     gap: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
+    touch-action: none; /* Enable pointer events for dragging on mobile */
 }
 
 .deck-area:hover, .discard-area:hover {
