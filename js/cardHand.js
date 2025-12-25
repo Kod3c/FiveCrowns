@@ -497,8 +497,14 @@ class CardHandManager {
             // Defensive: Reset if already in a weird state
             if (isDragging || pointerStart) {
                 console.warn('Card already in drag/pointer state, resetting');
-                if (hasCapture) {
-                    cardEl.releasePointerCapture(pointerStart.pointerId);
+                if (hasCapture && pointerStart && pointerStart.pointerId !== undefined) {
+                    try {
+                        if (cardEl.hasPointerCapture(pointerStart.pointerId)) {
+                            cardEl.releasePointerCapture(pointerStart.pointerId);
+                        }
+                    } catch (err) {
+                        console.warn('Failed to release stuck pointer:', err);
+                    }
                     hasCapture = false;
                 }
                 isDragging = false;

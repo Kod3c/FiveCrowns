@@ -11,7 +11,10 @@
       "Bash(timeout:*)",
       "Read(//10.69.0.2/GITHUB/FiveCrowns/**)",
       "Read(//10.69.0.2/GITHUB/FiveCrowns/css/**)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(move mobile-app-migration.md ..Planning )",
+      "Bash(move:*)",
+      "Bash(move quick-start-guide.md ..Planning)"
     ],
     "deny": [],
     "ask": []

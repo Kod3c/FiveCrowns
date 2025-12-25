@@ -745,7 +745,7 @@
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     user-select: none;
-    touch-action: pan-y; /* Allow vertical scrolling */
+    touch-action: none; /* Disable browser touch handling to allow custom drag */
     display: flex;
     align-items: center;
     justify-content: center;
