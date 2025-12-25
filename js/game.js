@@ -1165,6 +1165,7 @@ function findOptimalGrouping(cards, wildRank) {
 
         // Try all possible groups of size 3 to remaining.length that include the first card
         const firstCard = remainingCards[0];
+        let foundValidGroupWithFirstCard = false;
 
         for (let groupSize = 3; groupSize <= remainingCards.length; groupSize++) {
             // Generate all combinations of size groupSize that include firstCard
@@ -1173,6 +1174,7 @@ function findOptimalGrouping(cards, wildRank) {
             for (const combo of combinations) {
                 // Check if this combination forms a valid group
                 if (isValidGroup(combo, wildRank)) {
+                    foundValidGroupWithFirstCard = true;
                     // Remove these cards from remaining
                     const newRemaining = remainingCards.filter(c => !combo.includes(c));
 
@@ -1180,6 +1182,13 @@ function findOptimalGrouping(cards, wildRank) {
                     backtrack(newRemaining, [...currentGroups, combo]);
                 }
             }
+        }
+
+        // Also try skipping the first card (don't group it)
+        // This ensures we explore all possibilities
+        const restOfCards = remainingCards.slice(1);
+        if (restOfCards.length >= 3) {
+            backtrack(restOfCards, currentGroups);
         }
     }
 

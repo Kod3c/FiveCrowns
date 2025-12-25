@@ -10,7 +10,8 @@
       "Bash(node:*)",
       "Bash(timeout:*)",
       "Read(//10.69.0.2/GITHUB/FiveCrowns/**)",
-      "Read(//10.69.0.2/GITHUB/FiveCrowns/css/**)"
+      "Read(//10.69.0.2/GITHUB/FiveCrowns/css/**)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

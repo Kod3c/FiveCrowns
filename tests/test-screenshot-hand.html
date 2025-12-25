@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screenshot Hand Test - Five Crowns</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        .test {
+            margin: 10px 0;
+            padding: 10px;
+            background: #16213e;
+            border-radius: 5px;
+        }
+        .pass { color: #4ade80; }
+        .fail { color: #f87171; }
+        pre {
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Screenshot Hand Test</h1>
+    <p>Testing the hand from the screenshot where some cards can be grouped</p>
+    <div id="results"></div>
+
+    <script>
+        // Copy validation functions from game.js
+        function isValidSet(cards, wildRank) {
+            if (!cards || cards.length < 3) return false;
+            const wilds = cards.filter(card => card.rank === wildRank || card.rank === 'Joker');
+            const nonWilds = cards.filter(card => card.rank !== wildRank && card.rank !== 'Joker');
+            if (nonWilds.length === 0) return true;
+            const firstRank = nonWilds[0].rank;
+            return nonWilds.every(card => card.rank === firstRank);
+        }
+
+        function isValidRun(cards, wildRank) {
+            if (!cards || cards.length < 3) return false;
+            const rankOrder = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+            const wilds = cards.filter(card => card.rank === wildRank || card.rank === 'Joker');
+            const nonWilds = cards.filter(card => card.rank !== wildRank && card.rank !== 'Joker');
+            if (nonWilds.length === 0) return true;
+            const firstSuit = nonWilds[0].suit;
+            const allSameSuit = nonWilds.every(card => card.suit === firstSuit);
+            if (!allSameSuit) return false;
+            const rankIndices = nonWilds.map(card => rankOrder.indexOf(card.rank)).sort((a, b) => a - b);
+            const minIndex = rankIndices[0];
+            const maxIndex = rankIndices[rankIndices.length - 1];
+            const spanLength = maxIndex - minIndex + 1;
+            let gapsNeeded = 0;
+            for (let i = minIndex; i <= maxIndex; i++) {
+                if (!rankIndices.includes(i)) gapsNeeded++;
+            }
+            if (wilds.length < gapsNeeded) return false;
+            const wildsRemaining = wilds.length - gapsNeeded;
+            const expectedTotalCards = spanLength + wildsRemaining;
+            return cards.length === expectedTotalCards;
+        }
+
+        function isValidGroup(cards, wildRank) {
+            if (!cards || cards.length < 3) return false;
+            return isValidSet(cards, wildRank) || isValidRun(cards, wildRank);
+        }
+
+        function getCardPointValue(card, wildRank) {
+            if (card.rank === 'Joker') return 50;
+            if (card.rank === wildRank) return 20;
+            if (card.rank === 'J') return 11;
+            if (card.rank === 'Q') return 12;
+            if (card.rank === 'K') return 13;
+            return parseInt(card.rank, 10);
+        }
+
+        function findOptimalGrouping(cards, wildRank) {
+            if (!cards || cards.length === 0) {
+                return { groups: [], ungroupedCards: [], score: 0 };
+            }
+
+            let bestSolution = {
+                groups: [],
+                ungroupedCards: [...cards],
+                score: cards.reduce((sum, card) => sum + getCardPointValue(card, wildRank), 0)
+            };
+
+            function backtrack(remainingCards, currentGroups) {
+                if (remainingCards.length === 0) {
+                    if (0 < bestSolution.score) {
+                        bestSolution = {
+                            groups: [...currentGroups],
+                            ungroupedCards: [],
+                            score: 0
+                        };
+                    }
+                    return;
+                }
+
+                const currentScore = remainingCards.reduce((sum, card) => sum + getCardPointValue(card, wildRank), 0);
+
+                if (currentScore < bestSolution.score) {
+                    bestSolution = {
+                        groups: [...currentGroups],
+                        ungroupedCards: [...remainingCards],
+                        score: currentScore
+                    };
+                }
+
+                if (remainingCards.length < 3) {
+                    return;
+                }
+
+                const firstCard = remainingCards[0];
+
+                for (let groupSize = 3; groupSize <= remainingCards.length; groupSize++) {
+                    const combinations = getCombinations(remainingCards, groupSize, firstCard);
+
+                    for (const combo of combinations) {
+                        if (isValidGroup(combo, wildRank)) {
+                            const newRemaining = remainingCards.filter(c => !combo.includes(c));
+                            backtrack(newRemaining, [...currentGroups, combo]);
+                        }
+                    }
+                }
+            }
+
+            function getCombinations(array, k, requiredElement) {
+                const results = [];
+                if (!array.includes(requiredElement)) return results;
+                const reqIndex = array.indexOf(requiredElement);
+
+                function combine(start, combo) {
+                    if (combo.length === k) {
+                        results.push([...combo]);
+                        return;
+                    }
+                    for (let i = start; i < array.length; i++) {
+                        combo.push(array[i]);
+                        combine(i + 1, combo);
+                        combo.pop();
+                    }
+                }
+
+                combine(reqIndex + 1, [requiredElement]);
+                return results;
+            }
+
+            backtrack(cards, []);
+            return bestSolution;
+        }
+
+        // The hand from the screenshot (Round 5, wild = 8s)
+        // Hand shown: 8♥ (8), 4♦ (4), J♣♣ (50), 8♦ (8), 5♠ (5), 3♦ (3), 5♦ (5), 5♠ (5)
+        // Note: There appear to be duplicate 5♠ cards or it's showing two different 5s
+        const screenshotHand = [
+            {rank: '8', suit: 'hearts', id: '8h'},     // 8 points (wild)
+            {rank: '4', suit: 'diamonds', id: '4d'},   // 4 points
+            {rank: 'Joker', suit: 'joker', id: 'jkr'}, // 50 points
+            {rank: '8', suit: 'diamonds', id: '8d'},   // 8 points (wild)
+            {rank: '5', suit: 'spades', id: '5s1'},    // 5 points
+            {rank: '3', suit: 'diamonds', id: '3d'},   // 3 points
+            {rank: '5', suit: 'diamonds', id: '5d'},   // 5 points
+            {rank: '5', suit: 'spades', id: '5s2'}     // 5 points (appears to be duplicate)
+        ];
+
+        const wildRank = '8'; // Round 5 = 8s are wild
+
+        console.log('Testing screenshot hand...');
+        console.log('Wild rank:', wildRank);
+        console.log('Cards:', screenshotHand.map(c => c.rank + c.suit[0]).join(', '));
+
+        // Test if three 5s form a valid set
+        const threeFives = [
+            screenshotHand[4], // 5♠
+            screenshotHand[6], // 5♦
+            screenshotHand[7]  // 5♠
+        ];
+        console.log('\nTesting three 5s:', threeFives.map(c => c.rank + c.suit[0]).join(', '));
+        const threeFivesIsSet = isValidSet(threeFives, wildRank);
+        console.log('Is valid set?', threeFivesIsSet);
+
+        // Test if two 8s plus joker form a valid set
+        const twoEightsJoker = [
+            screenshotHand[0], // 8♥
+            screenshotHand[3], // 8♦
+            screenshotHand[2]  // Joker
+        ];
+        console.log('\nTesting two 8s + Joker:', twoEightsJoker.map(c => c.rank + c.suit[0]).join(', '));
+        const twoEightsJokerIsSet = isValidSet(twoEightsJoker, wildRank);
+        console.log('Is valid set?', twoEightsJokerIsSet);
+
+        // Run optimal grouping
+        const result = findOptimalGrouping(screenshotHand, wildRank);
+
+        console.log('\n=== OPTIMAL GROUPING RESULT ===');
+        console.log('Groups found:', result.groups.length);
+        result.groups.forEach((g, i) => {
+            const groupStr = g.map(c => c.rank + c.suit[0]).join(' ');
+            const groupPoints = g.reduce((sum, c) => sum + getCardPointValue(c, wildRank), 0);
+            console.log(`  Group ${i+1}: ${groupStr} (${groupPoints} points)`);
+        });
+        console.log('Ungrouped cards:', result.ungroupedCards.map(c => c.rank + c.suit[0]).join(', '));
+        console.log('Ungrouped points:', result.ungroupedCards.map(c =>
+            `${c.rank}${c.suit[0]}(${getCardPointValue(c, wildRank)})`
+        ).join(', '));
+        console.log('Total score:', result.score);
+
+        // Calculate what it SHOULD be
+        const totalPoints = screenshotHand.reduce((sum, c) => sum + getCardPointValue(c, wildRank), 0);
+        console.log('\n=== EXPECTED ===');
+        console.log('Total points if all ungrouped:', totalPoints);
+        console.log('Expected optimal score: 8 or less (if three 5s grouped)');
+        console.log('Screenshot shows: 81 points (seems wrong!)');
+
+        // Display results
+        const resultsDiv = document.getElementById('results');
+
+        const testDiv = document.createElement('div');
+        testDiv.className = 'test';
+
+        let groupsHTML = '';
+        if (result.groups.length > 0) {
+            groupsHTML = '<h3>Groups Found:</h3>';
+            result.groups.forEach((g, i) => {
+                const groupStr = g.map(c => c.rank + c.suit[0]).join(' ');
+                const isSet = isValidSet(g, wildRank);
+                const isRun = isValidRun(g, wildRank);
+                groupsHTML += `<div>Group ${i+1}: ${groupStr} (${isSet ? 'SET' : isRun ? 'RUN' : 'INVALID'})</div>`;
+            });
+        }
+
+        let ungroupedHTML = '';
+        if (result.ungroupedCards.length > 0) {
+            ungroupedHTML = '<h3>Ungrouped Cards:</h3>';
+            ungroupedHTML += `<div>${result.ungroupedCards.map(c =>
+                `${c.rank}${c.suit[0]} (${getCardPointValue(c, wildRank)})`
+            ).join(', ')}</div>`;
+        }
+
+        const expectedScore = 8; // Assuming optimal is: three 5s grouped, rest ungrouped
+        const scoreMatch = result.score <= expectedScore;
+
+        testDiv.innerHTML = `
+            <h2>Screenshot Hand Analysis</h2>
+            <div><strong>Cards:</strong> ${screenshotHand.map(c => c.rank + c.suit[0]).join(', ')}</div>
+            <div><strong>Wild rank:</strong> ${wildRank} (Round 5)</div>
+            <hr>
+            ${groupsHTML}
+            ${ungroupedHTML}
+            <hr>
+            <div><strong>Score:</strong> <span class="${scoreMatch ? 'pass' : 'fail'}">${result.score}</span>
+                ${scoreMatch ? '(Good!)' : '(Should be ≤ ' + expectedScore + ')'}</div>
+            <div><strong>Screenshot showed:</strong> <span class="fail">81 points</span> (WRONG!)</div>
+            <hr>
+            <h3>Individual Tests:</h3>
+            <div class="${threeFivesIsSet ? 'pass' : 'fail'}">
+                ${threeFivesIsSet ? '✓' : '✗'} Three 5s form a valid set: ${threeFivesIsSet}
+            </div>
+            <div class="${twoEightsJokerIsSet ? 'pass' : 'fail'}">
+                ${twoEightsJokerIsSet ? '✓' : '✗'} Two 8s + Joker form a valid set: ${twoEightsJokerIsSet}
+            </div>
+        `;
+
+        resultsDiv.appendChild(testDiv);
+
+        // Show console output
+        const consoleDiv = document.createElement('div');
+        consoleDiv.innerHTML = '<h2>Console Output</h2><pre id="console"></pre>';
+        resultsDiv.appendChild(consoleDiv);
+
+        // Redirect console.log to display
+        const consoleOutput = document.getElementById('console');
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            consoleOutput.textContent += args.join(' ') + '\n';
+        };
+    </script>
+</body>
+</html>
