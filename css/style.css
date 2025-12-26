@@ -229,6 +229,7 @@ body {
 
 .btn-secondary:hover {
     background: var(--gold-accent);
+    border-color: var(--gold);
     box-shadow: var(--shadow-lg), var(--glow-gold);
     transform: translateY(-2px);
 }

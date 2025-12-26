@@ -112,6 +112,247 @@
         #menuUserInfo:hover {
             background: transparent;
         }
+
+        /* Active Games List Styles */
+        .active-game-card {
+            background: rgba(45, 25, 80, 0.6);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .active-game-card:hover {
+            border-color: var(--gold);
+            background: rgba(45, 25, 80, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .active-game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .active-game-code {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 4px;
+        }
+
+        .active-game-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .active-game-status.waiting {
+            background: rgba(147, 51, 234, 0.3);
+            color: #c084fc;
+        }
+
+        .active-game-status.playing {
+            background: rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+
+        .active-game-info {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .active-game-info strong {
+            color: var(--white);
+        }
+
+        .active-game-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .active-game-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 8px;
+            background: rgba(123, 63, 242, 0.3);
+            color: var(--white);
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .active-game-btn:hover {
+            background: rgba(123, 63, 242, 0.6);
+            border-color: var(--gold);
+            transform: scale(1.02);
+        }
+
+        .active-game-btn.danger {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .active-game-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.6);
+        }
+
+        /* Fix active game card hover to show yellow border */
+        .active-game-card:hover {
+            border-color: var(--gold) !important;
+            background: rgba(45, 25, 80, 0.8);
+            transform: translateY(-2px);
+        }
+
+        /* Prevent badge cutoff in active games modal */
+        #activeGamesList {
+            overflow: visible;
+            padding: 4px; /* Add padding to prevent cutoff */
+        }
+
+        .active-game-card {
+            margin-bottom: 16px; /* More space between cards */
+        }
+
+        /* Social Sign-In Styles */
+        .social-signin {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .social-signin-text {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .social-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-social {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px;
+            background: rgba(123, 63, 242, 0.3);
+            color: var(--white);
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-social:hover {
+            background: rgba(123, 63, 242, 0.6);
+            border-color: var(--gold);
+            transform: translateY(-2px);
+        }
+
+        .btn-social:active {
+            transform: translateY(0);
+        }
+
+        .btn-social:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-social svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Auth Method Toggle */
+        .auth-toggle-methods {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 4px;
+        }
+
+        .auth-method-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .auth-method-btn.active {
+            background: rgba(123, 63, 242, 0.6);
+            color: var(--gold);
+        }
+
+        .auth-method-btn:hover:not(.active) {
+            color: var(--white);
+        }
+
+        .auth-form-section {
+            display: none;
+        }
+
+        .auth-form-section.active {
+            display: block;
+        }
+
+        .phone-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .country-code-select {
+            width: 100px;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .country-code-select:focus {
+            border-color: var(--gold);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .country-code-select option {
+            background: #2D1950;
+            color: var(--white);
+        }
+
+        #recaptcha-container {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
     </style>
 
     <!-- Google Fonts - Poppins for friendly, rounded look -->
@@ -167,6 +408,12 @@
                 <span class="btn-icon">🎴</span>
                 Join Game
             </button>
+
+            <button class="btn btn-secondary btn-large" id="activeGamesBtn" style="display: none;">
+                <span class="btn-icon">🎮</span>
+                Active Games
+                <span id="activeGamesCount" style="margin-left: 8px; background: rgba(255, 215, 0, 0.2); padding: 2px 8px; border-radius: 12px; font-size: 14px;"></span>
+            </button>
         </div>
 
         <!-- How to Play Link -->
@@ -207,16 +454,7 @@
                 <button class="close-btn" id="closeJoinModalBtn">&times;</button>
             </div>
             <div class="modal-body">
-                <p class="modal-instruction">What's your name?</p>
-                <input
-                    type="text"
-                    id="joinNameInput"
-                    class="player-name-input"
-                    maxlength="20"
-                    placeholder="Your Name"
-                    autocomplete="off"
-                >
-                <p class="modal-instruction" style="margin-top: 20px;">Enter the 4-digit game code:</p>
+                <p class="modal-instruction">Enter the 4-digit game code:</p>
                 <input
                     type="text"
                     id="gameCodeInput"
@@ -260,23 +498,83 @@
                 <div id="loginFormContent">
                     <p class="modal-instruction" style="text-align: center;">Sign in to continue</p>
 
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Email</label>
-                        <input type="email" id="loginEmail" class="player-name-input" placeholder="your@email.com" autocomplete="email">
+                    <!-- Auth Method Toggle -->
+                    <div class="auth-toggle-methods">
+                        <button class="auth-method-btn active" id="loginEmailMethodBtn">Email</button>
+                        <button class="auth-method-btn" id="loginPhoneMethodBtn">Phone</button>
                     </div>
 
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Password</label>
-                        <input type="password" id="loginPassword" class="player-name-input" placeholder="••••••••" autocomplete="current-password">
+                    <!-- Email Login Section -->
+                    <div id="loginEmailSection" class="auth-form-section active">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Email</label>
+                            <input type="email" id="loginEmail" class="player-name-input" placeholder="your@email.com" autocomplete="email">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Password</label>
+                            <input type="password" id="loginPassword" class="player-name-input" placeholder="••••••••" autocomplete="current-password">
+                        </div>
+
+                        <div style="text-align: right; margin-bottom: 15px;">
+                            <a href="#" id="forgotPasswordLink" style="color: var(--gold); text-decoration: none; font-size: 13px;">Forgot password?</a>
+                        </div>
+
+                        <p class="error-message" id="loginError"></p>
+
+                        <button class="btn btn-primary btn-large" id="loginBtn">Sign In</button>
                     </div>
 
-                    <div style="text-align: right; margin-bottom: 15px;">
-                        <a href="#" id="forgotPasswordLink" style="color: var(--gold); text-decoration: none; font-size: 13px;">Forgot password?</a>
+                    <!-- Phone Login Section -->
+                    <div id="loginPhoneSection" class="auth-form-section">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Phone Number</label>
+                            <div class="phone-input-group">
+                                <select id="loginCountryCode" class="country-code-select">
+                                    <option value="+1">🇺🇸 +1</option>
+                                    <option value="+44">🇬🇧 +44</option>
+                                    <option value="+91">🇮🇳 +91</option>
+                                    <option value="+61">🇦🇺 +61</option>
+                                    <option value="+81">🇯🇵 +81</option>
+                                    <option value="+86">🇨🇳 +86</option>
+                                </select>
+                                <input type="tel" id="loginPhone" class="player-name-input" style="flex: 1;" placeholder="1234567890" autocomplete="tel">
+                            </div>
+                        </div>
+
+                        <div id="loginVerificationCodeSection" style="display: none; margin-bottom: 15px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Verification Code</label>
+                            <input type="text" id="loginVerificationCode" class="player-name-input" placeholder="123456" maxlength="6" inputmode="numeric">
+                        </div>
+
+                        <div id="recaptcha-container-login"></div>
+
+                        <p class="error-message" id="loginPhoneError"></p>
+
+                        <button class="btn btn-primary btn-large" id="loginPhoneSendCodeBtn">Send Code</button>
+                        <button class="btn btn-primary btn-large" id="loginPhoneVerifyBtn" style="display: none;">Verify & Sign In</button>
                     </div>
 
-                    <p class="error-message" id="loginError"></p>
-
-                    <button class="btn btn-primary btn-large" id="loginBtn">Sign In</button>
+                    <div class="social-signin">
+                        <p class="social-signin-text">Or continue with</p>
+                        <div class="social-buttons">
+                            <button class="btn-social" id="googleSignInBtn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                                </svg>
+                                Sign in with Google
+                            </button>
+                            <button class="btn-social" id="appleSignInBtn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.09l-.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                                </svg>
+                                Sign in with Apple
+                            </button>
+                        </div>
+                    </div>
 
                     <div style="text-align: center; margin-top: 15px; font-size: 14px; color: var(--white);">
                         Don't have an account? <a href="#" id="showSignupLink" style="color: var(--gold); text-decoration: none; font-weight: 600;">Sign up</a>
@@ -287,29 +585,113 @@
                 <div id="signupFormContent" style="display: none;">
                     <p class="modal-instruction" style="text-align: center;">Create your account</p>
 
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">First Name</label>
-                        <input type="text" id="signupFirstName" class="player-name-input" placeholder="Your name" autocomplete="given-name">
+                    <!-- Auth Method Toggle -->
+                    <div class="auth-toggle-methods">
+                        <button class="auth-method-btn active" id="signupEmailMethodBtn">Email</button>
+                        <button class="auth-method-btn" id="signupPhoneMethodBtn">Phone</button>
                     </div>
 
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Email</label>
-                        <input type="email" id="signupEmail" class="player-name-input" placeholder="your@email.com" autocomplete="email">
+                    <!-- Email Signup Section -->
+                    <div id="signupEmailSection" class="auth-form-section active">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">First Name</label>
+                            <input type="text" id="signupFirstName" class="player-name-input" placeholder="Your name" autocomplete="given-name">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Email</label>
+                            <input type="email" id="signupEmail" class="player-name-input" placeholder="your@email.com" autocomplete="email">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Password</label>
+                            <input type="password" id="signupPassword" class="player-name-input" placeholder="At least 6 characters" autocomplete="new-password">
+                        </div>
+
+                        <p class="error-message" id="signupError"></p>
+
+                        <button class="btn btn-primary btn-large" id="signupBtn">Create Account</button>
                     </div>
 
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Password</label>
-                        <input type="password" id="signupPassword" class="player-name-input" placeholder="At least 6 characters" autocomplete="new-password">
+                    <!-- Phone Signup Section -->
+                    <div id="signupPhoneSection" class="auth-form-section">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">First Name</label>
+                            <input type="text" id="signupPhoneFirstName" class="player-name-input" placeholder="Your name" autocomplete="given-name">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Phone Number</label>
+                            <div class="phone-input-group">
+                                <select id="signupCountryCode" class="country-code-select">
+                                    <option value="+1">🇺🇸 +1</option>
+                                    <option value="+44">🇬🇧 +44</option>
+                                    <option value="+91">🇮🇳 +91</option>
+                                    <option value="+61">🇦🇺 +61</option>
+                                    <option value="+81">🇯🇵 +81</option>
+                                    <option value="+86">🇨🇳 +86</option>
+                                </select>
+                                <input type="tel" id="signupPhone" class="player-name-input" style="flex: 1;" placeholder="1234567890" autocomplete="tel">
+                            </div>
+                        </div>
+
+                        <div id="signupVerificationCodeSection" style="display: none; margin-bottom: 15px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Verification Code</label>
+                            <input type="text" id="signupVerificationCode" class="player-name-input" placeholder="123456" maxlength="6" inputmode="numeric">
+                        </div>
+
+                        <div id="recaptcha-container-signup"></div>
+
+                        <p class="error-message" id="signupPhoneError"></p>
+
+                        <button class="btn btn-primary btn-large" id="signupPhoneSendCodeBtn">Send Code</button>
+                        <button class="btn btn-primary btn-large" id="signupPhoneVerifyBtn" style="display: none;">Verify & Create Account</button>
                     </div>
 
-                    <p class="error-message" id="signupError"></p>
-
-                    <button class="btn btn-primary btn-large" id="signupBtn">Create Account</button>
+                    <div class="social-signin">
+                        <p class="social-signin-text">Or continue with</p>
+                        <div class="social-buttons">
+                            <button class="btn-social" id="googleSignUpBtn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                                </svg>
+                                Sign up with Google
+                            </button>
+                            <button class="btn-social" id="appleSignUpBtn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.09l-.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                                </svg>
+                                Sign up with Apple
+                            </button>
+                        </div>
+                    </div>
 
                     <div style="text-align: center; margin-top: 15px; font-size: 14px; color: var(--white);">
                         Already have an account? <a href="#" id="showLoginLink" style="color: var(--gold); text-decoration: none; font-weight: 600;">Sign in</a>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Games Modal -->
+    <div class="modal" id="activeGamesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎮 Active Games</h2>
+                <button class="close-btn" id="closeActiveGamesBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-instruction" style="text-align: center; margin-bottom: 20px;">Your ongoing games</p>
+                <div id="activeGamesList" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Active games will be populated here -->
+                </div>
+                <p id="noActiveGamesMessage" style="text-align: center; color: var(--text-muted); padding: 40px 20px; display: none;">
+                    No active games found.
+                </p>
             </div>
         </div>
     </div>
