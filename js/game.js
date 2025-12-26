@@ -3083,6 +3083,10 @@ async function confirmLeaveGame() {
         playersRef.child(playerId).remove()
             .then(() => {
                 console.log('Left game');
+                // Clear active game from user profile
+                return clearActiveGame();
+            })
+            .then(() => {
                 window.location.href = 'index.html';
             })
             .catch((error) => {
