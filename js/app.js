@@ -3,6 +3,11 @@
 
 console.log('Five Crowns app loaded!');
 
+// Global variables for current user
+let currentUser = null;
+let currentUserFirstName = null;
+let pendingAction = null; // 'createGame' or 'joinGame'
+
 // Modal Helper Functions
 function showErrorModal(message) {
     const errorModal = document.getElementById('errorModal');
@@ -53,9 +58,39 @@ if (typeof database === 'undefined') {
 }
 
 // DOM Elements
+const mainMenu = document.getElementById('mainMenu');
 const createGameBtn = document.getElementById('createGameBtn');
 const joinGameBtn = document.getElementById('joinGameBtn');
 const howToPlayBtn = document.getElementById('howToPlayBtn');
+
+// Menu Elements
+const menuButton = document.getElementById('menuButton');
+const menuDropdown = document.getElementById('menuDropdown');
+const menuUserInfo = document.getElementById('menuUserInfo');
+const menuUserName = document.getElementById('menuUserName');
+const menuDivider = document.getElementById('menuDivider');
+const menuSignIn = document.getElementById('menuSignIn');
+const menuSignUp = document.getElementById('menuSignUp');
+const menuSignOut = document.getElementById('menuSignOut');
+
+// Auth Modal Elements
+const authModal = document.getElementById('authModal');
+const authModalTitle = document.getElementById('authModalTitle');
+const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
+const loginFormContent = document.getElementById('loginFormContent');
+const signupFormContent = document.getElementById('signupFormContent');
+const loginEmail = document.getElementById('loginEmail');
+const loginPassword = document.getElementById('loginPassword');
+const loginBtn = document.getElementById('loginBtn');
+const loginError = document.getElementById('loginError');
+const signupFirstName = document.getElementById('signupFirstName');
+const signupEmail = document.getElementById('signupEmail');
+const signupPassword = document.getElementById('signupPassword');
+const signupBtn = document.getElementById('signupBtn');
+const signupError = document.getElementById('signupError');
+const showSignupLink = document.getElementById('showSignupLink');
+const showLoginLink = document.getElementById('showLoginLink');
+const forgotPasswordLink = document.getElementById('forgotPasswordLink');
 
 // Name Modal Elements
 const nameModal = document.getElementById('nameModal');
@@ -78,27 +113,82 @@ let currentAction = null; // 'create' or 'join'
 const urlParams = new URLSearchParams(window.location.search);
 const joinCode = urlParams.get('join');
 
+// Auth State Listener - Update UI based on login state
+auth.onAuthStateChanged(async (user) => {
+    console.log('Auth state changed:', user ? user.uid : 'No user');
+
+    if (user) {
+        // User is logged in
+        currentUser = user;
+
+        // Get user's first name from Firestore
+        try {
+            currentUserFirstName = await getUserFirstName(user.uid);
+            console.log('User first name:', currentUserFirstName);
+
+            // Update menu UI
+            if (menuUserName) menuUserName.textContent = currentUserFirstName;
+            if (menuUserInfo) menuUserInfo.style.display = 'block';
+            if (menuDivider) menuDivider.style.display = 'block';
+            if (menuSignIn) menuSignIn.style.display = 'none';
+            if (menuSignUp) menuSignUp.style.display = 'none';
+            if (menuSignOut) menuSignOut.style.display = 'block';
+
+            // If there's a join code in URL and user just logged in, auto-open join modal
+            if (joinCode && joinCode.length === 4) {
+                console.log('Join code detected in URL:', joinCode);
+                setTimeout(() => {
+                    openJoinModal();
+                    gameCodeInput.value = joinCode;
+                    joinNameInput.value = currentUserFirstName;
+                }, 100);
+            }
+
+            // Check if there's a pending action after login
+            if (pendingAction === 'createGame') {
+                pendingAction = null;
+                handleCreateGame(currentUserFirstName);
+            } else if (pendingAction === 'joinGame') {
+                pendingAction = null;
+                openJoinModal();
+            } else {
+                // Check for active game (only if no pending action)
+                checkForActiveGame();
+            }
+        } catch (error) {
+            console.error('Error getting user data:', error);
+            currentUserFirstName = user.displayName || 'Player';
+            if (menuUserName) menuUserName.textContent = currentUserFirstName;
+            if (menuUserInfo) menuUserInfo.style.display = 'block';
+            if (menuDivider) menuDivider.style.display = 'block';
+            if (menuSignIn) menuSignIn.style.display = 'none';
+            if (menuSignUp) menuSignUp.style.display = 'none';
+            if (menuSignOut) menuSignOut.style.display = 'block';
+        }
+    } else {
+        // No user logged in - show sign in/up options
+        console.log('No user logged in');
+        if (menuUserInfo) menuUserInfo.style.display = 'none';
+        if (menuDivider) menuDivider.style.display = 'none';
+        if (menuSignIn) menuSignIn.style.display = 'block';
+        if (menuSignUp) menuSignUp.style.display = 'block';
+        if (menuSignOut) menuSignOut.style.display = 'none';
+    }
+});
+
 // Verify DOM elements loaded
 console.log('DOM elements:', {
     createGameBtn: !!createGameBtn,
     joinGameBtn: !!joinGameBtn,
-    howToPlayBtn: !!howToPlayBtn
+    howToPlayBtn: !!howToPlayBtn,
+    menuButton: !!menuButton,
+    authModal: !!authModal,
+    closeAuthModalBtn: !!closeAuthModalBtn
 });
-
-// If join code is in URL, auto-open join modal with prefilled code
-if (joinCode && joinCode.length === 4) {
-    console.log('Join code detected in URL:', joinCode);
-    // Wait for DOM to be fully ready
-    setTimeout(() => {
-        openJoinModal();
-        gameCodeInput.value = joinCode;
-        joinNameInput.focus();
-    }, 100);
-}
 
 // Event Listeners
 if (createGameBtn) {
-    createGameBtn.addEventListener('click', openNameModalForCreate);
+    createGameBtn.addEventListener('click', handleCreateGameClick);
     console.log('Create game button listener added');
 } else {
     console.error('Create game button not found!');
@@ -108,9 +198,50 @@ if (joinGameBtn) {
     joinGameBtn.addEventListener('click', openJoinModal);
 }
 
-if (nameSubmitBtn) {
-    nameSubmitBtn.addEventListener('click', handleNameSubmit);
+// Menu button toggle
+if (menuButton) {
+    menuButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menuDropdown.classList.toggle('active');
+    });
 }
+
+// Close menu when clicking outside
+document.addEventListener('click', (e) => {
+    if (menuDropdown && !menuButton.contains(e.target) && !menuDropdown.contains(e.target)) {
+        menuDropdown.classList.remove('active');
+    }
+});
+
+// Menu item actions
+if (menuSignIn) {
+    menuSignIn.addEventListener('click', () => {
+        menuDropdown.classList.remove('active');
+        showAuthModal('login');
+    });
+}
+
+if (menuSignUp) {
+    menuSignUp.addEventListener('click', () => {
+        menuDropdown.classList.remove('active');
+        showAuthModal('signup');
+    });
+}
+
+if (menuSignOut) {
+    menuSignOut.addEventListener('click', async () => {
+        menuDropdown.classList.remove('active');
+        try {
+            await signOutUser();
+            // Redirect happens in auth state listener
+        } catch (error) {
+            console.error('Error logging out:', error);
+            showErrorModal('Error signing out. Please try again.');
+        }
+    });
+}
+
+// nameSubmitBtn listener removed - no longer needed with auth system
 
 if (closeJoinModalBtn) {
     closeJoinModalBtn.addEventListener('click', closeJoinModal);
@@ -122,6 +253,146 @@ if (joinSubmitBtn) {
 
 if (howToPlayBtn) {
     howToPlayBtn.addEventListener('click', showHowToPlay);
+}
+
+// Auth Modal Event Listeners
+console.log('Setting up auth modal listeners...');
+if (closeAuthModalBtn) {
+    console.log('Close button found, adding listener');
+    closeAuthModalBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Close button clicked');
+        closeAuthModal();
+    });
+} else {
+    console.error('closeAuthModalBtn not found!');
+}
+
+if (authModal) {
+    authModal.addEventListener('click', (e) => {
+        if (e.target === authModal) {
+            closeAuthModal();
+        }
+    });
+}
+
+// Toggle between login and signup
+if (showSignupLink) {
+    showSignupLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Switching to signup form');
+        showAuthModal('signup');
+    });
+}
+
+if (showLoginLink) {
+    showLoginLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Switching to login form');
+        showAuthModal('login');
+    });
+}
+
+// Login form submission
+if (loginBtn) {
+    loginBtn.addEventListener('click', async () => {
+        const email = loginEmail.value.trim();
+        const password = loginPassword.value;
+
+        if (!email || !password) {
+            showAuthError(loginError, 'Please fill in all fields');
+            return;
+        }
+
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Signing in...';
+
+        try {
+            await signInUser(email, password);
+            closeAuthModal();
+            // Auth state listener will handle the redirect
+        } catch (error) {
+            console.error('Login error:', error);
+            showAuthError(loginError, getAuthErrorMessage(error));
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Sign In';
+        }
+    });
+}
+
+// Signup form submission
+if (signupBtn) {
+    signupBtn.addEventListener('click', async () => {
+        const firstName = signupFirstName.value.trim();
+        const email = signupEmail.value.trim();
+        const password = signupPassword.value;
+
+        if (!firstName || !email || !password) {
+            showAuthError(signupError, 'Please fill in all fields');
+            return;
+        }
+
+        if (firstName.length < 2) {
+            showAuthError(signupError, 'First name must be at least 2 characters');
+            return;
+        }
+
+        if (password.length < 6) {
+            showAuthError(signupError, 'Password must be at least 6 characters');
+            return;
+        }
+
+        signupBtn.disabled = true;
+        signupBtn.textContent = 'Creating account...';
+
+        try {
+            await signUpUser(email, password, firstName);
+            closeAuthModal();
+            // Auth state listener will handle the redirect
+        } catch (error) {
+            console.error('Signup error:', error);
+            showAuthError(signupError, getAuthErrorMessage(error));
+            signupBtn.disabled = false;
+            signupBtn.textContent = 'Create Account';
+        }
+    });
+}
+
+// Forgot password
+if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const email = loginEmail.value.trim();
+
+        if (!email) {
+            showAuthError(loginError, 'Please enter your email address first');
+            return;
+        }
+
+        try {
+            await sendPasswordReset(email);
+            showAuthError(loginError, '✅ Password reset email sent! Check your inbox.');
+            loginError.style.color = '#4ade80';
+        } catch (error) {
+            showAuthError(loginError, getAuthErrorMessage(error));
+        }
+    });
+}
+
+// Enter key handlers for auth modal
+if (loginPassword) {
+    loginPassword.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loginBtn.click();
+    });
+}
+
+if (signupPassword) {
+    signupPassword.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') signupBtn.click();
+    });
 }
 
 // Close modals when clicking outside
@@ -163,42 +434,19 @@ gameCodeInput.addEventListener('keypress', (e) => {
 });
 
 /**
- * Open name modal for creating game
+ * Handle create game click - requires authentication
  */
-function openNameModalForCreate() {
-    console.log('Opening name modal for create game');
-    currentAction = 'create';
-    nameModal.classList.add('active');
-    playerNameInput.value = '';
-    playerNameInput.focus();
-    nameError.textContent = '';
-}
+function handleCreateGameClick() {
+    console.log('Create game clicked');
 
-/**
- * Handle name submission
- */
-function handleNameSubmit() {
-    const playerName = playerNameInput.value.trim();
-
-    // Validate name
-    if (playerName.length === 0) {
-        nameError.textContent = 'Please enter your name';
+    if (!currentUser || !currentUserFirstName) {
+        // Store the intended action and show login modal
+        pendingAction = 'createGame';
+        showAuthModal('login');
         return;
     }
 
-    if (playerName.length < 2) {
-        nameError.textContent = 'Name must be at least 2 characters';
-        return;
-    }
-
-    console.log('Player name submitted:', playerName);
-
-    // Store name in session storage
-    sessionStorage.setItem('playerName', playerName);
-
-    // Close modal and proceed to create game
-    closeNameModal();
-    handleCreateGame(playerName);
+    handleCreateGame(currentUserFirstName);
 }
 
 /**
@@ -240,13 +488,21 @@ function handleCreateGame(playerName) {
 }
 
 /**
- * Open the Join Game modal
+ * Open the Join Game modal - requires authentication
  */
 function openJoinModal() {
+    if (!currentUser || !currentUserFirstName) {
+        // Store the intended action and show login modal
+        pendingAction = 'joinGame';
+        showAuthModal('login');
+        return;
+    }
+
     joinModal.classList.add('active');
-    joinNameInput.value = '';
+    // Pre-fill with user's first name
+    joinNameInput.value = currentUserFirstName || '';
     gameCodeInput.value = '';
-    joinNameInput.focus();
+    gameCodeInput.focus(); // Focus on code input since name is pre-filled
     joinError.textContent = '';
 }
 
@@ -378,6 +634,10 @@ function createGameSession(gameCode, playerId, playerName) {
                     playerName: playerName
                 });
 
+                // Save active game to user profile
+                return saveActiveGame(gameCode, 'waiting');
+            })
+            .then(() => {
                 // Wait a moment to ensure Firebase has propagated the data
                 // before redirecting. This prevents race condition where lobby
                 // loads before the game data is readable.
@@ -581,6 +841,10 @@ function joinExistingGame(gameCode, playerName) {
             sessionStorage.setItem('playerId', playerId);
             sessionStorage.setItem('gameCode', gameCode);
             sessionStorage.setItem('playerName', playerName);
+            // Save active game to user profile
+            return saveActiveGame(gameCode, 'waiting');
+        })
+        .then(() => {
             // Redirect to lobby
             window.location.href = 'lobby.html?code=' + gameCode;
         })
@@ -597,5 +861,74 @@ function showJoinError(message) {
     joinError.textContent = message;
 }
 
+// ======================
+// Auth Modal Functions
+// ======================
+
+/**
+ * Show the auth modal (login or signup)
+ * @param {string} mode - 'login' or 'signup'
+ */
+function showAuthModal(mode = 'login') {
+    console.log('showAuthModal called with mode:', mode);
+
+    if (mode === 'signup') {
+        console.log('Showing signup form');
+        if (loginFormContent) loginFormContent.style.display = 'none';
+        if (signupFormContent) signupFormContent.style.display = 'block';
+        if (authModalTitle) authModalTitle.textContent = 'Create Account';
+    } else {
+        console.log('Showing login form');
+        if (loginFormContent) loginFormContent.style.display = 'block';
+        if (signupFormContent) signupFormContent.style.display = 'none';
+        if (authModalTitle) authModalTitle.textContent = 'Sign In';
+    }
+
+    // Clear any errors
+    if (loginError) loginError.textContent = '';
+    if (signupError) signupError.textContent = '';
+
+    // Clear inputs only when opening fresh
+    if (!authModal.classList.contains('active')) {
+        if (loginEmail) loginEmail.value = '';
+        if (loginPassword) loginPassword.value = '';
+        if (signupFirstName) signupFirstName.value = '';
+        if (signupEmail) signupEmail.value = '';
+        if (signupPassword) signupPassword.value = '';
+    }
+
+    if (authModal) authModal.classList.add('active');
+
+    // Focus on first input
+    setTimeout(() => {
+        if (mode === 'signup') {
+            if (signupFirstName) signupFirstName.focus();
+        } else {
+            if (loginEmail) loginEmail.focus();
+        }
+    }, 100);
+}
+
+/**
+ * Close the auth modal
+ */
+function closeAuthModal() {
+    console.log('Closing auth modal');
+    if (authModal) {
+        authModal.classList.remove('active');
+    }
+    if (loginError) loginError.textContent = '';
+    if (signupError) signupError.textContent = '';
+}
+
+/**
+ * Show error in auth modal
+ */
+function showAuthError(element, message) {
+    element.textContent = message;
+    element.style.display = 'block';
+}
+
 // Initialize
 console.log('Landing page ready!');
+

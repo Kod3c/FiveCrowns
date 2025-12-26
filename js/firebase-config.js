@@ -28,6 +28,8 @@ const firebaseConfig = {
 // Initialize Firebase (using CDN globals)
 const app = firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
+const auth = firebase.auth();
+const firestore = firebase.firestore();
 
 // Optional: Initialize Analytics
 // const analytics = firebase.analytics();

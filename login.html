@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#7B3FF2">
+    <title>Login - Five Crowns</title>
+    <link rel="icon" type="image/png" href="favicon.ico">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        .auth-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .auth-form {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .auth-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gold);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .auth-subtitle {
+            font-size: 14px;
+            color: var(--white);
+            text-align: center;
+            margin-bottom: 25px;
+            opacity: 0.8;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--white);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            outline: none;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            border-color: var(--gold);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .error-text {
+            color: #ff6b6b;
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .error-text.show {
+            display: block;
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--white);
+        }
+
+        .auth-toggle a {
+            color: var(--gold);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-toggle a:hover {
+            text-decoration: underline;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-top: -10px;
+            margin-bottom: 20px;
+        }
+
+        .forgot-password a {
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading-spinner.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid var(--gold);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Logo and Title -->
+        <div class="logo-section">
+            <h1 class="game-title"><span class="crown-icon">👑</span> Five Crowns <span class="crown-icon">👑</span></h1>
+            <p class="tagline">Five-Suited Rummy Card Game</p>
+        </div>
+
+        <!-- Auth Container -->
+        <div class="auth-container">
+            <!-- Login Form -->
+            <div id="loginForm" class="auth-form">
+                <h2 class="auth-title">Welcome Back</h2>
+                <p class="auth-subtitle">Sign in to continue playing</p>
+
+                <div class="form-group">
+                    <label class="form-label" for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="your@email.com" autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" autocomplete="current-password">
+                </div>
+
+                <div class="forgot-password">
+                    <a href="#" id="forgotPasswordLink">Forgot password?</a>
+                </div>
+
+                <p class="error-text" id="loginError"></p>
+
+                <button class="btn btn-primary btn-large" id="loginBtn">Sign In</button>
+
+                <div class="auth-toggle">
+                    Don't have an account? <a href="#" id="showSignupLink">Sign up</a>
+                </div>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signupForm" class="auth-form" style="display: none;">
+                <h2 class="auth-title">Create Account</h2>
+                <p class="auth-subtitle">Join the game</p>
+
+                <div class="form-group">
+                    <label class="form-label" for="signupFirstName">First Name</label>
+                    <input type="text" id="signupFirstName" class="form-input" placeholder="Your name" autocomplete="given-name">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" class="form-input" placeholder="your@email.com" autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" class="form-input" placeholder="At least 6 characters" autocomplete="new-password">
+                </div>
+
+                <p class="error-text" id="signupError"></p>
+
+                <button class="btn btn-primary btn-large" id="signupBtn">Create Account</button>
+
+                <div class="auth-toggle">
+                    Already have an account? <a href="#" id="showLoginLink">Sign in</a>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p style="color: var(--white); margin-top: 15px;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Firebase Config -->
+    <script src="js/firebase-config.js"></script>
+
+    <!-- Auth Service -->
+    <script src="js/auth.js"></script>
+
+    <!-- Login Page Logic -->
+    <script>
+        console.log('Login page loaded');
+
+        // DOM Elements
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+
+        // Login elements
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+
+        // Signup elements
+        const signupFirstName = document.getElementById('signupFirstName');
+        const signupEmail = document.getElementById('signupEmail');
+        const signupPassword = document.getElementById('signupPassword');
+        const signupBtn = document.getElementById('signupBtn');
+        const signupError = document.getElementById('signupError');
+
+        // Toggle links
+        const showSignupLink = document.getElementById('showSignupLink');
+        const showLoginLink = document.getElementById('showLoginLink');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+
+        // Check if user is already logged in
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log('User already logged in:', user.uid);
+                // Redirect to home page
+                window.location.href = 'index.html';
+            } else {
+                // Hide loading, show login form
+                loadingSpinner.classList.remove('show');
+                loginForm.style.display = 'block';
+            }
+        });
+
+        // Show loading initially
+        loadingSpinner.classList.add('show');
+        loginForm.style.display = 'none';
+
+        // Toggle between login and signup
+        showSignupLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            signupForm.style.display = 'block';
+            loginError.classList.remove('show');
+            signupError.classList.remove('show');
+        });
+
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            signupForm.style.display = 'none';
+            loginForm.style.display = 'block';
+            loginError.classList.remove('show');
+            signupError.classList.remove('show');
+        });
+
+        // Login
+        loginBtn.addEventListener('click', async () => {
+            const email = loginEmail.value.trim();
+            const password = loginPassword.value;
+
+            // Validate
+            if (!email || !password) {
+                showError(loginError, 'Please fill in all fields');
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+
+            try {
+                await signInUser(email, password);
+                // Redirect handled by onAuthStateChanged
+            } catch (error) {
+                console.error('Login error:', error);
+                showError(loginError, getAuthErrorMessage(error));
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+            }
+        });
+
+        // Signup
+        signupBtn.addEventListener('click', async () => {
+            const firstName = signupFirstName.value.trim();
+            const email = signupEmail.value.trim();
+            const password = signupPassword.value;
+
+            // Validate
+            if (!firstName || !email || !password) {
+                showError(signupError, 'Please fill in all fields');
+                return;
+            }
+
+            if (firstName.length < 2) {
+                showError(signupError, 'First name must be at least 2 characters');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError(signupError, 'Password must be at least 6 characters');
+                return;
+            }
+
+            signupBtn.disabled = true;
+            signupBtn.textContent = 'Creating account...';
+
+            try {
+                await signUpUser(email, password, firstName);
+                // Redirect handled by onAuthStateChanged
+            } catch (error) {
+                console.error('Signup error:', error);
+                showError(signupError, getAuthErrorMessage(error));
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Create Account';
+            }
+        });
+
+        // Forgot password
+        forgotPasswordLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const email = loginEmail.value.trim();
+
+            if (!email) {
+                showError(loginError, 'Please enter your email address first');
+                return;
+            }
+
+            try {
+                await sendPasswordReset(email);
+                showError(loginError, '✅ Password reset email sent! Check your inbox.', false);
+            } catch (error) {
+                showError(loginError, getAuthErrorMessage(error));
+            }
+        });
+
+        // Enter key handlers
+        loginPassword.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+
+        signupPassword.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') signupBtn.click();
+        });
+
+        // Helper function to show errors
+        function showError(element, message, isError = true) {
+            element.textContent = message;
+            element.classList.add('show');
+            if (!isError) {
+                element.style.color = '#4ade80';
+            } else {
+                element.style.color = '#ff6b6b';
+            }
+        }
+    </script>
+</body>
+</html>

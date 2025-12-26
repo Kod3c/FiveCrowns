@@ -42,6 +42,22 @@ if (!gameCode || !playerId) {
     }, 2000);
 }
 
+// CRITICAL DEBUG: Log auth state immediately
+console.log('=== LOBBY LOADED ===');
+console.log('Game Code:', gameCode);
+console.log('Player ID:', playerId);
+console.log('Auth object available:', typeof auth !== 'undefined');
+console.log('Auth currentUser (immediate):', auth?.currentUser ? auth.currentUser.uid : 'NULL - Auth not ready yet');
+
+// Wait a moment and check again
+setTimeout(() => {
+    console.log('Auth currentUser (after 100ms):', auth?.currentUser ? auth.currentUser.uid : 'NULL');
+}, 100);
+
+setTimeout(() => {
+    console.log('Auth currentUser (after 500ms):', auth?.currentUser ? auth.currentUser.uid : 'NULL');
+}, 500);
+
 // DOM Elements
 const backBtn = document.getElementById('backBtn');
 const statusIndicator = document.getElementById('statusIndicator');
@@ -80,6 +96,7 @@ let currentGameData = null;
 let isHost = false;
 let maxPlayers = 6;
 let isGameStarting = false; // Flag to prevent disconnect handlers from being re-registered during game start
+let disconnectHandlerSetup = false; // Flag to ensure we only set up disconnect handler once
 
 // Initialize
 init();
@@ -101,8 +118,26 @@ function init() {
     // Listen for game data changes
     listenToGameChanges();
 
-    // Handle player disconnect on page close
-    setupDisconnectHandler();
+    // CRITICAL: Wait for auth to initialize before setting up disconnect handler
+    // This ensures auth.currentUser is populated if user is logged in
+    // NOTE: onAuthStateChanged fires TWICE - once with null, then with user
+    // We need to wait for both callbacks before deciding
+    let authCheckCount = 0;
+    auth.onAuthStateChanged((user) => {
+        authCheckCount++;
+        console.log(`Auth state change #${authCheckCount} in lobby, user:`, user ? user.uid : 'none');
+
+        // Only set up disconnect handler after second callback (or after 500ms timeout)
+        // This gives auth time to restore the session
+        if (!disconnectHandlerSetup) {
+            setTimeout(() => {
+                if (!disconnectHandlerSetup) {
+                    disconnectHandlerSetup = true;
+                    setupDisconnectHandler();
+                }
+            }, 500);
+        }
+    });
 }
 
 /**
@@ -189,6 +224,9 @@ function listenToGameChanges() {
                 gameRef.onDisconnect().cancel(),
                 playerRef.onDisconnect().cancel()
             ]).then(() => {
+                // Update active game status to 'playing'
+                return saveActiveGame(gameCode, 'playing');
+            }).then(() => {
                 // Wait a moment for game state to be fully written
                 return new Promise(resolve => setTimeout(resolve, 300));
             }).then(() => {
@@ -629,6 +667,10 @@ function handleLeaveGame() {
         gameRef.remove()
             .then(() => {
                 console.log('Game deleted');
+                // Clear active game from user profile
+                return clearActiveGame();
+            })
+            .then(() => {
                 cleanup();
                 window.location.href = 'index.html';
             })
@@ -641,6 +683,10 @@ function handleLeaveGame() {
         playerRef.remove()
             .then(() => {
                 console.log('Player removed from game');
+                // Clear active game from user profile
+                return clearActiveGame();
+            })
+            .then(() => {
                 cleanup();
                 window.location.href = 'index.html';
             })
@@ -655,6 +701,18 @@ function handleLeaveGame() {
  * Set up disconnect handler
  */
 function setupDisconnectHandler() {
+    // Check if user is authenticated - if so, don't set up disconnect handlers
+    // Authenticated users can rejoin their games, so we don't want to auto-delete
+    const user = auth.currentUser;
+    console.log('setupDisconnectHandler called, user:', user ? user.uid : 'NOT AUTHENTICATED');
+
+    if (user) {
+        console.log('✅ User is authenticated, SKIPPING disconnect handler (game will persist)');
+        return;
+    }
+
+    console.log('⚠️ No user authenticated, setting up disconnect handler (game will be deleted on disconnect)');
+
     // Only remove players on disconnect if the game is still in waiting state
     // This allows players to rejoin if they disconnect during an active game
     gameRef.once('value').then((snapshot) => {

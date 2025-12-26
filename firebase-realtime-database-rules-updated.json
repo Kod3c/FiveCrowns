@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "games": {
+      "$gameCode": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    }
+  }
+}
