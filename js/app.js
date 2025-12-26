@@ -416,6 +416,279 @@ if (forgotPasswordLink) {
     });
 }
 
+// Google Sign-In (Login)
+const googleSignInBtn = document.getElementById('googleSignInBtn');
+if (googleSignInBtn) {
+    googleSignInBtn.addEventListener('click', async () => {
+        googleSignInBtn.disabled = true;
+        const originalHTML = googleSignInBtn.innerHTML;
+        googleSignInBtn.textContent = 'Signing in...';
+
+        try {
+            await signInWithGoogle();
+            closeAuthModal();
+            // Auth state listener will handle the redirect
+        } catch (error) {
+            console.error('Google sign-in error:', error);
+            showAuthError(loginError, getAuthErrorMessage(error));
+            googleSignInBtn.disabled = false;
+            googleSignInBtn.innerHTML = originalHTML;
+        }
+    });
+}
+
+// Apple Sign-In (Login)
+const appleSignInBtn = document.getElementById('appleSignInBtn');
+if (appleSignInBtn) {
+    appleSignInBtn.addEventListener('click', async () => {
+        appleSignInBtn.disabled = true;
+        const originalHTML = appleSignInBtn.innerHTML;
+        appleSignInBtn.textContent = 'Signing in...';
+
+        try {
+            await signInWithApple();
+            closeAuthModal();
+            // Auth state listener will handle the redirect
+        } catch (error) {
+            console.error('Apple sign-in error:', error);
+            showAuthError(loginError, getAuthErrorMessage(error));
+            appleSignInBtn.disabled = false;
+            appleSignInBtn.innerHTML = originalHTML;
+        }
+    });
+}
+
+// Google Sign-Up
+const googleSignUpBtn = document.getElementById('googleSignUpBtn');
+if (googleSignUpBtn) {
+    googleSignUpBtn.addEventListener('click', async () => {
+        googleSignUpBtn.disabled = true;
+        const originalHTML = googleSignUpBtn.innerHTML;
+        googleSignUpBtn.textContent = 'Signing up...';
+
+        try {
+            await signInWithGoogle();
+            closeAuthModal();
+            // Auth state listener will handle the redirect
+        } catch (error) {
+            console.error('Google sign-up error:', error);
+            showAuthError(signupError, getAuthErrorMessage(error));
+            googleSignUpBtn.disabled = false;
+            googleSignUpBtn.innerHTML = originalHTML;
+        }
+    });
+}
+
+// Apple Sign-Up
+const appleSignUpBtn = document.getElementById('appleSignUpBtn');
+if (appleSignUpBtn) {
+    appleSignUpBtn.addEventListener('click', async () => {
+        appleSignUpBtn.disabled = true;
+        const originalHTML = appleSignUpBtn.innerHTML;
+        appleSignUpBtn.textContent = 'Signing up...';
+
+        try {
+            await signInWithApple();
+            closeAuthModal();
+            // Auth state listener will handle the redirect
+        } catch (error) {
+            console.error('Apple sign-up error:', error);
+            showAuthError(signupError, getAuthErrorMessage(error));
+            appleSignUpBtn.disabled = false;
+            appleSignUpBtn.innerHTML = originalHTML;
+        }
+    });
+}
+
+// Auth method toggle handlers
+const loginEmailMethodBtn = document.getElementById('loginEmailMethodBtn');
+const loginPhoneMethodBtn = document.getElementById('loginPhoneMethodBtn');
+const loginEmailSection = document.getElementById('loginEmailSection');
+const loginPhoneSection = document.getElementById('loginPhoneSection');
+
+const signupEmailMethodBtn = document.getElementById('signupEmailMethodBtn');
+const signupPhoneMethodBtn = document.getElementById('signupPhoneMethodBtn');
+const signupEmailSection = document.getElementById('signupEmailSection');
+const signupPhoneSection = document.getElementById('signupPhoneSection');
+
+// Login method toggle
+if (loginEmailMethodBtn && loginPhoneMethodBtn) {
+    loginEmailMethodBtn.addEventListener('click', () => {
+        loginEmailMethodBtn.classList.add('active');
+        loginPhoneMethodBtn.classList.remove('active');
+        loginEmailSection.classList.add('active');
+        loginPhoneSection.classList.remove('active');
+    });
+
+    loginPhoneMethodBtn.addEventListener('click', () => {
+        loginPhoneMethodBtn.classList.add('active');
+        loginEmailMethodBtn.classList.remove('active');
+        loginPhoneSection.classList.add('active');
+        loginEmailSection.classList.remove('active');
+    });
+}
+
+// Signup method toggle
+if (signupEmailMethodBtn && signupPhoneMethodBtn) {
+    signupEmailMethodBtn.addEventListener('click', () => {
+        signupEmailMethodBtn.classList.add('active');
+        signupPhoneMethodBtn.classList.remove('active');
+        signupEmailSection.classList.add('active');
+        signupPhoneSection.classList.remove('active');
+    });
+
+    signupPhoneMethodBtn.addEventListener('click', () => {
+        signupPhoneMethodBtn.classList.add('active');
+        signupEmailMethodBtn.classList.remove('active');
+        signupPhoneSection.classList.add('active');
+        signupEmailSection.classList.remove('active');
+    });
+}
+
+// Phone login handlers
+const loginPhoneSendCodeBtn = document.getElementById('loginPhoneSendCodeBtn');
+const loginPhoneVerifyBtn = document.getElementById('loginPhoneVerifyBtn');
+const loginPhone = document.getElementById('loginPhone');
+const loginCountryCode = document.getElementById('loginCountryCode');
+const loginVerificationCode = document.getElementById('loginVerificationCode');
+const loginVerificationCodeSection = document.getElementById('loginVerificationCodeSection');
+const loginPhoneError = document.getElementById('loginPhoneError');
+
+let loginConfirmationResult = null;
+
+if (loginPhoneSendCodeBtn) {
+    loginPhoneSendCodeBtn.addEventListener('click', async () => {
+        const phoneNumber = loginCountryCode.value + loginPhone.value.trim();
+
+        if (!loginPhone.value.trim()) {
+            showAuthError(loginPhoneError, 'Please enter your phone number');
+            return;
+        }
+
+        loginPhoneSendCodeBtn.disabled = true;
+        loginPhoneSendCodeBtn.textContent = 'Sending...';
+
+        try {
+            const recaptchaVerifier = initializeRecaptcha('recaptcha-container-login');
+            loginConfirmationResult = await sendPhoneVerificationCode(phoneNumber, recaptchaVerifier);
+
+            // Show verification code input
+            loginVerificationCodeSection.style.display = 'block';
+            loginPhoneSendCodeBtn.style.display = 'none';
+            loginPhoneVerifyBtn.style.display = 'block';
+
+            showAuthError(loginPhoneError, '✅ Code sent! Check your phone.');
+            loginPhoneError.style.color = '#4ade80';
+        } catch (error) {
+            console.error('Error sending code:', error);
+            showAuthError(loginPhoneError, getAuthErrorMessage(error));
+            loginPhoneSendCodeBtn.disabled = false;
+            loginPhoneSendCodeBtn.textContent = 'Send Code';
+        }
+    });
+}
+
+if (loginPhoneVerifyBtn) {
+    loginPhoneVerifyBtn.addEventListener('click', async () => {
+        const code = loginVerificationCode.value.trim();
+
+        if (!code || code.length !== 6) {
+            showAuthError(loginPhoneError, 'Please enter the 6-digit code');
+            return;
+        }
+
+        loginPhoneVerifyBtn.disabled = true;
+        loginPhoneVerifyBtn.textContent = 'Verifying...';
+
+        try {
+            await verifyPhoneCode(loginConfirmationResult, code);
+            closeAuthModal();
+            // Auth state listener will handle the redirect
+        } catch (error) {
+            console.error('Error verifying code:', error);
+            showAuthError(loginPhoneError, 'Invalid code. Please try again.');
+            loginPhoneVerifyBtn.disabled = false;
+            loginPhoneVerifyBtn.textContent = 'Verify & Sign In';
+        }
+    });
+}
+
+// Phone signup handlers
+const signupPhoneSendCodeBtn = document.getElementById('signupPhoneSendCodeBtn');
+const signupPhoneVerifyBtn = document.getElementById('signupPhoneVerifyBtn');
+const signupPhone = document.getElementById('signupPhone');
+const signupCountryCode = document.getElementById('signupCountryCode');
+const signupVerificationCode = document.getElementById('signupVerificationCode');
+const signupVerificationCodeSection = document.getElementById('signupVerificationCodeSection');
+const signupPhoneError = document.getElementById('signupPhoneError');
+const signupPhoneFirstName = document.getElementById('signupPhoneFirstName');
+
+let signupConfirmationResult = null;
+
+if (signupPhoneSendCodeBtn) {
+    signupPhoneSendCodeBtn.addEventListener('click', async () => {
+        const phoneNumber = signupCountryCode.value + signupPhone.value.trim();
+        const firstName = signupPhoneFirstName.value.trim();
+
+        if (!firstName || firstName.length < 2) {
+            showAuthError(signupPhoneError, 'Please enter your name (at least 2 characters)');
+            return;
+        }
+
+        if (!signupPhone.value.trim()) {
+            showAuthError(signupPhoneError, 'Please enter your phone number');
+            return;
+        }
+
+        signupPhoneSendCodeBtn.disabled = true;
+        signupPhoneSendCodeBtn.textContent = 'Sending...';
+
+        try {
+            const recaptchaVerifier = initializeRecaptcha('recaptcha-container-signup');
+            signupConfirmationResult = await sendPhoneVerificationCode(phoneNumber, recaptchaVerifier);
+
+            // Show verification code input
+            signupVerificationCodeSection.style.display = 'block';
+            signupPhoneSendCodeBtn.style.display = 'none';
+            signupPhoneVerifyBtn.style.display = 'block';
+
+            showAuthError(signupPhoneError, '✅ Code sent! Check your phone.');
+            signupPhoneError.style.color = '#4ade80';
+        } catch (error) {
+            console.error('Error sending code:', error);
+            showAuthError(signupPhoneError, getAuthErrorMessage(error));
+            signupPhoneSendCodeBtn.disabled = false;
+            signupPhoneSendCodeBtn.textContent = 'Send Code';
+        }
+    });
+}
+
+if (signupPhoneVerifyBtn) {
+    signupPhoneVerifyBtn.addEventListener('click', async () => {
+        const code = signupVerificationCode.value.trim();
+        const firstName = signupPhoneFirstName.value.trim();
+
+        if (!code || code.length !== 6) {
+            showAuthError(signupPhoneError, 'Please enter the 6-digit code');
+            return;
+        }
+
+        signupPhoneVerifyBtn.disabled = true;
+        signupPhoneVerifyBtn.textContent = 'Verifying...';
+
+        try {
+            await verifyPhoneCode(signupConfirmationResult, code, firstName);
+            closeAuthModal();
+            // Auth state listener will handle the redirect
+        } catch (error) {
+            console.error('Error verifying code:', error);
+            showAuthError(signupPhoneError, 'Invalid code. Please try again.');
+            signupPhoneVerifyBtn.disabled = false;
+            signupPhoneVerifyBtn.textContent = 'Verify & Create Account';
+        }
+    });
+}
+
 // Enter key handlers for auth modal
 if (loginPassword) {
     loginPassword.addEventListener('keypress', (e) => {
@@ -426,6 +699,18 @@ if (loginPassword) {
 if (signupPassword) {
     signupPassword.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') signupBtn.click();
+    });
+}
+
+if (loginVerificationCode) {
+    loginVerificationCode.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && loginPhoneVerifyBtn) loginPhoneVerifyBtn.click();
+    });
+}
+
+if (signupVerificationCode) {
+    signupVerificationCode.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && signupPhoneVerifyBtn) signupPhoneVerifyBtn.click();
     });
 }
 

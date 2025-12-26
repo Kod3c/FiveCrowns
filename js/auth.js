@@ -225,6 +225,207 @@ async function resendVerificationEmail() {
 }
 
 /**
+ * Sign in with Google
+ * @returns {Promise<object>} User object
+ */
+async function signInWithGoogle() {
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const userCredential = await auth.signInWithPopup(provider);
+        const user = userCredential.user;
+
+        console.log('User signed in with Google:', user.uid);
+
+        // Check if user document exists, create if not
+        const userDoc = await firestore.collection('users').doc(user.uid).get();
+
+        if (!userDoc.exists) {
+            // Create user document for new Google sign-in
+            await firestore.collection('users').doc(user.uid).set({
+                uid: user.uid,
+                email: user.email,
+                firstName: user.displayName ? user.displayName.split(' ')[0] : 'Player',
+                displayName: user.displayName || 'Player',
+                emailVerified: user.emailVerified,
+                photoURL: user.photoURL || null,
+                provider: 'google',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                stats: {
+                    gamesPlayed: 0,
+                    gamesWon: 0,
+                    totalScore: 0,
+                    averageScore: 0,
+                    bestScore: 999,
+                    currentStreak: 0,
+                    longestStreak: 0
+                }
+            });
+            console.log('New Google user profile created in Firestore');
+        } else {
+            // Update last login for existing user
+            await firestore.collection('users').doc(user.uid).update({
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                emailVerified: user.emailVerified
+            });
+        }
+
+        return user;
+    } catch (error) {
+        console.error('Error signing in with Google:', error);
+        throw error;
+    }
+}
+
+/**
+ * Sign in with Apple
+ * @returns {Promise<object>} User object
+ */
+async function signInWithApple() {
+    try {
+        const provider = new firebase.auth.OAuthProvider('apple.com');
+        provider.addScope('email');
+        provider.addScope('name');
+
+        const userCredential = await auth.signInWithPopup(provider);
+        const user = userCredential.user;
+
+        console.log('User signed in with Apple:', user.uid);
+
+        // Check if user document exists, create if not
+        const userDoc = await firestore.collection('users').doc(user.uid).get();
+
+        if (!userDoc.exists) {
+            // Create user document for new Apple sign-in
+            await firestore.collection('users').doc(user.uid).set({
+                uid: user.uid,
+                email: user.email,
+                firstName: user.displayName ? user.displayName.split(' ')[0] : 'Player',
+                displayName: user.displayName || 'Player',
+                emailVerified: user.emailVerified,
+                photoURL: user.photoURL || null,
+                provider: 'apple',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                stats: {
+                    gamesPlayed: 0,
+                    gamesWon: 0,
+                    totalScore: 0,
+                    averageScore: 0,
+                    bestScore: 999,
+                    currentStreak: 0,
+                    longestStreak: 0
+                }
+            });
+            console.log('New Apple user profile created in Firestore');
+        } else {
+            // Update last login for existing user
+            await firestore.collection('users').doc(user.uid).update({
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                emailVerified: user.emailVerified
+            });
+        }
+
+        return user;
+    } catch (error) {
+        console.error('Error signing in with Apple:', error);
+        throw error;
+    }
+}
+
+/**
+ * Send phone verification code
+ * @param {string} phoneNumber - Phone number in E.164 format (e.g., +1234567890)
+ * @param {object} recaptchaVerifier - reCAPTCHA verifier instance
+ * @returns {Promise<object>} Confirmation result
+ */
+async function sendPhoneVerificationCode(phoneNumber, recaptchaVerifier) {
+    try {
+        console.log('Sending verification code to:', phoneNumber);
+        const confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, recaptchaVerifier);
+        console.log('Verification code sent');
+        return confirmationResult;
+    } catch (error) {
+        console.error('Error sending verification code:', error);
+        throw error;
+    }
+}
+
+/**
+ * Verify phone code and complete sign-in
+ * @param {object} confirmationResult - Result from sendPhoneVerificationCode
+ * @param {string} verificationCode - 6-digit code from SMS
+ * @param {string} firstName - User's first name (for new users)
+ * @returns {Promise<object>} User object
+ */
+async function verifyPhoneCode(confirmationResult, verificationCode, firstName = 'Player') {
+    try {
+        const userCredential = await confirmationResult.confirm(verificationCode);
+        const user = userCredential.user;
+
+        console.log('Phone verified, user signed in:', user.uid);
+
+        // Check if user document exists, create if not
+        const userDoc = await firestore.collection('users').doc(user.uid).get();
+
+        if (!userDoc.exists) {
+            // Create user document for new phone sign-in
+            await firestore.collection('users').doc(user.uid).set({
+                uid: user.uid,
+                phoneNumber: user.phoneNumber,
+                firstName: firstName,
+                displayName: firstName,
+                emailVerified: false,
+                provider: 'phone',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                stats: {
+                    gamesPlayed: 0,
+                    gamesWon: 0,
+                    totalScore: 0,
+                    averageScore: 0,
+                    bestScore: 999,
+                    currentStreak: 0,
+                    longestStreak: 0
+                }
+            });
+            console.log('New phone user profile created in Firestore');
+        } else {
+            // Update last login for existing user
+            await firestore.collection('users').doc(user.uid).update({
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        return user;
+    } catch (error) {
+        console.error('Error verifying phone code:', error);
+        throw error;
+    }
+}
+
+/**
+ * Initialize reCAPTCHA verifier for phone authentication
+ * @param {string} containerId - ID of the container element for reCAPTCHA
+ * @returns {object} RecaptchaVerifier instance
+ */
+function initializeRecaptcha(containerId) {
+    if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier(containerId, {
+            'size': 'invisible',
+            'callback': (response) => {
+                console.log('reCAPTCHA solved');
+            },
+            'expired-callback': () => {
+                console.log('reCAPTCHA expired');
+                window.recaptchaVerifier = null;
+            }
+        });
+    }
+    return window.recaptchaVerifier;
+}
+
+/**
  * Get friendly error message for Firebase auth errors
  * @param {object} error - Firebase error
  * @returns {string} User-friendly error message
@@ -249,6 +450,12 @@ function getAuthErrorMessage(error) {
             return 'Too many failed attempts. Please try again later.';
         case 'auth/email-not-verified':
             return error.message;
+        case 'auth/popup-closed-by-user':
+            return 'Sign-in popup was closed. Please try again.';
+        case 'auth/cancelled-popup-request':
+            return 'Only one popup can be open at a time.';
+        case 'auth/account-exists-with-different-credential':
+            return 'An account already exists with the same email but different sign-in credentials.';
         default:
             return error.message || 'An error occurred. Please try again.';
     }
