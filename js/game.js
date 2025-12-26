@@ -3083,10 +3083,7 @@ async function confirmLeaveGame() {
         playersRef.child(playerId).remove()
             .then(() => {
                 console.log('Left game');
-                // Clear active game from user profile
-                return clearActiveGame();
-            })
-            .then(() => {
+                // Note: Game remains in activeGames list so player can rejoin later
                 window.location.href = 'index.html';
             })
             .catch((error) => {

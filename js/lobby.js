@@ -602,10 +602,12 @@ function shuffleDeck(deck) {
 }
 
 /**
- * Handle back button
+ * Handle back button - return to main menu without leaving game
  */
 function handleBack() {
-    showLeaveModal();
+    // Simply return to index.html
+    // Game remains in active games list for easy rejoin
+    window.location.href = 'index.html';
 }
 
 /**
@@ -667,10 +669,8 @@ function handleLeaveGame() {
         gameRef.remove()
             .then(() => {
                 console.log('Game deleted');
-                // Clear active game from user profile
-                return clearActiveGame();
-            })
-            .then(() => {
+                // Note: Game will be cleaned up from activeGames list automatically
+                // when user loads index.html (stale game cleanup)
                 cleanup();
                 window.location.href = 'index.html';
             })
@@ -683,10 +683,7 @@ function handleLeaveGame() {
         playerRef.remove()
             .then(() => {
                 console.log('Player removed from game');
-                // Clear active game from user profile
-                return clearActiveGame();
-            })
-            .then(() => {
+                // Note: Game remains in activeGames list so player can rejoin later
                 cleanup();
                 window.location.href = 'index.html';
             })

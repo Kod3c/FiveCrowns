@@ -61,6 +61,8 @@ if (typeof database === 'undefined') {
 const mainMenu = document.getElementById('mainMenu');
 const createGameBtn = document.getElementById('createGameBtn');
 const joinGameBtn = document.getElementById('joinGameBtn');
+const activeGamesBtn = document.getElementById('activeGamesBtn');
+const activeGamesCount = document.getElementById('activeGamesCount');
 const howToPlayBtn = document.getElementById('howToPlayBtn');
 
 // Menu Elements
@@ -106,6 +108,12 @@ const gameCodeInput = document.getElementById('gameCodeInput');
 const joinSubmitBtn = document.getElementById('joinSubmitBtn');
 const joinError = document.getElementById('joinError');
 
+// Active Games Modal Elements
+const activeGamesModal = document.getElementById('activeGamesModal');
+const closeActiveGamesBtn = document.getElementById('closeActiveGamesBtn');
+const activeGamesList = document.getElementById('activeGamesList');
+const noActiveGamesMessage = document.getElementById('noActiveGamesMessage');
+
 // State
 let currentAction = null; // 'create' or 'join'
 
@@ -134,13 +142,15 @@ auth.onAuthStateChanged(async (user) => {
             if (menuSignUp) menuSignUp.style.display = 'none';
             if (menuSignOut) menuSignOut.style.display = 'block';
 
+            // Load and display active games
+            await loadActiveGames();
+
             // If there's a join code in URL and user just logged in, auto-open join modal
             if (joinCode && joinCode.length === 4) {
                 console.log('Join code detected in URL:', joinCode);
                 setTimeout(() => {
                     openJoinModal();
                     gameCodeInput.value = joinCode;
-                    joinNameInput.value = currentUserFirstName;
                 }, 100);
             }
 
@@ -151,9 +161,6 @@ auth.onAuthStateChanged(async (user) => {
             } else if (pendingAction === 'joinGame') {
                 pendingAction = null;
                 openJoinModal();
-            } else {
-                // Check for active game (only if no pending action)
-                checkForActiveGame();
             }
         } catch (error) {
             console.error('Error getting user data:', error);
@@ -173,6 +180,7 @@ auth.onAuthStateChanged(async (user) => {
         if (menuSignIn) menuSignIn.style.display = 'block';
         if (menuSignUp) menuSignUp.style.display = 'block';
         if (menuSignOut) menuSignOut.style.display = 'none';
+        if (activeGamesBtn) activeGamesBtn.style.display = 'none';
     }
 });
 
@@ -196,6 +204,22 @@ if (createGameBtn) {
 
 if (joinGameBtn) {
     joinGameBtn.addEventListener('click', openJoinModal);
+}
+
+if (activeGamesBtn) {
+    activeGamesBtn.addEventListener('click', openActiveGamesModal);
+}
+
+if (closeActiveGamesBtn) {
+    closeActiveGamesBtn.addEventListener('click', closeActiveGamesModal);
+}
+
+if (activeGamesModal) {
+    activeGamesModal.addEventListener('click', (e) => {
+        if (e.target === activeGamesModal) {
+            closeActiveGamesModal();
+        }
+    });
 }
 
 // Menu button toggle
@@ -499,10 +523,8 @@ function openJoinModal() {
     }
 
     joinModal.classList.add('active');
-    // Pre-fill with user's first name
-    joinNameInput.value = currentUserFirstName || '';
     gameCodeInput.value = '';
-    gameCodeInput.focus(); // Focus on code input since name is pre-filled
+    gameCodeInput.focus();
     joinError.textContent = '';
 }
 
@@ -511,7 +533,6 @@ function openJoinModal() {
  */
 function closeJoinModal() {
     joinModal.classList.remove('active');
-    joinNameInput.value = '';
     gameCodeInput.value = '';
     joinError.textContent = '';
 }
@@ -520,19 +541,7 @@ function closeJoinModal() {
  * Join an existing game
  */
 function handleJoinGame() {
-    const playerName = joinNameInput.value.trim();
     const code = gameCodeInput.value.trim();
-
-    // Validate name
-    if (playerName.length === 0) {
-        showJoinError('Please enter your name');
-        return;
-    }
-
-    if (playerName.length < 2) {
-        showJoinError('Name must be at least 2 characters');
-        return;
-    }
 
     // Validate code
     if (code.length !== 4) {
@@ -540,13 +549,13 @@ function handleJoinGame() {
         return;
     }
 
-    console.log('Attempting to join game:', code, 'as', playerName);
+    console.log('Attempting to join game:', code, 'as', currentUserFirstName);
 
     // Store name in session storage
-    sessionStorage.setItem('playerName', playerName);
+    sessionStorage.setItem('playerName', currentUserFirstName);
 
     // Check if game exists in Firebase
-    checkGameExists(code, playerName);
+    checkGameExists(code, currentUserFirstName);
 }
 
 /**
@@ -927,6 +936,224 @@ function closeAuthModal() {
 function showAuthError(element, message) {
     element.textContent = message;
     element.style.display = 'block';
+}
+
+// ======================
+// Active Games Functions
+// ======================
+
+/**
+ * Load active games and update UI
+ */
+async function loadActiveGames() {
+    try {
+        console.log('Loading active games...');
+
+        // Clean up stale games and get valid ones
+        const validGames = await cleanupStaleGames();
+
+        console.log('Valid active games:', validGames.length);
+
+        // Update button visibility
+        if (validGames.length > 0) {
+            activeGamesBtn.style.display = 'flex';
+            activeGamesCount.textContent = validGames.length;
+        } else {
+            activeGamesBtn.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error loading active games:', error);
+    }
+}
+
+/**
+ * Open Active Games modal
+ */
+async function openActiveGamesModal() {
+    try {
+        console.log('Opening active games modal...');
+
+        // Get fresh list of active games
+        const validGames = await cleanupStaleGames();
+
+        // Clear current list
+        activeGamesList.innerHTML = '';
+
+        if (validGames.length === 0) {
+            noActiveGamesMessage.style.display = 'block';
+        } else {
+            noActiveGamesMessage.style.display = 'none';
+
+            // Sort by last updated (most recent first)
+            validGames.sort((a, b) => {
+                const aTime = a.lastUpdated?.toMillis?.() || 0;
+                const bTime = b.lastUpdated?.toMillis?.() || 0;
+                return bTime - aTime;
+            });
+
+            // Create game cards
+            validGames.forEach(game => {
+                const card = createActiveGameCard(game);
+                activeGamesList.appendChild(card);
+            });
+        }
+
+        // Show modal
+        activeGamesModal.classList.add('active');
+    } catch (error) {
+        console.error('Error opening active games modal:', error);
+        showErrorModal('Error loading active games. Please try again.');
+    }
+}
+
+/**
+ * Close Active Games modal
+ */
+function closeActiveGamesModal() {
+    activeGamesModal.classList.remove('active');
+}
+
+/**
+ * Create an active game card element
+ * @param {object} game - Game data
+ * @returns {HTMLElement} Game card element
+ */
+function createActiveGameCard(game) {
+    const card = document.createElement('div');
+    card.className = 'active-game-card';
+
+    // Header with code and status
+    const header = document.createElement('div');
+    header.className = 'active-game-header';
+
+    const code = document.createElement('div');
+    code.className = 'active-game-code';
+    code.textContent = game.gameCode;
+
+    const status = document.createElement('div');
+    status.className = `active-game-status ${game.status}`;
+    status.textContent = game.status === 'waiting' ? 'Lobby' : 'In Progress';
+
+    header.appendChild(code);
+    header.appendChild(status);
+
+    // Game info
+    const info = document.createElement('div');
+    info.className = 'active-game-info';
+    info.innerHTML = `<strong>Playing as:</strong> ${game.playerName}`;
+
+    // Actions
+    const actions = document.createElement('div');
+    actions.className = 'active-game-actions';
+
+    const rejoinBtn = document.createElement('button');
+    rejoinBtn.className = 'active-game-btn';
+    rejoinBtn.textContent = '🎮 Rejoin';
+    rejoinBtn.onclick = () => rejoinGame(game);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'active-game-btn danger';
+    removeBtn.textContent = '🗑️ Remove';
+    removeBtn.onclick = () => removeActiveGame(game.gameCode);
+
+    actions.appendChild(rejoinBtn);
+    actions.appendChild(removeBtn);
+
+    // Assemble card
+    card.appendChild(header);
+    card.appendChild(info);
+    card.appendChild(actions);
+
+    return card;
+}
+
+/**
+ * Rejoin an active game
+ * @param {object} game - Game data
+ */
+async function rejoinGame(game) {
+    try {
+        console.log('Rejoining game:', game.gameCode);
+
+        // Verify game still exists
+        const gameRef = database.ref('games/' + game.gameCode);
+        const snapshot = await gameRef.once('value');
+
+        if (!snapshot.exists()) {
+            showErrorModal('This game no longer exists.');
+            // Remove from active games
+            await clearActiveGame(game.gameCode);
+            await loadActiveGames();
+            closeActiveGamesModal();
+            return;
+        }
+
+        const gameData = snapshot.val();
+
+        // Find player ID by name
+        let playerId = null;
+        if (gameData.status === 'playing' && gameData.gameState?.playerNames) {
+            // Game is active - search in gameState
+            for (const [pid, pname] of Object.entries(gameData.gameState.playerNames)) {
+                if (pname.toLowerCase() === game.playerName.toLowerCase()) {
+                    playerId = pid;
+                    break;
+                }
+            }
+        } else if (gameData.players) {
+            // Game is in lobby - search in players
+            for (const [pid, pdata] of Object.entries(gameData.players)) {
+                if (pdata.name?.toLowerCase() === game.playerName.toLowerCase()) {
+                    playerId = pid;
+                    break;
+                }
+            }
+        }
+
+        if (!playerId) {
+            showErrorModal('Could not find your player in this game. The game may have been reset.');
+            return;
+        }
+
+        // Store player info in session
+        sessionStorage.setItem('playerId', playerId);
+        sessionStorage.setItem('gameCode', game.gameCode);
+        sessionStorage.setItem('playerName', game.playerName);
+
+        // Redirect to appropriate page
+        if (gameData.status === 'playing') {
+            window.location.href = `game.html?code=${game.gameCode}`;
+        } else {
+            window.location.href = `lobby.html?code=${game.gameCode}`;
+        }
+    } catch (error) {
+        console.error('Error rejoining game:', error);
+        showErrorModal('Error rejoining game. Please try again.');
+    }
+}
+
+/**
+ * Remove a game from active games list
+ * @param {string} gameCode - Game code to remove
+ */
+async function removeActiveGame(gameCode) {
+    try {
+        const confirmed = confirm('Remove this game from your active games list?');
+        if (!confirmed) return;
+
+        console.log('Removing game from active list:', gameCode);
+
+        await clearActiveGame(gameCode);
+        await loadActiveGames();
+
+        // Refresh modal if it's open
+        if (activeGamesModal.classList.contains('active')) {
+            await openActiveGamesModal();
+        }
+    } catch (error) {
+        console.error('Error removing active game:', error);
+        showErrorModal('Error removing game. Please try again.');
+    }
 }
 
 // Initialize

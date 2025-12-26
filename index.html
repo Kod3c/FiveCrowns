@@ -112,6 +112,97 @@
         #menuUserInfo:hover {
             background: transparent;
         }
+
+        /* Active Games List Styles */
+        .active-game-card {
+            background: rgba(45, 25, 80, 0.6);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .active-game-card:hover {
+            border-color: var(--gold);
+            background: rgba(45, 25, 80, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .active-game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .active-game-code {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 4px;
+        }
+
+        .active-game-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .active-game-status.waiting {
+            background: rgba(147, 51, 234, 0.3);
+            color: #c084fc;
+        }
+
+        .active-game-status.playing {
+            background: rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+
+        .active-game-info {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .active-game-info strong {
+            color: var(--white);
+        }
+
+        .active-game-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .active-game-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 8px;
+            background: rgba(123, 63, 242, 0.3);
+            color: var(--white);
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .active-game-btn:hover {
+            background: rgba(123, 63, 242, 0.6);
+            border-color: var(--gold);
+            transform: scale(1.02);
+        }
+
+        .active-game-btn.danger {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .active-game-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.6);
+        }
     </style>
 
     <!-- Google Fonts - Poppins for friendly, rounded look -->
@@ -167,6 +258,12 @@
                 <span class="btn-icon">🎴</span>
                 Join Game
             </button>
+
+            <button class="btn btn-secondary btn-large" id="activeGamesBtn" style="display: none;">
+                <span class="btn-icon">🎮</span>
+                Active Games
+                <span id="activeGamesCount" style="margin-left: 8px; background: rgba(255, 215, 0, 0.2); padding: 2px 8px; border-radius: 12px; font-size: 14px;"></span>
+            </button>
         </div>
 
         <!-- How to Play Link -->
@@ -207,16 +304,7 @@
                 <button class="close-btn" id="closeJoinModalBtn">&times;</button>
             </div>
             <div class="modal-body">
-                <p class="modal-instruction">What's your name?</p>
-                <input
-                    type="text"
-                    id="joinNameInput"
-                    class="player-name-input"
-                    maxlength="20"
-                    placeholder="Your Name"
-                    autocomplete="off"
-                >
-                <p class="modal-instruction" style="margin-top: 20px;">Enter the 4-digit game code:</p>
+                <p class="modal-instruction">Enter the 4-digit game code:</p>
                 <input
                     type="text"
                     id="gameCodeInput"
@@ -310,6 +398,25 @@
                         Already have an account? <a href="#" id="showLoginLink" style="color: var(--gold); text-decoration: none; font-weight: 600;">Sign in</a>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Games Modal -->
+    <div class="modal" id="activeGamesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎮 Active Games</h2>
+                <button class="close-btn" id="closeActiveGamesBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-instruction" style="text-align: center; margin-bottom: 20px;">Your ongoing games</p>
+                <div id="activeGamesList" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Active games will be populated here -->
+                </div>
+                <p id="noActiveGamesMessage" style="text-align: center; color: var(--text-muted); padding: 40px 20px; display: none;">
+                    No active games found.
+                </p>
             </div>
         </div>
     </div>
