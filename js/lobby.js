@@ -604,8 +604,11 @@ function shuffleDeck(deck) {
 /**
  * Handle back button - return to main menu without leaving game
  */
-function handleBack() {
-    // Simply return to index.html
+async function handleBack() {
+    // Save current game to active games list before returning
+    await saveActiveGame(gameCode, currentGameData?.status || 'waiting');
+
+    // Return to index.html
     // Game remains in active games list for easy rejoin
     window.location.href = 'index.html';
 }

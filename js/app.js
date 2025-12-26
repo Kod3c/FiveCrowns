@@ -116,6 +116,7 @@ const noActiveGamesMessage = document.getElementById('noActiveGamesMessage');
 
 // State
 let currentAction = null; // 'create' or 'join'
+let activeGamesListeners = []; // Track Firebase listeners for cleanup
 
 // Check for join parameter in URL
 const urlParams = new URLSearchParams(window.location.search);
@@ -129,9 +130,21 @@ auth.onAuthStateChanged(async (user) => {
         // User is logged in
         currentUser = user;
 
+        // Show Active Games button immediately for logged-in users
+        if (activeGamesBtn) {
+            activeGamesBtn.style.display = 'flex';
+            activeGamesCount.textContent = '...'; // Loading indicator
+        }
+
+        // Load active games and user data in parallel for faster page load
+        const [firstName] = await Promise.all([
+            getUserFirstName(user.uid),
+            loadActiveGames() // Load count in background
+        ]);
+
         // Get user's first name from Firestore
         try {
-            currentUserFirstName = await getUserFirstName(user.uid);
+            currentUserFirstName = firstName;
             console.log('User first name:', currentUserFirstName);
 
             // Update menu UI
@@ -141,9 +154,6 @@ auth.onAuthStateChanged(async (user) => {
             if (menuSignIn) menuSignIn.style.display = 'none';
             if (menuSignUp) menuSignUp.style.display = 'none';
             if (menuSignOut) menuSignOut.style.display = 'block';
-
-            // Load and display active games
-            await loadActiveGames();
 
             // If there's a join code in URL and user just logged in, auto-open join modal
             if (joinCode && joinCode.length === 4) {
@@ -445,17 +455,21 @@ playerNameInput.addEventListener('keypress', (e) => {
     }
 });
 
-joinNameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        gameCodeInput.focus();
-    }
-});
+if (joinNameInput) {
+    joinNameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            if (gameCodeInput) gameCodeInput.focus();
+        }
+    });
+}
 
-gameCodeInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && gameCodeInput.value.length === 4) {
-        handleJoinGame();
-    }
-});
+if (gameCodeInput) {
+    gameCodeInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && gameCodeInput.value.length === 4) {
+            handleJoinGame();
+        }
+    });
+}
 
 /**
  * Handle create game click - requires authentication
@@ -947,18 +961,23 @@ function showAuthError(element, message) {
  */
 async function loadActiveGames() {
     try {
-        console.log('Loading active games...');
+        // First, quickly get games from Firestore without validation
+        const allGames = await getActiveGames();
 
-        // Clean up stale games and get valid ones
+        // Show button immediately if there are any games
+        if (allGames.length > 0 && activeGamesBtn) {
+            activeGamesBtn.style.display = 'flex';
+            activeGamesCount.textContent = allGames.length;
+        }
+
+        // Then clean up stale games in the background and update if needed
         const validGames = await cleanupStaleGames();
 
-        console.log('Valid active games:', validGames.length);
-
-        // Update button visibility
-        if (validGames.length > 0) {
+        // Update button with final count
+        if (validGames.length > 0 && activeGamesBtn) {
             activeGamesBtn.style.display = 'flex';
             activeGamesCount.textContent = validGames.length;
-        } else {
+        } else if (activeGamesBtn) {
             activeGamesBtn.style.display = 'none';
         }
     } catch (error) {
@@ -973,6 +992,9 @@ async function openActiveGamesModal() {
     try {
         console.log('Opening active games modal...');
 
+        // Clean up any existing listeners
+        cleanupActiveGamesListeners();
+
         // Get fresh list of active games
         const validGames = await cleanupStaleGames();
 
@@ -986,16 +1008,45 @@ async function openActiveGamesModal() {
 
             // Sort by last updated (most recent first)
             validGames.sort((a, b) => {
-                const aTime = a.lastUpdated?.toMillis?.() || 0;
-                const bTime = b.lastUpdated?.toMillis?.() || 0;
+                const aTime = a.lastUpdated?.getTime?.() || a.lastUpdated?.toMillis?.() || 0;
+                const bTime = b.lastUpdated?.getTime?.() || b.lastUpdated?.toMillis?.() || 0;
                 return bTime - aTime;
             });
 
-            // Create game cards
-            validGames.forEach(game => {
-                const card = createActiveGameCard(game);
-                activeGamesList.appendChild(card);
-            });
+            // Create game cards with live updates
+            for (const game of validGames) {
+                const cardContainer = document.createElement('div');
+                cardContainer.id = `game-card-${game.gameCode}`;
+                activeGamesList.appendChild(cardContainer);
+
+                // Set up real-time listener for this game
+                const gameRef = database.ref('games/' + game.gameCode);
+                const listener = gameRef.on('value', async (snapshot) => {
+                    if (snapshot.exists()) {
+                        const gameData = snapshot.val();
+                        // Update game status in local data
+                        game.status = gameData.status;
+
+                        // Recreate card with updated data
+                        const card = await createActiveGameCard(game);
+                        cardContainer.innerHTML = '';
+                        cardContainer.appendChild(card);
+                    } else {
+                        // Game was deleted, remove card
+                        cardContainer.remove();
+                        // Also remove from active games list
+                        await clearActiveGame(game.gameCode);
+                        await loadActiveGames();
+                    }
+                });
+
+                // Track listener for cleanup
+                activeGamesListeners.push({ ref: gameRef, listener: listener });
+
+                // Create initial card
+                const card = await createActiveGameCard(game);
+                cardContainer.appendChild(card);
+            }
         }
 
         // Show modal
@@ -1011,6 +1062,18 @@ async function openActiveGamesModal() {
  */
 function closeActiveGamesModal() {
     activeGamesModal.classList.remove('active');
+    // Clean up Firebase listeners
+    cleanupActiveGamesListeners();
+}
+
+/**
+ * Clean up Firebase listeners for active games
+ */
+function cleanupActiveGamesListeners() {
+    activeGamesListeners.forEach(({ ref, listener }) => {
+        ref.off('value', listener);
+    });
+    activeGamesListeners = [];
 }
 
 /**
@@ -1018,7 +1081,7 @@ function closeActiveGamesModal() {
  * @param {object} game - Game data
  * @returns {HTMLElement} Game card element
  */
-function createActiveGameCard(game) {
+async function createActiveGameCard(game) {
     const card = document.createElement('div');
     card.className = 'active-game-card';
 
@@ -1030,17 +1093,93 @@ function createActiveGameCard(game) {
     code.className = 'active-game-code';
     code.textContent = game.gameCode;
 
+    // Status badges container
+    const statusContainer = document.createElement('div');
+    statusContainer.style.display = 'flex';
+    statusContainer.style.flexDirection = 'column';
+    statusContainer.style.gap = '6px';
+    statusContainer.style.alignItems = 'flex-end';
+
     const status = document.createElement('div');
     status.className = `active-game-status ${game.status}`;
     status.textContent = game.status === 'waiting' ? 'Lobby' : 'In Progress';
 
+    statusContainer.appendChild(status);
+
     header.appendChild(code);
-    header.appendChild(status);
+    header.appendChild(statusContainer);
 
     // Game info
     const info = document.createElement('div');
     info.className = 'active-game-info';
     info.innerHTML = `<strong>Playing as:</strong> ${game.playerName}`;
+
+    // Get player names and turn info from Firebase
+    try {
+        const gameRef = database.ref('games/' + game.gameCode);
+        const snapshot = await gameRef.once('value');
+
+        if (snapshot.exists()) {
+            const gameData = snapshot.val();
+            let playerNames = [];
+            let isYourTurn = false;
+            let currentPlayerName = '';
+
+            if (gameData.status === 'playing' && gameData.gameState?.playerNames) {
+                // Game is active - get names from gameState
+                playerNames = Object.values(gameData.gameState.playerNames);
+
+                // Check if it's the current player's turn
+                const currentPlayerId = gameData.gameState.currentPlayer;
+                if (currentPlayerId && gameData.gameState.playerNames[currentPlayerId]) {
+                    currentPlayerName = gameData.gameState.playerNames[currentPlayerId];
+
+                    // Find player ID by name to check if it's their turn
+                    for (const [pid, pname] of Object.entries(gameData.gameState.playerNames)) {
+                        if (pname.toLowerCase() === game.playerName.toLowerCase() && pid === currentPlayerId) {
+                            isYourTurn = true;
+                            break;
+                        }
+                    }
+                }
+            } else if (gameData.players) {
+                // Game is in lobby - get names from players
+                playerNames = Object.values(gameData.players).map(p => p.name);
+            }
+
+            // Remove current player from the list
+            playerNames = playerNames.filter(name => name.toLowerCase() !== game.playerName.toLowerCase());
+
+            // Add "Playing with" section
+            if (playerNames.length > 0) {
+                const playingWith = document.createElement('div');
+                playingWith.className = 'active-game-info';
+                playingWith.style.marginTop = '4px';
+                playingWith.innerHTML = `<strong>Playing with:</strong> ${playerNames.join(', ')}`;
+                info.appendChild(playingWith);
+            }
+
+            // Add turn indicator badge for active games (beneath status)
+            if (gameData.status === 'playing') {
+                const turnBadge = document.createElement('div');
+                turnBadge.className = 'active-game-status';
+
+                if (isYourTurn) {
+                    turnBadge.style.background = 'rgba(34, 197, 94, 0.3)';
+                    turnBadge.style.color = '#86efac';
+                    turnBadge.textContent = 'Your Turn';
+                } else {
+                    turnBadge.style.background = 'rgba(234, 179, 8, 0.3)';
+                    turnBadge.style.color = '#fbbf24';
+                    turnBadge.textContent = 'Their Turn';
+                }
+
+                statusContainer.appendChild(turnBadge);
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching player names:', error);
+    }
 
     // Actions
     const actions = document.createElement('div');
@@ -1156,6 +1295,5 @@ async function removeActiveGame(gameCode) {
     }
 }
 
-// Initialize
 console.log('Landing page ready!');
 

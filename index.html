@@ -132,7 +132,7 @@
         .active-game-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 12px;
         }
 
@@ -202,6 +202,23 @@
 
         .active-game-btn.danger:hover {
             background: rgba(239, 68, 68, 0.6);
+        }
+
+        /* Fix active game card hover to show yellow border */
+        .active-game-card:hover {
+            border-color: var(--gold) !important;
+            background: rgba(45, 25, 80, 0.8);
+            transform: translateY(-2px);
+        }
+
+        /* Prevent badge cutoff in active games modal */
+        #activeGamesList {
+            overflow: visible;
+            padding: 4px; /* Add padding to prevent cutoff */
+        }
+
+        .active-game-card {
+            margin-bottom: 16px; /* More space between cards */
         }
     </style>
 

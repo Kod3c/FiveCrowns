@@ -13,7 +13,7 @@ async function saveActiveGame(gameCode, status = 'waiting') {
     try {
         const user = auth.currentUser;
         if (!user) {
-            console.log('No user logged in, skipping game save');
+            console.log('⚠️ No user logged in, skipping game save');
             return;
         }
 
@@ -24,26 +24,28 @@ async function saveActiveGame(gameCode, status = 'waiting') {
 
         // Get player name from session storage
         const playerName = sessionStorage.getItem('playerName') || 'Player';
+        let activeGames = [];
 
         if (!userDoc.exists) {
             console.log('User document does not exist, creating with active game');
+            activeGames = [{
+                gameCode: gameCode,
+                status: status,
+                playerName: playerName,
+                lastUpdated: new Date(),
+                createdAt: new Date()
+            }];
             await userRef.set({
                 uid: user.uid,
                 email: user.email,
                 firstName: user.displayName || 'Player',
                 displayName: user.displayName || 'Player',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                activeGames: [{
-                    gameCode: gameCode,
-                    status: status,
-                    playerName: playerName,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                }]
+                activeGames: activeGames
             });
         } else {
             const userData = userDoc.data();
-            let activeGames = userData.activeGames || [];
+            activeGames = userData.activeGames || [];
 
             // Migrate old activeGame format to activeGames array
             if (userData.activeGame && !userData.activeGames) {
@@ -52,8 +54,8 @@ async function saveActiveGame(gameCode, status = 'waiting') {
                     gameCode: userData.activeGame.gameCode,
                     status: userData.activeGame.status,
                     playerName: playerName,
-                    lastUpdated: userData.activeGame.lastUpdated,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    lastUpdated: userData.activeGame.lastUpdated || new Date(),
+                    createdAt: new Date()
                 }];
             }
 
@@ -66,8 +68,8 @@ async function saveActiveGame(gameCode, status = 'waiting') {
                     gameCode: gameCode,
                     status: status,
                     playerName: playerName,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-                    createdAt: activeGames[existingIndex].createdAt || firebase.firestore.FieldValue.serverTimestamp()
+                    lastUpdated: new Date(),
+                    createdAt: activeGames[existingIndex].createdAt || new Date()
                 };
             } else {
                 // Add new game to array
@@ -75,16 +77,16 @@ async function saveActiveGame(gameCode, status = 'waiting') {
                     gameCode: gameCode,
                     status: status,
                     playerName: playerName,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    lastUpdated: new Date(),
+                    createdAt: new Date()
                 });
             }
 
             // Limit to 10 most recent games
             if (activeGames.length > 10) {
                 activeGames.sort((a, b) => {
-                    const aTime = a.lastUpdated?.toMillis?.() || 0;
-                    const bTime = b.lastUpdated?.toMillis?.() || 0;
+                    const aTime = a.lastUpdated?.getTime?.() || a.lastUpdated?.toMillis?.() || 0;
+                    const bTime = b.lastUpdated?.getTime?.() || b.lastUpdated?.toMillis?.() || 0;
                     return bTime - aTime;
                 });
                 activeGames = activeGames.slice(0, 10);
@@ -96,7 +98,7 @@ async function saveActiveGame(gameCode, status = 'waiting') {
             });
         }
 
-        console.log('Active game saved successfully');
+        console.log('Active game saved successfully! Total games:', activeGames.length);
     } catch (error) {
         console.error('Error saving active game:', error);
         // Non-critical error, don't throw
@@ -173,8 +175,8 @@ async function getActiveGames() {
                     gameCode: userData.activeGame.gameCode,
                     status: userData.activeGame.status,
                     playerName: sessionStorage.getItem('playerName') || 'Player',
-                    lastUpdated: userData.activeGame.lastUpdated,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    lastUpdated: userData.activeGame.lastUpdated || new Date(),
+                    createdAt: new Date()
                 }];
 
                 // Perform migration
@@ -209,8 +211,8 @@ async function getActiveGame() {
         if (games.length > 0) {
             // Return most recently updated game
             games.sort((a, b) => {
-                const aTime = a.lastUpdated?.toMillis?.() || 0;
-                const bTime = b.lastUpdated?.toMillis?.() || 0;
+                const aTime = a.lastUpdated?.getTime?.() || a.lastUpdated?.toMillis?.() || 0;
+                const bTime = b.lastUpdated?.getTime?.() || b.lastUpdated?.toMillis?.() || 0;
                 return bTime - aTime;
             });
             return games[0];
