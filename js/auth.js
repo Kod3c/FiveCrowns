@@ -18,6 +18,10 @@ async function signUpUser(email, password, firstName) {
 
         console.log('User created:', user.uid);
 
+        // Send email verification
+        await user.sendEmailVerification();
+        console.log('Verification email sent to:', email);
+
         // Update profile with display name
         await user.updateProfile({
             displayName: firstName
@@ -31,6 +35,7 @@ async function signUpUser(email, password, firstName) {
             email: email,
             firstName: firstName,
             displayName: firstName,
+            emailVerified: false,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
             stats: {
@@ -66,10 +71,20 @@ async function signInUser(email, password) {
 
         console.log('User signed in:', user.uid);
 
-        // Update last login timestamp (or create document if it doesn't exist)
+        // Check if email is verified
+        if (!user.emailVerified) {
+            // Sign the user out
+            await auth.signOut();
+            const error = new Error('Please verify your email address before signing in. Check your inbox for the verification link.');
+            error.code = 'auth/email-not-verified';
+            throw error;
+        }
+
+        // Update last login timestamp and email verification status
         try {
             await firestore.collection('users').doc(user.uid).update({
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                emailVerified: true
             });
         } catch (updateError) {
             // Document might not exist, create it
@@ -79,6 +94,7 @@ async function signInUser(email, password) {
                 email: user.email,
                 firstName: user.displayName || 'Player',
                 displayName: user.displayName || 'Player',
+                emailVerified: true,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
                 stats: {
@@ -186,6 +202,29 @@ async function sendPasswordReset(email) {
 }
 
 /**
+ * Resend email verification to the current user
+ * @returns {Promise<void>}
+ */
+async function resendVerificationEmail() {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error('No user is currently signed in');
+        }
+
+        if (user.emailVerified) {
+            throw new Error('Email is already verified');
+        }
+
+        await user.sendEmailVerification();
+        console.log('Verification email resent to:', user.email);
+    } catch (error) {
+        console.error('Error resending verification email:', error);
+        throw error;
+    }
+}
+
+/**
  * Get friendly error message for Firebase auth errors
  * @param {object} error - Firebase error
  * @returns {string} User-friendly error message
@@ -208,6 +247,8 @@ function getAuthErrorMessage(error) {
             return 'Incorrect password.';
         case 'auth/too-many-requests':
             return 'Too many failed attempts. Please try again later.';
+        case 'auth/email-not-verified':
+            return error.message;
         default:
             return error.message || 'An error occurred. Please try again.';
     }
