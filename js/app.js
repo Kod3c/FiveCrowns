@@ -1112,7 +1112,6 @@ async function createActiveGameCard(game) {
     // Game info
     const info = document.createElement('div');
     info.className = 'active-game-info';
-    info.innerHTML = `<strong>Playing as:</strong> ${game.playerName}`;
 
     // Get player names and turn info from Firebase
     try {
@@ -1127,7 +1126,17 @@ async function createActiveGameCard(game) {
 
             if (gameData.status === 'playing' && gameData.gameState?.playerNames) {
                 // Game is active - get names from gameState
-                playerNames = Object.values(gameData.gameState.playerNames);
+                const playerScores = gameData.gameState.playerScores || {};
+                const round = gameData.gameState.currentRound || 1;
+
+                // Build array of player info with scores
+                const playersWithScores = [];
+                for (const [pid, pname] of Object.entries(gameData.gameState.playerNames)) {
+                    if (pname.toLowerCase() !== game.playerName.toLowerCase()) {
+                        const score = playerScores[pid] || 0;
+                        playersWithScores.push({ name: pname, score: score });
+                    }
+                }
 
                 // Check if it's the current player's turn
                 const currentPlayerId = gameData.gameState.currentPlayer;
@@ -1142,21 +1151,64 @@ async function createActiveGameCard(game) {
                         }
                     }
                 }
+
+                // Format player names with scores (only show scores after round 1)
+                if (playersWithScores.length > 0) {
+                    if (round === 1) {
+                        // Round 1 - no scores yet
+                        playerNames = playersWithScores.map(p => p.name);
+                    } else {
+                        // Round 2+ - show scores
+                        playerNames = playersWithScores.map(p => `${p.name} (${p.score})`);
+                    }
+                }
             } else if (gameData.players) {
                 // Game is in lobby - get names from players
                 playerNames = Object.values(gameData.players).map(p => p.name);
+                // Remove current player from lobby list
+                playerNames = playerNames.filter(name => name.toLowerCase() !== game.playerName.toLowerCase());
             }
 
-            // Remove current player from the list
-            playerNames = playerNames.filter(name => name.toLowerCase() !== game.playerName.toLowerCase());
-
-            // Add "Playing with" section
+            // Add "Playing with" section - this is the main info shown
             if (playerNames.length > 0) {
-                const playingWith = document.createElement('div');
-                playingWith.className = 'active-game-info';
-                playingWith.style.marginTop = '4px';
-                playingWith.innerHTML = `<strong>Playing with:</strong> ${playerNames.join(', ')}`;
-                info.appendChild(playingWith);
+                info.innerHTML = `<strong>Playing with:</strong> ${playerNames.join(', ')}`;
+            } else {
+                info.innerHTML = `<span style="color: var(--text-muted);">Waiting for players...</span>`;
+            }
+
+            // Add wild card info and your score for active games
+            if (gameData.status === 'playing' && gameData.gameState?.currentRound) {
+                const round = gameData.gameState.currentRound;
+                const wildCards = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+                const wildCard = wildCards[round - 1];
+
+                const wildInfo = document.createElement('div');
+                wildInfo.className = 'active-game-info';
+                wildInfo.style.marginTop = '4px';
+                wildInfo.style.fontSize = '13px';
+                wildInfo.style.color = 'var(--text-muted)';
+
+                // Only show your score after round 1 (when scores are meaningful)
+                if (round === 1) {
+                    wildInfo.innerHTML = `${wildCard}'s Wild`;
+                } else {
+                    // Get player's score
+                    let yourScore = 0;
+
+                    if (gameData.gameState.playerScores) {
+                        // Find current player's score
+                        for (const [pid, pname] of Object.entries(gameData.gameState.playerNames || {})) {
+                            if (pname.toLowerCase() === game.playerName.toLowerCase()) {
+                                yourScore = gameData.gameState.playerScores[pid] || 0;
+                                break;
+                            }
+                        }
+                    }
+
+                    wildInfo.innerHTML = `${wildCard}'s Wild • You: ${yourScore}`;
+                }
+
+                info.appendChild(wildInfo);
             }
 
             // Add turn indicator badge for active games (beneath status)
