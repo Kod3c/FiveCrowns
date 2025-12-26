@@ -21,39 +21,41 @@ body.card-design-classic .card {
     /* No overrides needed - this is the base design */
 }
 
-/* Add subtle stroke to classic design */
+/* Removed shadows/strokes for better suit visibility on small screens */
 body.card-design-classic .card-rank {
-    text-shadow:
-        -0.5px -0.5px 0 rgba(0, 0, 0, 0.3),
-        0.5px -0.5px 0 rgba(0, 0, 0, 0.3),
-        -0.5px 0.5px 0 rgba(0, 0, 0, 0.3),
-        0.5px 0.5px 0 rgba(0, 0, 0, 0.3);
+    text-shadow: none;
 }
 
 body.card-design-classic .card-suit.hearts,
 body.card-design-classic .card-suit.diamonds,
 body.card-design-classic .card-suit.stars {
-    filter:
-        drop-shadow(-0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(-0.5px 0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(0.5px 0.5px 0 rgba(0, 0, 0, 0.3));
+    filter: none;
 }
 
 body.card-design-classic .corner-rank {
-    text-shadow:
-        -0.5px -0.5px 0 rgba(0, 0, 0, 0.3),
-        0.5px -0.5px 0 rgba(0, 0, 0, 0.3),
-        -0.5px 0.5px 0 rgba(0, 0, 0, 0.3),
-        0.5px 0.5px 0 rgba(0, 0, 0, 0.3);
+    font-size: 48px !important; /* Tripled from base 16px */
+    text-shadow: none;
 }
 
 body.card-design-classic .corner-suit {
-    filter:
-        drop-shadow(-0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(-0.5px 0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(0.5px 0.5px 0 rgba(0, 0, 0, 0.3));
+    font-size: 42px !important; /* Tripled from base 14px */
+    filter: none;
+}
+
+body.card-design-classic .hand-card .corner-rank {
+    font-size: 33px !important; /* Tripled from base 11px */
+}
+
+body.card-design-classic .hand-card .corner-suit {
+    font-size: 30px !important; /* Tripled from base 10px */
+}
+
+body.card-design-classic .discard-pile .corner-rank {
+    font-size: 48px !important; /* Tripled from base 16px */
+}
+
+body.card-design-classic .discard-pile .corner-suit {
+    font-size: 42px !important; /* Tripled from base 14px */
 }
 
 body.card-design-classic .card-back {
@@ -117,21 +119,13 @@ body.card-design-minimal .card-corner {
 body.card-design-minimal .corner-rank {
     font-size: 32px;
     font-weight: 700;
-    text-shadow:
-        -0.5px -0.5px 0 rgba(0, 0, 0, 0.3),
-        0.5px -0.5px 0 rgba(0, 0, 0, 0.3),
-        -0.5px 0.5px 0 rgba(0, 0, 0, 0.3),
-        0.5px 0.5px 0 rgba(0, 0, 0, 0.3);
+    text-shadow: none;
 }
 
 body.card-design-minimal .corner-suit {
     font-size: 30px;
     margin-top: 4px;
-    filter:
-        drop-shadow(-0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(-0.5px 0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(0.5px 0.5px 0 rgba(0, 0, 0, 0.3));
+    filter: none;
 }
 
 /* Add bottom-right corner for better visibility */
@@ -148,49 +142,29 @@ body.card-design-minimal .card::after {
     transform: rotate(180deg);
     font-size: 32px;
     font-weight: 700;
-    text-shadow:
-        -0.5px -0.5px 0 rgba(0, 0, 0, 0.3),
-        0.5px -0.5px 0 rgba(0, 0, 0, 0.3),
-        -0.5px 0.5px 0 rgba(0, 0, 0, 0.3),
-        0.5px 0.5px 0 rgba(0, 0, 0, 0.3);
+    text-shadow: none;
 }
 
 /* Hand card adjustments for minimal design */
 body.card-design-minimal .hand-card .corner-rank {
     font-size: 26px;
-    text-shadow:
-        -0.5px -0.5px 0 rgba(0, 0, 0, 0.3),
-        0.5px -0.5px 0 rgba(0, 0, 0, 0.3),
-        -0.5px 0.5px 0 rgba(0, 0, 0, 0.3),
-        0.5px 0.5px 0 rgba(0, 0, 0, 0.3);
+    text-shadow: none;
 }
 
 body.card-design-minimal .hand-card .corner-suit {
     font-size: 24px;
-    filter:
-        drop-shadow(-0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(-0.5px 0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(0.5px 0.5px 0 rgba(0, 0, 0, 0.3));
+    filter: none;
 }
 
 /* Discard pile cards - slightly larger */
 body.card-design-minimal .discard-pile .corner-rank {
     font-size: 36px;
-    text-shadow:
-        -0.5px -0.5px 0 rgba(0, 0, 0, 0.3),
-        0.5px -0.5px 0 rgba(0, 0, 0, 0.3),
-        -0.5px 0.5px 0 rgba(0, 0, 0, 0.3),
-        0.5px 0.5px 0 rgba(0, 0, 0, 0.3);
+    text-shadow: none;
 }
 
 body.card-design-minimal .discard-pile .corner-suit {
     font-size: 34px;
-    filter:
-        drop-shadow(-0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(0.5px -0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(-0.5px 0.5px 0 rgba(0, 0, 0, 0.3))
-        drop-shadow(0.5px 0.5px 0 rgba(0, 0, 0, 0.3));
+    filter: none;
 }
 
 /* Card back remains the same */

@@ -410,18 +410,35 @@ async function verifyPhoneCode(confirmationResult, verificationCode, firstName =
  * @returns {object} RecaptchaVerifier instance
  */
 function initializeRecaptcha(containerId) {
-    if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier(containerId, {
-            'size': 'invisible',
-            'callback': (response) => {
-                console.log('reCAPTCHA solved');
-            },
-            'expired-callback': () => {
-                console.log('reCAPTCHA expired');
-                window.recaptchaVerifier = null;
-            }
-        });
+    // Clear any existing verifier
+    if (window.recaptchaVerifier) {
+        try {
+            window.recaptchaVerifier.clear();
+        } catch (e) {
+            console.log('Error clearing previous verifier:', e);
+        }
+        window.recaptchaVerifier = null;
     }
+
+    // Create new verifier
+    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier(containerId, {
+        'size': 'invisible',
+        'callback': (response) => {
+            console.log('reCAPTCHA solved');
+        },
+        'expired-callback': () => {
+            console.log('reCAPTCHA expired - clearing verifier');
+            if (window.recaptchaVerifier) {
+                try {
+                    window.recaptchaVerifier.clear();
+                } catch (e) {
+                    console.log('Error clearing expired verifier:', e);
+                }
+            }
+            window.recaptchaVerifier = null;
+        }
+    });
+
     return window.recaptchaVerifier;
 }
 
