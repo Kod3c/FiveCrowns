@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#7B3FF2">
-    <title>Login - Wandering Wilds</title>
+    <title>Login - Five Crowns</title>
     <link rel="icon" type="image/png" href="favicon.ico">
 
     <!-- CSS -->
@@ -601,7 +601,7 @@
     <div class="container">
         <!-- Logo and Title -->
         <div class="logo-section">
-            <h1 class="game-title"><span class="crown-icon">👑</span> Wandering Wilds <span class="crown-icon">👑</span></h1>
+            <h1 class="game-title"><span class="crown-icon">👑</span> Five Crowns <span class="crown-icon">👑</span></h1>
             <p class="tagline">Five-Suited Rummy Card Game</p>
         </div>
 
@@ -813,6 +813,7 @@
         let loginConfirmationResult = null;
         let signupConfirmationResult = null;
         let isVerifyingLogin = false; // Flag to prevent auto-redirect during login verification
+        let isCreatingAccount = false; // Flag to prevent auto-redirect during signup
 
         // Toggle links
         const showSignupLink = document.getElementById('showSignupLink');
@@ -893,6 +894,12 @@
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 console.log('User already logged in:', user.uid);
+
+                // Don't process if we're in the middle of creating an account
+                if (isCreatingAccount) {
+                    console.log('Account creation in progress, skipping auto-redirect');
+                    return;
+                }
 
                 // Check if we need to show phone collection modal
                 if (addPhoneMode) {
@@ -1110,17 +1117,27 @@
                 signupBtn.textContent = 'Creating account...';
 
                 try {
+                    // Set flag to prevent onAuthStateChanged from interfering
+                    isCreatingAccount = true;
                     console.log('Calling verifyPhoneCode with firstName:', firstName);
                     await verifyPhoneCode(signupConfirmationResult, code, firstName);
+
+                    // Account creation complete, clear flag
+                    isCreatingAccount = false;
+
+                    console.log('✅ Signup complete! Redirecting to index.html');
 
                     if (debugMode) {
                         console.log('%c🔧 DEBUG: Signup complete! Check logs above. Would normally redirect to index.html', 'background: #4CAF50; color: white; padding: 5px; font-weight: bold;');
                         console.log('%c🔧 User UID:', 'font-weight: bold;', auth.currentUser?.uid);
                         console.log('%c🔧 DisplayName:', 'font-weight: bold;', auth.currentUser?.displayName);
+                    } else {
+                        // Manually redirect to home page
+                        window.location.href = 'index.html';
                     }
-                    // Redirect handled by onAuthStateChanged (unless debug mode)
                 } catch (error) {
                     console.error('Signup error:', error);
+                    isCreatingAccount = false; // Clear flag on error
                     showError(signupError, getAuthErrorMessage(error));
                     signupBtn.disabled = false;
                     signupBtn.textContent = 'Create Account';

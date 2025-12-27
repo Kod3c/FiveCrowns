@@ -1,5 +1,5 @@
 /**
- * Wandering Wilds - Deck and Discard Pile Manager
+ * Five Crowns - Deck and Discard Pile Manager
  * Handles drawing cards from deck/discard and discarding cards via drag-and-drop
  */
 

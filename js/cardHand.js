@@ -1,5 +1,5 @@
 /**
- * Wandering Wilds - Card Hand Manager
+ * Five Crowns - Card Hand Manager
  * Modern touch-first card hand system with multi-stack support
  */
 

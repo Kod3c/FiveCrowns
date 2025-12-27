@@ -1,4 +1,4 @@
-// Wandering Wilds - Authentication Service
+// Five Crowns - Authentication Service
 // Handles user registration, login, logout, and profile management
 
 console.log('Auth service loaded');
@@ -578,12 +578,36 @@ async function verifyPhoneCode(confirmationResult, verificationCode, firstName =
             };
 
             console.log('Creating user document with data:', { ...userData, firstName, displayName: firstName });
-            await firestore.collection('users').doc(user.uid).set(userData);
-            console.log('New phone user profile created in Firestore with name:', firstName);
+            console.log('User UID:', user.uid);
+            console.log('Phone Number:', user.phoneNumber);
+
+            try {
+                await firestore.collection('users').doc(user.uid).set(userData);
+                console.log('✅ New phone user profile created in Firestore with name:', firstName);
+
+                // Verify it was created
+                const verifyDoc = await firestore.collection('users').doc(user.uid).get();
+                if (verifyDoc.exists) {
+                    console.log('✅ Verified: User document exists in Firestore');
+                    console.log('Document data:', verifyDoc.data());
+                } else {
+                    console.error('❌ ERROR: User document was NOT created in Firestore!');
+                }
+            } catch (firestoreError) {
+                console.error('❌ ERROR creating Firestore document:', firestoreError);
+                throw firestoreError;
+            }
 
             // Register phone number in public collection for pre-auth lookups
-            await registerPhoneNumber(user.phoneNumber);
+            try {
+                await registerPhoneNumber(user.phoneNumber);
+                console.log('✅ Phone number registered in public collection');
+            } catch (regError) {
+                console.error('❌ ERROR registering phone number:', regError);
+                // Don't throw - this is non-critical
+            }
         } else {
+            console.log('User document already exists, updating last login');
             // Update last login for existing user
             await firestore.collection('users').doc(user.uid).update({
                 lastLogin: firebase.firestore.FieldValue.serverTimestamp()
@@ -741,16 +765,26 @@ async function currentUserHasPhoneNumber() {
     try {
         const user = auth.currentUser;
         if (!user) {
+            console.log('currentUserHasPhoneNumber: No current user');
             return false;
         }
 
+        console.log('currentUserHasPhoneNumber: Checking for user', user.uid);
+        console.log('currentUserHasPhoneNumber: Firebase Auth phoneNumber:', user.phoneNumber);
+
         const userDoc = await firestore.collection('users').doc(user.uid).get();
         if (!userDoc.exists) {
+            console.log('currentUserHasPhoneNumber: User document does not exist');
             return false;
         }
 
         const userData = userDoc.data();
-        return !!userData.phoneNumber;
+        console.log('currentUserHasPhoneNumber: User data:', userData);
+        console.log('currentUserHasPhoneNumber: phoneNumber field:', userData.phoneNumber);
+
+        const hasPhone = !!userData.phoneNumber;
+        console.log('currentUserHasPhoneNumber: Result:', hasPhone);
+        return hasPhone;
     } catch (error) {
         console.error('Error checking if user has phone number:', error);
         return false;

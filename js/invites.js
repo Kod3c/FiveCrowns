@@ -1,4 +1,4 @@
-// Wandering Wilds - Game Invitations System
+// Five Crowns - Game Invitations System
 // Handles sending and receiving game invitations
 
 console.log('Game invites service loaded');

@@ -1,4 +1,4 @@
-// Wandering Wilds - Friends Management System
+// Five Crowns - Friends Management System
 // Handles friend requests, friend lists, and user search
 
 console.log('Friends service loaded');
