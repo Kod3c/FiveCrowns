@@ -293,7 +293,7 @@ async function resendVerificationEmail() {
 
 /**
  * Sign in with Google
- * @returns {Promise<object>} User object
+ * @returns {Promise<object>} User object with needsPhoneNumber flag
  */
 async function signInWithGoogle() {
     try {
@@ -305,15 +305,14 @@ async function signInWithGoogle() {
 
         // Check if user document exists, create if not
         const userDoc = await firestore.collection('users').doc(user.uid).get();
+        let needsPhoneNumber = false;
 
         if (!userDoc.exists) {
-            // Create user document for new Google sign-in
+            // Create user document for new Google sign-in (without phone number)
             await firestore.collection('users').doc(user.uid).set({
                 uid: user.uid,
-                email: user.email,
                 firstName: user.displayName ? user.displayName.split(' ')[0] : 'Player',
                 displayName: user.displayName || 'Player',
-                emailVerified: user.emailVerified,
                 photoURL: user.photoURL || null,
                 provider: 'google',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -334,15 +333,18 @@ async function signInWithGoogle() {
                 }
             });
             console.log('New Google user profile created in Firestore');
+            needsPhoneNumber = true;
         } else {
             // Update last login for existing user
             await firestore.collection('users').doc(user.uid).update({
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                emailVerified: user.emailVerified
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
             });
+            // Check if existing user has phone number
+            const userData = userDoc.data();
+            needsPhoneNumber = !userData.phoneNumber;
         }
 
-        return user;
+        return { user, needsPhoneNumber };
     } catch (error) {
         console.error('Error signing in with Google:', error);
         throw error;
@@ -351,7 +353,7 @@ async function signInWithGoogle() {
 
 /**
  * Sign in with Apple
- * @returns {Promise<object>} User object
+ * @returns {Promise<object>} User object with needsPhoneNumber flag
  */
 async function signInWithApple() {
     try {
@@ -366,15 +368,14 @@ async function signInWithApple() {
 
         // Check if user document exists, create if not
         const userDoc = await firestore.collection('users').doc(user.uid).get();
+        let needsPhoneNumber = false;
 
         if (!userDoc.exists) {
-            // Create user document for new Apple sign-in
+            // Create user document for new Apple sign-in (without phone number)
             await firestore.collection('users').doc(user.uid).set({
                 uid: user.uid,
-                email: user.email,
                 firstName: user.displayName ? user.displayName.split(' ')[0] : 'Player',
                 displayName: user.displayName || 'Player',
-                emailVerified: user.emailVerified,
                 photoURL: user.photoURL || null,
                 provider: 'apple',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -395,15 +396,18 @@ async function signInWithApple() {
                 }
             });
             console.log('New Apple user profile created in Firestore');
+            needsPhoneNumber = true;
         } else {
             // Update last login for existing user
             await firestore.collection('users').doc(user.uid).update({
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                emailVerified: user.emailVerified
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
             });
+            // Check if existing user has phone number
+            const userData = userDoc.data();
+            needsPhoneNumber = !userData.phoneNumber;
         }
 
-        return user;
+        return { user, needsPhoneNumber };
     } catch (error) {
         console.error('Error signing in with Apple:', error);
         throw error;
@@ -653,6 +657,104 @@ async function initializeRecaptcha(containerId, useVisible = false) {
     }
 
     return window.recaptchaVerifier;
+}
+
+/**
+ * Verify phone code and add to existing user (for Google/Apple users)
+ * This verifies the code WITHOUT signing in as the phone number
+ * @param {object} confirmationResult - Result from sendPhoneVerificationCode
+ * @param {string} verificationCode - 6-digit code from SMS
+ * @returns {Promise<void>}
+ */
+async function verifyAndAddPhoneToUser(confirmationResult, verificationCode) {
+    try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            throw new Error('No user is currently signed in');
+        }
+
+        console.log('Verifying phone code for existing user:', currentUser.uid);
+        const currentUid = currentUser.uid;
+
+        // Verify the code - this will sign in as the phone number temporarily
+        const phoneCredential = firebase.auth.PhoneAuthProvider.credential(
+            confirmationResult.verificationId,
+            verificationCode
+        );
+
+        // Link the phone credential to the existing account
+        // This adds the phone number to the existing Google/Apple account
+        await currentUser.linkWithCredential(phoneCredential);
+
+        console.log('Phone credential linked to account');
+
+        // Update Firestore document with phone number
+        const phoneNumber = currentUser.phoneNumber;
+        await firestore.collection('users').doc(currentUid).update({
+            phoneNumber: phoneNumber
+        });
+
+        // Register phone number in public collection
+        await registerPhoneNumber(phoneNumber);
+
+        console.log('Phone number added to user account:', phoneNumber);
+    } catch (error) {
+        console.error('Error verifying and adding phone number:', error);
+        throw error;
+    }
+}
+
+/**
+ * Add phone number to existing user account (for Google/Apple users)
+ * @param {string} phoneNumber - Phone number in E.164 format
+ * @returns {Promise<void>}
+ */
+async function addPhoneNumberToUser(phoneNumber) {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error('No user is currently signed in');
+        }
+
+        console.log('Adding phone number to user:', user.uid);
+
+        // Update Firestore document with phone number
+        await firestore.collection('users').doc(user.uid).update({
+            phoneNumber: phoneNumber
+        });
+
+        // Register phone number in public collection
+        await registerPhoneNumber(phoneNumber);
+
+        console.log('Phone number added to user account');
+    } catch (error) {
+        console.error('Error adding phone number to user:', error);
+        throw error;
+    }
+}
+
+/**
+ * Check if current user has a phone number
+ * @returns {Promise<boolean>} True if user has phone number
+ */
+async function currentUserHasPhoneNumber() {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            return false;
+        }
+
+        const userDoc = await firestore.collection('users').doc(user.uid).get();
+        if (!userDoc.exists) {
+            return false;
+        }
+
+        const userData = userDoc.data();
+        return !!userData.phoneNumber;
+    } catch (error) {
+        console.error('Error checking if user has phone number:', error);
+        return false;
+    }
 }
 
 /**

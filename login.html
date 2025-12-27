@@ -550,6 +550,51 @@
                 font-size: 10px;
             }
         }
+
+        /* Phone Number Collection Modal */
+        .phone-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .phone-modal.show {
+            display: flex;
+        }
+
+        .phone-modal-content {
+            background: rgba(45, 25, 80, 0.98);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        .phone-modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gold);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .phone-modal-subtitle {
+            font-size: 14px;
+            color: var(--white);
+            text-align: center;
+            margin-bottom: 25px;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -693,6 +738,39 @@
         </div>
     </div>
 
+    <!-- Phone Number Collection Modal -->
+    <div class="phone-modal" id="phoneCollectionModal">
+        <div class="phone-modal-content">
+            <h2 class="phone-modal-title">📱 Add Phone Number</h2>
+            <p class="phone-modal-subtitle">We need your phone number to connect you with friends</p>
+
+            <div class="form-group">
+                <label class="form-label" for="modalPhoneNumber">Phone Number</label>
+                <div class="phone-input-group">
+                    <select id="modalCountryCode" class="country-code-select">
+                        <option value="+1">🇺🇸 +1</option>
+                        <option value="+44">🇬🇧 +44</option>
+                        <option value="+91">🇮🇳 +91</option>
+                        <option value="+61">🇦🇺 +61</option>
+                        <option value="+81">🇯🇵 +81</option>
+                        <option value="+86">🇨🇳 +86</option>
+                    </select>
+                    <input type="tel" id="modalPhoneNumber" class="form-input" placeholder="(123) 456-7890" autocomplete="tel">
+                </div>
+            </div>
+
+            <div class="form-group" id="modalVerificationCodeGroup" style="display: none;">
+                <label class="form-label" for="modalVerificationCode">Verification Code</label>
+                <input type="text" id="modalVerificationCode" class="form-input" placeholder="123 - 456" maxlength="9" inputmode="numeric" autocomplete="one-time-code" style="text-align: center; letter-spacing: 2px; font-weight: 600;">
+            </div>
+
+            <p class="error-text" id="modalPhoneError"></p>
+
+            <button class="btn btn-primary btn-large" id="modalPhoneBtn">Send Code</button>
+            <div id="modalRecaptcha"></div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs (CDN) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -801,14 +879,41 @@
         // Check for debug mode (prevents redirect to see console logs)
         const urlParams = new URLSearchParams(window.location.search);
         const debugMode = urlParams.has('debug');
+        const addPhoneMode = urlParams.has('addPhone');
+
         if (debugMode) {
             console.log('%c🔧 DEBUG MODE ENABLED - Auto-redirect disabled', 'background: #ff6b6b; color: white; padding: 5px; font-weight: bold;');
         }
 
+        if (addPhoneMode) {
+            console.log('Add phone mode detected - will show phone collection modal');
+        }
+
         // Check if user is already logged in
-        auth.onAuthStateChanged((user) => {
+        auth.onAuthStateChanged(async (user) => {
             if (user) {
                 console.log('User already logged in:', user.uid);
+
+                // Check if we need to show phone collection modal
+                if (addPhoneMode) {
+                    console.log('Checking if user needs to add phone number...');
+                    try {
+                        const hasPhone = await currentUserHasPhoneNumber();
+                        if (!hasPhone) {
+                            console.log('User missing phone number - showing modal');
+                            loadingSpinner.classList.remove('show');
+                            showPhoneCollectionModal();
+                            return; // Don't redirect
+                        } else {
+                            console.log('User already has phone number, redirecting to index.html');
+                            window.location.href = 'index.html';
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Error checking phone number:', error);
+                    }
+                }
+
                 // Don't redirect if we're in the middle of verifying login
                 // (need to check Firestore account existence first)
                 if (!isVerifyingLogin) {
@@ -1030,8 +1135,12 @@
             googleSignInBtn.textContent = 'Signing in...';
 
             try {
-                await signInWithGoogle();
-                // Redirect handled by onAuthStateChanged
+                const result = await signInWithGoogle();
+                if (result.needsPhoneNumber) {
+                    // Show phone collection modal
+                    showPhoneCollectionModal();
+                }
+                // Redirect handled by onAuthStateChanged or after phone is added
             } catch (error) {
                 console.error('Google sign-in error:', error);
                 showError(loginError, getAuthErrorMessage(error));
@@ -1047,8 +1156,12 @@
             appleSignInBtn.textContent = 'Signing in...';
 
             try {
-                await signInWithApple();
-                // Redirect handled by onAuthStateChanged
+                const result = await signInWithApple();
+                if (result.needsPhoneNumber) {
+                    // Show phone collection modal
+                    showPhoneCollectionModal();
+                }
+                // Redirect handled by onAuthStateChanged or after phone is added
             } catch (error) {
                 console.error('Apple sign-in error:', error);
                 showError(loginError, getAuthErrorMessage(error));
@@ -1064,8 +1177,12 @@
             googleSignUpBtn.textContent = 'Signing up...';
 
             try {
-                await signInWithGoogle();
-                // Redirect handled by onAuthStateChanged
+                const result = await signInWithGoogle();
+                if (result.needsPhoneNumber) {
+                    // Show phone collection modal
+                    showPhoneCollectionModal();
+                }
+                // Redirect handled by onAuthStateChanged or after phone is added
             } catch (error) {
                 console.error('Google sign-up error:', error);
                 showError(signupError, getAuthErrorMessage(error));
@@ -1081,8 +1198,12 @@
             appleSignUpBtn.textContent = 'Signing up...';
 
             try {
-                await signInWithApple();
-                // Redirect handled by onAuthStateChanged
+                const result = await signInWithApple();
+                if (result.needsPhoneNumber) {
+                    // Show phone collection modal
+                    showPhoneCollectionModal();
+                }
+                // Redirect handled by onAuthStateChanged or after phone is added
             } catch (error) {
                 console.error('Apple sign-up error:', error);
                 showError(signupError, getAuthErrorMessage(error));
@@ -1110,6 +1231,108 @@
                 element.style.color = '#ff6b6b';
             }
         }
+
+        // ===== Phone Number Collection Modal Logic =====
+        const phoneCollectionModal = document.getElementById('phoneCollectionModal');
+        const modalCountryCode = document.getElementById('modalCountryCode');
+        const modalPhoneNumber = document.getElementById('modalPhoneNumber');
+        const modalVerificationCodeGroup = document.getElementById('modalVerificationCodeGroup');
+        const modalVerificationCode = document.getElementById('modalVerificationCode');
+        const modalPhoneBtn = document.getElementById('modalPhoneBtn');
+        const modalPhoneError = document.getElementById('modalPhoneError');
+        let modalConfirmationResult = null;
+
+        // Format phone number input in modal
+        modalPhoneNumber.addEventListener('input', () => formatPhoneNumber(modalPhoneNumber));
+        modalVerificationCode.addEventListener('input', () => formatVerificationCode(modalVerificationCode));
+
+        // Enter key handlers for modal
+        modalPhoneNumber.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') modalPhoneBtn.click();
+        });
+
+        modalVerificationCode.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') modalPhoneBtn.click();
+        });
+
+        // Show phone collection modal
+        function showPhoneCollectionModal() {
+            phoneCollectionModal.classList.add('show');
+            modalPhoneNumber.value = '';
+            modalVerificationCode.value = '';
+            modalVerificationCodeGroup.style.display = 'none';
+            modalPhoneError.classList.remove('show');
+            modalPhoneBtn.textContent = 'Send Code';
+            modalConfirmationResult = null;
+        }
+
+        // Phone collection button handler
+        modalPhoneBtn.addEventListener('click', async () => {
+            if (!modalConfirmationResult) {
+                // Step 1: Send verification code
+                const phoneDigits = modalPhoneNumber.value.replace(/\D/g, '');
+                const phoneNumber = modalCountryCode.value + phoneDigits;
+
+                if (!phoneDigits || phoneDigits.length < 10) {
+                    showError(modalPhoneError, 'Please enter a valid 10-digit phone number');
+                    return;
+                }
+
+                modalPhoneBtn.disabled = true;
+                modalPhoneBtn.textContent = 'Sending code...';
+
+                try {
+                    // Initialize reCAPTCHA
+                    await initializeRecaptcha('modalRecaptcha');
+
+                    // Send verification code
+                    modalConfirmationResult = await sendPhoneVerificationCode(phoneNumber, window.recaptchaVerifier);
+
+                    // Show verification code input
+                    modalVerificationCodeGroup.style.display = 'block';
+                    modalPhoneBtn.textContent = 'Verify & Continue';
+                    showError(modalPhoneError, '✅ Code sent! Check your phone.', false);
+                    modalPhoneBtn.disabled = false;
+                } catch (error) {
+                    console.error('Error sending code:', error);
+                    showError(modalPhoneError, getAuthErrorMessage(error));
+                    modalPhoneBtn.disabled = false;
+                    modalPhoneBtn.textContent = 'Send Code';
+                    modalConfirmationResult = null;
+                }
+            } else {
+                // Step 2: Verify code and add phone number to account
+                const code = modalVerificationCode.value.replace(/\D/g, '');
+
+                if (!code || code.length !== 6) {
+                    showError(modalPhoneError, 'Please enter the 6-digit code');
+                    return;
+                }
+
+                modalPhoneBtn.disabled = true;
+                modalPhoneBtn.textContent = 'Verifying...';
+
+                try {
+                    // Verify the code and add phone to existing user account
+                    await verifyAndAddPhoneToUser(modalConfirmationResult, code);
+
+                    console.log('Phone number successfully added to account');
+
+                    // Close modal and redirect to home
+                    phoneCollectionModal.classList.remove('show');
+                    if (!debugMode) {
+                        window.location.href = 'index.html';
+                    } else {
+                        console.log('%c🔧 DEBUG: Would redirect to index.html but debug mode is on', 'background: #4CAF50; color: white; padding: 5px;');
+                    }
+                } catch (error) {
+                    console.error('Verification error:', error);
+                    showError(modalPhoneError, getAuthErrorMessage(error));
+                    modalPhoneBtn.disabled = false;
+                    modalPhoneBtn.textContent = 'Verify & Continue';
+                }
+            }
+        });
     </script>
 </body>
 </html>

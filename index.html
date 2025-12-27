@@ -773,13 +773,24 @@
     <!-- Auth Check - Redirect if not logged in -->
     <script>
         // Check authentication state on page load
-        auth.onAuthStateChanged((user) => {
+        auth.onAuthStateChanged(async (user) => {
             if (!user) {
                 // User is not logged in, redirect to login page
                 console.log('User not authenticated, redirecting to login page');
                 window.location.href = 'login.html';
             } else {
                 console.log('User authenticated:', user.uid);
+
+                // Check if user has a phone number (required for friends system)
+                try {
+                    const hasPhone = await currentUserHasPhoneNumber();
+                    if (!hasPhone) {
+                        console.log('User missing phone number, redirecting to add it');
+                        window.location.href = 'login.html?addPhone=true';
+                    }
+                } catch (error) {
+                    console.error('Error checking phone number:', error);
+                }
             }
         });
     </script>
