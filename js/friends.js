@@ -4,103 +4,36 @@
 console.log('Friends service loaded');
 
 /**
- * Validate username format
- * @param {string} username - Username to validate
+ * Validate phone number format
+ * @param {string} phoneNumber - Phone number to validate (E.164 format)
  * @returns {object} {valid: boolean, error: string}
  */
-function validateUsername(username) {
-    if (!username || username.trim().length === 0) {
-        return { valid: false, error: 'Username is required' };
+function validatePhoneNumber(phoneNumber) {
+    if (!phoneNumber || phoneNumber.trim().length === 0) {
+        return { valid: false, error: 'Phone number is required' };
     }
 
-    const trimmed = username.trim();
+    const trimmed = phoneNumber.trim();
 
-    if (trimmed.length < 3) {
-        return { valid: false, error: 'Username must be at least 3 characters' };
-    }
-
-    if (trimmed.length > 15) {
-        return { valid: false, error: 'Username must be 15 characters or less' };
-    }
-
-    // Allow letters, numbers, and underscores only
-    if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
-        return { valid: false, error: 'Username can only contain letters, numbers, and underscores' };
+    // Check for E.164 format: +[country code][number]
+    if (!/^\+[1-9]\d{1,14}$/.test(trimmed)) {
+        return { valid: false, error: 'Invalid phone number format. Use format: +1234567890' };
     }
 
     return { valid: true };
 }
 
 /**
- * Check if username is available
- * @param {string} username - Username to check
- * @returns {Promise<boolean>} True if available
- */
-async function isUsernameAvailable(username) {
-    try {
-        const normalizedUsername = username.toLowerCase().trim();
-
-        const snapshot = await firestore.collection('users')
-            .where('username', '==', normalizedUsername)
-            .limit(1)
-            .get();
-
-        return snapshot.empty;
-    } catch (error) {
-        console.error('Error checking username availability:', error);
-        throw error;
-    }
-}
-
-/**
- * Set username for current user
- * @param {string} username - Username to set
- * @returns {Promise<void>}
- */
-async function setUsername(username) {
-    try {
-        const user = auth.currentUser;
-        if (!user) {
-            throw new Error('No user is currently signed in');
-        }
-
-        // Validate username
-        const validation = validateUsername(username);
-        if (!validation.valid) {
-            throw new Error(validation.error);
-        }
-
-        const normalizedUsername = username.toLowerCase().trim();
-
-        // Check availability
-        const available = await isUsernameAvailable(normalizedUsername);
-        if (!available) {
-            throw new Error('Username is already taken');
-        }
-
-        // Update user document
-        await firestore.collection('users').doc(user.uid).update({
-            username: normalizedUsername
-        });
-
-        console.log('Username set successfully:', normalizedUsername);
-    } catch (error) {
-        console.error('Error setting username:', error);
-        throw error;
-    }
-}
-
-/**
- * Search for a user by username
- * @param {string} username - Username to search for
+ * Search for a user by phone number
+ * @param {string} phoneNumber - Phone number to search for (E.164 format)
  * @returns {Promise<object|null>} User data or null if not found
  */
-async function searchUserByUsername(username) {
+async function searchUserByPhoneNumber(phoneNumber) {
     try {
-        const normalizedUsername = username.toLowerCase().trim();
+        const trimmedPhone = phoneNumber.trim();
 
         const snapshot = await firestore.collection('users')
-            .where('username', '==', normalizedUsername)
+            .where('phoneNumber', '==', trimmedPhone)
             .limit(1)
             .get();
 
@@ -113,7 +46,7 @@ async function searchUserByUsername(username) {
 
         return {
             uid: userData.uid,
-            username: userData.username,
+            phoneNumber: userData.phoneNumber,
             displayName: userData.displayName || userData.firstName || 'Player',
             firstName: userData.firstName
         };
@@ -125,10 +58,10 @@ async function searchUserByUsername(username) {
 
 /**
  * Send a friend request
- * @param {string} username - Username of user to send request to
+ * @param {string} phoneNumber - Phone number of user to send request to (E.164 format)
  * @returns {Promise<void>}
  */
-async function sendFriendRequest(username) {
+async function sendFriendRequest(phoneNumber) {
     try {
         const user = auth.currentUser;
         if (!user) {
@@ -142,12 +75,12 @@ async function sendFriendRequest(username) {
         }
 
         const currentUserData = currentUserDoc.data();
-        if (!currentUserData.username) {
-            throw new Error('You must set a username before adding friends');
+        if (!currentUserData.phoneNumber) {
+            throw new Error('You must have a phone number to add friends');
         }
 
         // Search for target user
-        const targetUser = await searchUserByUsername(username);
+        const targetUser = await searchUserByPhoneNumber(phoneNumber);
         if (!targetUser) {
             throw new Error('User not found');
         }
@@ -183,7 +116,7 @@ async function sendFriendRequest(username) {
 
         const requestData = {
             from: user.uid,
-            username: currentUserData.username,
+            phoneNumber: currentUserData.phoneNumber,
             displayName: currentUserData.displayName || currentUserData.firstName || 'Player',
             timestamp: now
         };
@@ -197,13 +130,13 @@ async function sendFriendRequest(username) {
         await firestore.collection('users').doc(user.uid).update({
             'friendRequests.outgoing': firebase.firestore.FieldValue.arrayUnion({
                 to: targetUser.uid,
-                username: targetUser.username,
+                phoneNumber: targetUser.phoneNumber,
                 displayName: targetUser.displayName,
                 timestamp: now
             })
         });
 
-        console.log('Friend request sent to:', username);
+        console.log('Friend request sent to:', phoneNumber);
     } catch (error) {
         console.error('Error sending friend request:', error);
         throw error;
@@ -435,7 +368,7 @@ async function getFriends() {
                     const friendData = friendDoc.data();
                     return {
                         uid: friendUid,
-                        username: friendData.username || 'unknown',
+                        phoneNumber: friendData.phoneNumber || 'unknown',
                         displayName: friendData.displayName || friendData.firstName || 'Player',
                         firstName: friendData.firstName
                     };
@@ -520,10 +453,10 @@ async function getFriendRequestCount() {
 }
 
 /**
- * Check if current user has a username set
- * @returns {Promise<boolean>} True if username is set
+ * Check if current user has a phone number set
+ * @returns {Promise<boolean>} True if phone number is set
  */
-async function hasUsername() {
+async function hasPhoneNumber() {
     try {
         const user = auth.currentUser;
         if (!user) {
@@ -536,9 +469,9 @@ async function hasUsername() {
         }
 
         const userData = userDoc.data();
-        return !!userData.username;
+        return !!userData.phoneNumber;
     } catch (error) {
-        console.error('Error checking username:', error);
+        console.error('Error checking phone number:', error);
         return false;
     }
 }

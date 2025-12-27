@@ -90,28 +90,10 @@ const menuDropdown = document.getElementById('menuDropdown');
 const menuUserInfo = document.getElementById('menuUserInfo');
 const menuUserName = document.getElementById('menuUserName');
 const menuDivider = document.getElementById('menuDivider');
+const menuEditProfile = document.getElementById('menuEditProfile');
 const menuSignIn = document.getElementById('menuSignIn');
 const menuSignUp = document.getElementById('menuSignUp');
 const menuSignOut = document.getElementById('menuSignOut');
-
-// Auth Modal Elements
-const authModal = document.getElementById('authModal');
-const authModalTitle = document.getElementById('authModalTitle');
-const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
-const loginFormContent = document.getElementById('loginFormContent');
-const signupFormContent = document.getElementById('signupFormContent');
-const loginEmail = document.getElementById('loginEmail');
-const loginPassword = document.getElementById('loginPassword');
-const loginBtn = document.getElementById('loginBtn');
-const loginError = document.getElementById('loginError');
-const signupFirstName = document.getElementById('signupFirstName');
-const signupEmail = document.getElementById('signupEmail');
-const signupPassword = document.getElementById('signupPassword');
-const signupBtn = document.getElementById('signupBtn');
-const signupError = document.getElementById('signupError');
-const showSignupLink = document.getElementById('showSignupLink');
-const showLoginLink = document.getElementById('showLoginLink');
-const forgotPasswordLink = document.getElementById('forgotPasswordLink');
 
 // Name Modal Elements
 const nameModal = document.getElementById('nameModal');
@@ -163,6 +145,7 @@ auth.onAuthStateChanged(async (user) => {
         }
 
         // Load active games and user data in parallel for faster page load
+        console.log('Loading user data for UID:', user.uid);
         const [firstName] = await Promise.all([
             getUserFirstName(user.uid),
             loadActiveGames() // Load count in background
@@ -172,12 +155,16 @@ auth.onAuthStateChanged(async (user) => {
         try {
             currentUserFirstName = firstName;
             window.currentUserFirstName = firstName;
-            console.log('User first name:', currentUserFirstName);
+            console.log('User first name from getUserFirstName:', currentUserFirstName);
+            console.log('Firebase Auth displayName:', user.displayName);
+            console.log('Firebase Auth phoneNumber:', user.phoneNumber);
+            console.log('Firebase Auth email:', user.email);
 
             // Update menu UI
             if (menuUserName) menuUserName.textContent = currentUserFirstName;
             if (menuUserInfo) menuUserInfo.style.display = 'block';
             if (menuDivider) menuDivider.style.display = 'block';
+            if (menuEditProfile) menuEditProfile.style.display = 'block';
             if (menuSignIn) menuSignIn.style.display = 'none';
             if (menuSignUp) menuSignUp.style.display = 'none';
             if (menuSignOut) menuSignOut.style.display = 'block';
@@ -208,21 +195,15 @@ auth.onAuthStateChanged(async (user) => {
             if (menuUserName) menuUserName.textContent = currentUserFirstName;
             if (menuUserInfo) menuUserInfo.style.display = 'block';
             if (menuDivider) menuDivider.style.display = 'block';
+            if (menuEditProfile) menuEditProfile.style.display = 'block';
             if (menuSignIn) menuSignIn.style.display = 'none';
             if (menuSignUp) menuSignUp.style.display = 'none';
             if (menuSignOut) menuSignOut.style.display = 'block';
         }
     } else {
-        // No user logged in - show sign in/up options
-        console.log('No user logged in');
-        if (menuUserInfo) menuUserInfo.style.display = 'none';
-        if (menuDivider) menuDivider.style.display = 'none';
-        if (menuSignIn) menuSignIn.style.display = 'block';
-        if (menuSignUp) menuSignUp.style.display = 'block';
-        if (menuSignOut) menuSignOut.style.display = 'none';
-        if (activeGamesBtn) activeGamesBtn.style.display = 'none';
-        // Active Games nav button stays visible, just hide badge
-        if (activeGamesNavBadge) activeGamesNavBadge.style.display = 'none';
+        // No user logged in - redirect to login page
+        console.log('No user logged in - redirecting to login page');
+        window.location.href = 'login.html';
     }
 });
 
@@ -231,9 +212,7 @@ console.log('DOM elements:', {
     createGameBtn: !!createGameBtn,
     joinGameBtn: !!joinGameBtn,
     howToPlayBtn: !!howToPlayBtn,
-    menuButton: !!menuButton,
-    authModal: !!authModal,
-    closeAuthModalBtn: !!closeAuthModalBtn
+    menuButton: !!menuButton
 });
 
 // Event Listeners
@@ -283,14 +262,35 @@ if (menuButton) {
 if (menuSignIn) {
     menuSignIn.addEventListener('click', () => {
         closeMenuModal();
-        showAuthModal('login');
+        window.location.href = 'login.html';
     });
 }
 
 if (menuSignUp) {
     menuSignUp.addEventListener('click', () => {
         closeMenuModal();
-        showAuthModal('signup');
+        window.location.href = 'login.html';
+    });
+}
+
+if (menuEditProfile) {
+    menuEditProfile.addEventListener('click', () => {
+        closeMenuModal();
+        // Prompt for new name
+        const newName = prompt('Enter your first name:', currentUserFirstName !== 'Player' ? currentUserFirstName : '');
+        if (newName && newName.trim() && newName.trim() !== currentUserFirstName) {
+            updateUserName(newName.trim())
+                .then(() => {
+                    currentUserFirstName = newName.trim();
+                    window.currentUserFirstName = newName.trim();
+                    if (menuUserName) menuUserName.textContent = newName.trim();
+                    alert('Name updated successfully!');
+                })
+                .catch((error) => {
+                    console.error('Error updating name:', error);
+                    alert('Error updating name. Please try again.');
+                });
+        }
     });
 }
 
@@ -366,629 +366,6 @@ if (menuModal) {
     });
 }
 
-// Auth Modal Event Listeners
-console.log('Setting up auth modal listeners...');
-if (closeAuthModalBtn) {
-    console.log('Close button found, adding listener');
-    closeAuthModalBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('Close button clicked');
-        closeAuthModal();
-    });
-} else {
-    console.error('closeAuthModalBtn not found!');
-}
-
-if (authModal) {
-    authModal.addEventListener('click', (e) => {
-        if (e.target === authModal) {
-            closeAuthModal();
-        }
-    });
-}
-
-// Toggle between login and signup
-if (showSignupLink) {
-    showSignupLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('Switching to signup form');
-        showAuthModal('signup');
-    });
-}
-
-if (showLoginLink) {
-    showLoginLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('Switching to login form');
-        showAuthModal('login');
-    });
-}
-
-// Login form submission
-if (loginBtn) {
-    loginBtn.addEventListener('click', async () => {
-        const email = loginEmail.value.trim();
-        const password = loginPassword.value;
-
-        if (!email || !password) {
-            showAuthError(loginError, 'Please fill in all fields');
-            return;
-        }
-
-        loginBtn.disabled = true;
-        loginBtn.textContent = 'Signing in...';
-
-        try {
-            await signInUser(email, password);
-            closeAuthModal();
-            // Auth state listener will handle the redirect
-        } catch (error) {
-            console.error('Login error:', error);
-            showAuthError(loginError, getAuthErrorMessage(error));
-            loginBtn.disabled = false;
-            loginBtn.textContent = 'Sign In';
-        }
-    });
-}
-
-// Signup form submission
-if (signupBtn) {
-    signupBtn.addEventListener('click', async () => {
-        const firstName = signupFirstName.value.trim();
-        const email = signupEmail.value.trim();
-        const password = signupPassword.value;
-
-        if (!firstName || !email || !password) {
-            showAuthError(signupError, 'Please fill in all fields');
-            return;
-        }
-
-        if (firstName.length < 2) {
-            showAuthError(signupError, 'First name must be at least 2 characters');
-            return;
-        }
-
-        if (password.length < 6) {
-            showAuthError(signupError, 'Password must be at least 6 characters');
-            return;
-        }
-
-        signupBtn.disabled = true;
-        signupBtn.textContent = 'Creating account...';
-
-        try {
-            await signUpUser(email, password, firstName);
-            closeAuthModal();
-            // Auth state listener will handle the redirect
-        } catch (error) {
-            console.error('Signup error:', error);
-            showAuthError(signupError, getAuthErrorMessage(error));
-            signupBtn.disabled = false;
-            signupBtn.textContent = 'Create Account';
-        }
-    });
-}
-
-// Forgot password
-if (forgotPasswordLink) {
-    forgotPasswordLink.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const email = loginEmail.value.trim();
-
-        if (!email) {
-            showAuthError(loginError, 'Please enter your email address first');
-            return;
-        }
-
-        try {
-            await sendPasswordReset(email);
-            showAuthError(loginError, '✅ Password reset email sent! Check your inbox.');
-            loginError.style.color = '#4ade80';
-        } catch (error) {
-            showAuthError(loginError, getAuthErrorMessage(error));
-        }
-    });
-}
-
-// Google Sign-In (Login)
-const googleSignInBtn = document.getElementById('googleSignInBtn');
-if (googleSignInBtn) {
-    googleSignInBtn.addEventListener('click', async () => {
-        googleSignInBtn.disabled = true;
-        const originalHTML = googleSignInBtn.innerHTML;
-        googleSignInBtn.textContent = 'Signing in...';
-
-        try {
-            await signInWithGoogle();
-            closeAuthModal();
-            // Auth state listener will handle the redirect
-        } catch (error) {
-            console.error('Google sign-in error:', error);
-            showAuthError(loginError, getAuthErrorMessage(error));
-            googleSignInBtn.disabled = false;
-            googleSignInBtn.innerHTML = originalHTML;
-        }
-    });
-}
-
-// Apple Sign-In (Login)
-const appleSignInBtn = document.getElementById('appleSignInBtn');
-if (appleSignInBtn) {
-    appleSignInBtn.addEventListener('click', async () => {
-        appleSignInBtn.disabled = true;
-        const originalHTML = appleSignInBtn.innerHTML;
-        appleSignInBtn.textContent = 'Signing in...';
-
-        try {
-            await signInWithApple();
-            closeAuthModal();
-            // Auth state listener will handle the redirect
-        } catch (error) {
-            console.error('Apple sign-in error:', error);
-            showAuthError(loginError, getAuthErrorMessage(error));
-            appleSignInBtn.disabled = false;
-            appleSignInBtn.innerHTML = originalHTML;
-        }
-    });
-}
-
-// Google Sign-Up
-const googleSignUpBtn = document.getElementById('googleSignUpBtn');
-if (googleSignUpBtn) {
-    googleSignUpBtn.addEventListener('click', async () => {
-        googleSignUpBtn.disabled = true;
-        const originalHTML = googleSignUpBtn.innerHTML;
-        googleSignUpBtn.textContent = 'Signing up...';
-
-        try {
-            await signInWithGoogle();
-            closeAuthModal();
-            // Auth state listener will handle the redirect
-        } catch (error) {
-            console.error('Google sign-up error:', error);
-            showAuthError(signupError, getAuthErrorMessage(error));
-            googleSignUpBtn.disabled = false;
-            googleSignUpBtn.innerHTML = originalHTML;
-        }
-    });
-}
-
-// Apple Sign-Up
-const appleSignUpBtn = document.getElementById('appleSignUpBtn');
-if (appleSignUpBtn) {
-    appleSignUpBtn.addEventListener('click', async () => {
-        appleSignUpBtn.disabled = true;
-        const originalHTML = appleSignUpBtn.innerHTML;
-        appleSignUpBtn.textContent = 'Signing up...';
-
-        try {
-            await signInWithApple();
-            closeAuthModal();
-            // Auth state listener will handle the redirect
-        } catch (error) {
-            console.error('Apple sign-up error:', error);
-            showAuthError(signupError, getAuthErrorMessage(error));
-            appleSignUpBtn.disabled = false;
-            appleSignUpBtn.innerHTML = originalHTML;
-        }
-    });
-}
-
-// Auth method toggle handlers
-const loginEmailMethodBtn = document.getElementById('loginEmailMethodBtn');
-const loginPhoneMethodBtn = document.getElementById('loginPhoneMethodBtn');
-const loginEmailSection = document.getElementById('loginEmailSection');
-const loginPhoneSection = document.getElementById('loginPhoneSection');
-
-const signupEmailMethodBtn = document.getElementById('signupEmailMethodBtn');
-const signupPhoneMethodBtn = document.getElementById('signupPhoneMethodBtn');
-const signupEmailSection = document.getElementById('signupEmailSection');
-const signupPhoneSection = document.getElementById('signupPhoneSection');
-
-// Login method toggle
-if (loginEmailMethodBtn && loginPhoneMethodBtn) {
-    loginEmailMethodBtn.addEventListener('click', () => {
-        loginEmailMethodBtn.classList.add('active');
-        loginPhoneMethodBtn.classList.remove('active');
-        loginEmailSection.classList.add('active');
-        loginPhoneSection.classList.remove('active');
-    });
-
-    loginPhoneMethodBtn.addEventListener('click', () => {
-        loginPhoneMethodBtn.classList.add('active');
-        loginEmailMethodBtn.classList.remove('active');
-        loginPhoneSection.classList.add('active');
-        loginEmailSection.classList.remove('active');
-    });
-}
-
-// Signup method toggle
-if (signupEmailMethodBtn && signupPhoneMethodBtn) {
-    signupEmailMethodBtn.addEventListener('click', () => {
-        signupEmailMethodBtn.classList.add('active');
-        signupPhoneMethodBtn.classList.remove('active');
-        signupEmailSection.classList.add('active');
-        signupPhoneSection.classList.remove('active');
-    });
-
-    signupPhoneMethodBtn.addEventListener('click', () => {
-        signupPhoneMethodBtn.classList.add('active');
-        signupEmailMethodBtn.classList.remove('active');
-        signupPhoneSection.classList.add('active');
-        signupEmailSection.classList.remove('active');
-    });
-}
-
-// Phone number formatting function
-function formatPhoneNumber(value, countryCode) {
-    // Remove all non-numeric characters
-    const cleaned = value.replace(/\D/g, '');
-
-    // Format based on country code
-    if (countryCode === '+1') {
-        // US/Canada format: (123) 456-7890
-        if (cleaned.length === 0) return '';
-        if (cleaned.length <= 3) return `(${cleaned}`;
-        if (cleaned.length <= 6) return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
-        return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
-    }
-
-    // For other countries, just return the digits (can add more formats later)
-    return cleaned;
-}
-
-// Extract clean phone number from formatted input
-function cleanPhoneNumber(formatted) {
-    return formatted.replace(/\D/g, '');
-}
-
-// Format verification code as "123 - 456"
-function formatVerificationCode(value) {
-    const cleaned = value.replace(/\D/g, '');
-    if (cleaned.length === 0) return '';
-    if (cleaned.length <= 3) return cleaned;
-    return `${cleaned.slice(0, 3)} - ${cleaned.slice(3, 6)}`;
-}
-
-// Extract clean verification code from formatted input
-function cleanVerificationCode(formatted) {
-    return formatted.replace(/\D/g, '');
-}
-
-// Phone login handlers
-const loginPhoneSendCodeBtn = document.getElementById('loginPhoneSendCodeBtn');
-const loginPhoneVerifyBtn = document.getElementById('loginPhoneVerifyBtn');
-const loginPhone = document.getElementById('loginPhone');
-const loginCountryCode = document.getElementById('loginCountryCode');
-const loginVerificationCode = document.getElementById('loginVerificationCode');
-const loginVerificationCodeSection = document.getElementById('loginVerificationCodeSection');
-const loginPhoneError = document.getElementById('loginPhoneError');
-
-let loginConfirmationResult = null;
-
-// Add phone number formatting to login phone input
-if (loginPhone && loginCountryCode) {
-    loginPhone.addEventListener('input', (e) => {
-        const cursorPos = e.target.selectionStart;
-        const oldLength = e.target.value.length;
-
-        e.target.value = formatPhoneNumber(e.target.value, loginCountryCode.value);
-
-        const newLength = e.target.value.length;
-        const diff = newLength - oldLength;
-
-        // Adjust cursor position if formatting added characters
-        e.target.setSelectionRange(cursorPos + diff, cursorPos + diff);
-    });
-
-    // Reformat when country code changes
-    loginCountryCode.addEventListener('change', () => {
-        if (loginPhone.value) {
-            loginPhone.value = formatPhoneNumber(loginPhone.value, loginCountryCode.value);
-        }
-    });
-}
-
-// Add verification code formatting to login verification code input
-if (loginVerificationCode) {
-    loginVerificationCode.addEventListener('input', (e) => {
-        const cursorPos = e.target.selectionStart;
-        const oldLength = e.target.value.length;
-
-        e.target.value = formatVerificationCode(e.target.value);
-
-        const newLength = e.target.value.length;
-        const diff = newLength - oldLength;
-
-        // Adjust cursor position if formatting added characters
-        e.target.setSelectionRange(cursorPos + diff, cursorPos + diff);
-    });
-}
-
-if (loginPhoneSendCodeBtn) {
-    loginPhoneSendCodeBtn.addEventListener('click', async () => {
-        const phoneNumber = loginCountryCode.value + cleanPhoneNumber(loginPhone.value);
-
-        if (!loginPhone.value.trim()) {
-            showAuthError(loginPhoneError, 'Please enter your phone number');
-            return;
-        }
-
-        loginPhoneSendCodeBtn.disabled = true;
-        loginPhoneSendCodeBtn.textContent = 'Checking...';
-
-        try {
-            // Check if account exists before sending code
-            const exists = await phoneNumberExists(phoneNumber);
-            if (!exists) {
-                showAuthError(loginPhoneError, 'No account exists with this phone number. Please sign up first.');
-                loginPhoneSendCodeBtn.disabled = false;
-                loginPhoneSendCodeBtn.textContent = 'Send Code';
-                return;
-            }
-
-            loginPhoneSendCodeBtn.textContent = 'Sending...';
-            const recaptchaVerifier = await initializeRecaptcha('recaptcha-container-login');
-            loginConfirmationResult = await sendPhoneVerificationCode(phoneNumber, recaptchaVerifier);
-
-            // Show verification code input and hide social signin
-            loginVerificationCodeSection.style.display = 'block';
-            loginPhoneSendCodeBtn.style.display = 'none';
-            loginPhoneVerifyBtn.style.display = 'block';
-
-            // Hide social signin options
-            const loginSocialSection = document.getElementById('loginSocialSection');
-            if (loginSocialSection) loginSocialSection.style.display = 'none';
-
-            showAuthError(loginPhoneError, '✅ Code sent! Check your phone.');
-            loginPhoneError.style.color = '#4ade80';
-        } catch (error) {
-            console.error('Error sending code:', error);
-            showAuthError(loginPhoneError, getAuthErrorMessage(error));
-            loginPhoneSendCodeBtn.disabled = false;
-            loginPhoneSendCodeBtn.textContent = 'Send Code';
-        }
-    });
-}
-
-if (loginPhoneVerifyBtn) {
-    loginPhoneVerifyBtn.addEventListener('click', async () => {
-        const code = cleanVerificationCode(loginVerificationCode.value);
-
-        if (!code || code.length !== 6) {
-            showAuthError(loginPhoneError, 'Please enter the 6-digit code');
-            return;
-        }
-
-        loginPhoneVerifyBtn.disabled = true;
-        loginPhoneVerifyBtn.textContent = 'Verifying...';
-
-        try {
-            // Verify the code - account already confirmed to exist
-            await verifyPhoneCode(loginConfirmationResult, code);
-            closeAuthModal();
-            // Auth state listener will handle the redirect
-        } catch (error) {
-            console.error('Error verifying code:', error);
-            showAuthError(loginPhoneError, 'Invalid code. Please try again.');
-            loginPhoneVerifyBtn.disabled = false;
-            loginPhoneVerifyBtn.textContent = 'Verify & Sign In';
-        }
-    });
-}
-
-// Phone signup handlers
-const signupPhoneSendCodeBtn = document.getElementById('signupPhoneSendCodeBtn');
-const signupPhoneVerifyBtn = document.getElementById('signupPhoneVerifyBtn');
-const signupPhone = document.getElementById('signupPhone');
-const signupCountryCode = document.getElementById('signupCountryCode');
-const signupVerificationCode = document.getElementById('signupVerificationCode');
-const signupVerificationCodeSection = document.getElementById('signupVerificationCodeSection');
-const signupPhoneError = document.getElementById('signupPhoneError');
-const signupPhoneFirstName = document.getElementById('signupPhoneFirstName');
-
-let signupConfirmationResult = null;
-
-// Add phone number formatting to signup phone input
-if (signupPhone && signupCountryCode) {
-    signupPhone.addEventListener('input', (e) => {
-        const cursorPos = e.target.selectionStart;
-        const oldLength = e.target.value.length;
-
-        e.target.value = formatPhoneNumber(e.target.value, signupCountryCode.value);
-
-        const newLength = e.target.value.length;
-        const diff = newLength - oldLength;
-
-        // Adjust cursor position if formatting added characters
-        e.target.setSelectionRange(cursorPos + diff, cursorPos + diff);
-    });
-
-    // Reformat when country code changes
-    signupCountryCode.addEventListener('change', () => {
-        if (signupPhone.value) {
-            signupPhone.value = formatPhoneNumber(signupPhone.value, signupCountryCode.value);
-        }
-    });
-}
-
-// Add verification code formatting to signup verification code input
-if (signupVerificationCode) {
-    signupVerificationCode.addEventListener('input', (e) => {
-        const cursorPos = e.target.selectionStart;
-        const oldLength = e.target.value.length;
-
-        e.target.value = formatVerificationCode(e.target.value);
-
-        const newLength = e.target.value.length;
-        const diff = newLength - oldLength;
-
-        // Adjust cursor position if formatting added characters
-        e.target.setSelectionRange(cursorPos + diff, cursorPos + diff);
-    });
-}
-
-if (signupPhoneSendCodeBtn) {
-    signupPhoneSendCodeBtn.addEventListener('click', async () => {
-        const phoneNumber = signupCountryCode.value + cleanPhoneNumber(signupPhone.value);
-        const firstName = signupPhoneFirstName.value.trim();
-        const username = signupPhoneUsername.value.trim();
-
-        if (!firstName || firstName.length < 2) {
-            showAuthError(signupPhoneError, 'Please enter your name (at least 2 characters)');
-            return;
-        }
-
-        if (!username) {
-            showAuthError(signupPhoneError, 'Please enter a username');
-            return;
-        }
-
-        // Validate username
-        const validation = validateUsername(username);
-        if (!validation.valid) {
-            showAuthError(signupPhoneError, validation.error);
-            return;
-        }
-
-        if (!signupPhone.value.trim()) {
-            showAuthError(signupPhoneError, 'Please enter your phone number');
-            return;
-        }
-
-        signupPhoneSendCodeBtn.disabled = true;
-        signupPhoneSendCodeBtn.textContent = 'Checking username...';
-
-        try {
-            // Check username availability
-            const available = await isUsernameAvailable(username);
-            if (!available) {
-                showAuthError(signupPhoneError, 'Username is already taken');
-                signupPhoneSendCodeBtn.disabled = false;
-                signupPhoneSendCodeBtn.textContent = 'Send Code';
-                return;
-            }
-
-            signupPhoneSendCodeBtn.textContent = 'Sending...';
-
-            const recaptchaVerifier = await initializeRecaptcha('recaptcha-container-signup');
-            signupConfirmationResult = await sendPhoneVerificationCode(phoneNumber, recaptchaVerifier);
-
-            // Show verification code input and hide social signin
-            signupVerificationCodeSection.style.display = 'block';
-            signupPhoneSendCodeBtn.style.display = 'none';
-            signupPhoneVerifyBtn.style.display = 'block';
-
-            // Hide social signin options
-            const signupSocialSection = document.getElementById('signupSocialSection');
-            if (signupSocialSection) signupSocialSection.style.display = 'none';
-
-            showAuthError(signupPhoneError, '✅ Code sent! Check your phone.');
-            signupPhoneError.style.color = '#4ade80';
-        } catch (error) {
-            console.error('Error sending code:', error);
-            showAuthError(signupPhoneError, getAuthErrorMessage(error));
-            signupPhoneSendCodeBtn.disabled = false;
-            signupPhoneSendCodeBtn.textContent = 'Send Code';
-        }
-    });
-}
-
-if (signupPhoneVerifyBtn) {
-    signupPhoneVerifyBtn.addEventListener('click', async () => {
-        const code = cleanVerificationCode(signupVerificationCode.value);
-        const firstName = signupPhoneFirstName.value.trim();
-        const username = signupPhoneUsername.value.trim();
-
-        if (!code || code.length !== 6) {
-            showAuthError(signupPhoneError, 'Please enter the 6-digit code');
-            return;
-        }
-
-        signupPhoneVerifyBtn.disabled = true;
-        signupPhoneVerifyBtn.textContent = 'Verifying...';
-
-        try {
-            await verifyPhoneCode(signupConfirmationResult, code, firstName, username);
-            closeAuthModal();
-            // Auth state listener will handle the redirect
-        } catch (error) {
-            console.error('Error verifying code:', error);
-            showAuthError(signupPhoneError, 'Invalid code. Please try again.');
-            signupPhoneVerifyBtn.disabled = false;
-            signupPhoneVerifyBtn.textContent = 'Verify & Create Account';
-        }
-    });
-}
-
-// Enter key handlers for auth modal
-// Email login form
-if (loginEmail) {
-    loginEmail.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && loginBtn) loginBtn.click();
-    });
-}
-
-if (loginPassword) {
-    loginPassword.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && loginBtn) loginBtn.click();
-    });
-}
-
-// Email signup form
-if (signupFirstName) {
-    signupFirstName.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && signupBtn) signupBtn.click();
-    });
-}
-
-if (signupEmail) {
-    signupEmail.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && signupBtn) signupBtn.click();
-    });
-}
-
-if (signupPassword) {
-    signupPassword.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && signupBtn) signupBtn.click();
-    });
-}
-
-// Phone login form
-if (loginPhone) {
-    loginPhone.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && loginPhoneSendCodeBtn) loginPhoneSendCodeBtn.click();
-    });
-}
-
-if (loginVerificationCode) {
-    loginVerificationCode.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && loginPhoneVerifyBtn) loginPhoneVerifyBtn.click();
-    });
-}
-
-// Phone signup form
-if (signupPhoneFirstName) {
-    signupPhoneFirstName.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && signupPhoneSendCodeBtn) signupPhoneSendCodeBtn.click();
-    });
-}
-
-if (signupPhone) {
-    signupPhone.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && signupPhoneSendCodeBtn) signupPhoneSendCodeBtn.click();
-    });
-}
-
-if (signupVerificationCode) {
-    signupVerificationCode.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && signupPhoneVerifyBtn) signupPhoneVerifyBtn.click();
-    });
-}
-
 // Close modals when clicking outside
 nameModal.addEventListener('click', (e) => {
     if (e.target === nameModal) {
@@ -1038,9 +415,9 @@ function handleCreateGameClick() {
     console.log('Create game clicked');
 
     if (!currentUser || !currentUserFirstName) {
-        // Store the intended action and show login modal
+        // Store the intended action and redirect to login
         pendingAction = 'createGame';
-        showAuthModal('login');
+        window.location.href = 'login.html';
         return;
     }
 
@@ -1090,9 +467,9 @@ function handleCreateGame(playerName) {
  */
 function openJoinModal() {
     if (!currentUser || !currentUserFirstName) {
-        // Store the intended action and show login modal
+        // Store the intended action and redirect to login
         pendingAction = 'joinGame';
-        showAuthModal('login');
+        window.location.href = 'login.html';
         return;
     }
 
@@ -1470,74 +847,6 @@ function joinExistingGame(gameCode, playerName) {
  */
 function showJoinError(message) {
     joinError.textContent = message;
-}
-
-// ======================
-// Auth Modal Functions
-// ======================
-
-/**
- * Show the auth modal (login or signup)
- * @param {string} mode - 'login' or 'signup'
- */
-function showAuthModal(mode = 'login') {
-    console.log('showAuthModal called with mode:', mode);
-
-    if (mode === 'signup') {
-        console.log('Showing signup form');
-        if (loginFormContent) loginFormContent.style.display = 'none';
-        if (signupFormContent) signupFormContent.style.display = 'block';
-        if (authModalTitle) authModalTitle.textContent = 'Create Account';
-    } else {
-        console.log('Showing login form');
-        if (loginFormContent) loginFormContent.style.display = 'block';
-        if (signupFormContent) signupFormContent.style.display = 'none';
-        if (authModalTitle) authModalTitle.textContent = 'Sign In';
-    }
-
-    // Clear any errors
-    if (loginError) loginError.textContent = '';
-    if (signupError) signupError.textContent = '';
-
-    // Clear inputs only when opening fresh
-    if (!authModal.classList.contains('active')) {
-        if (loginEmail) loginEmail.value = '';
-        if (loginPassword) loginPassword.value = '';
-        if (signupFirstName) signupFirstName.value = '';
-        if (signupEmail) signupEmail.value = '';
-        if (signupPassword) signupPassword.value = '';
-    }
-
-    if (authModal) authModal.classList.add('active');
-
-    // Focus on first input
-    setTimeout(() => {
-        if (mode === 'signup') {
-            if (signupFirstName) signupFirstName.focus();
-        } else {
-            if (loginEmail) loginEmail.focus();
-        }
-    }, 100);
-}
-
-/**
- * Close the auth modal
- */
-function closeAuthModal() {
-    console.log('Closing auth modal');
-    if (authModal) {
-        authModal.classList.remove('active');
-    }
-    if (loginError) loginError.textContent = '';
-    if (signupError) signupError.textContent = '';
-}
-
-/**
- * Show error in auth modal
- */
-function showAuthError(element, message) {
-    element.textContent = message;
-    element.style.display = 'block';
 }
 
 // ======================
@@ -2091,12 +1400,6 @@ const friendRequestsCount = document.getElementById('friendRequestsCount');
 const friendsModal = document.getElementById('friendsModal');
 const closeFriendsBtn = document.getElementById('closeFriendsBtn');
 
-// Username Modal Elements
-const usernameModal = document.getElementById('usernameModal');
-const usernameInput = document.getElementById('usernameInput');
-const usernameSubmitBtn = document.getElementById('usernameSubmitBtn');
-const usernameError = document.getElementById('usernameError');
-
 // Friends Tab Elements
 const friendsTabs = document.querySelectorAll('.friends-tab');
 const friendsTabPanes = document.querySelectorAll('.tab-pane');
@@ -2129,16 +1432,9 @@ if (friendsBtn) {
     friendsBtn.addEventListener('click', openFriendsModal);
 }
 
-// Friends Nav Button - handle both with/without username
+// Friends Nav Button
 if (friendsNavBtn) {
-    friendsNavBtn.addEventListener('click', async () => {
-        const hasUserUsername = await hasUsername();
-        if (!hasUserUsername) {
-            showUsernameModal();
-        } else {
-            openFriendsModal();
-        }
-    });
+    friendsNavBtn.addEventListener('click', openFriendsModal);
 }
 
 if (closeFriendsBtn) {
@@ -2149,19 +1445,6 @@ if (friendsModal) {
     friendsModal.addEventListener('click', (e) => {
         if (e.target === friendsModal) {
             closeFriendsModal();
-        }
-    });
-}
-
-// Username Modal Event Listeners
-if (usernameSubmitBtn) {
-    usernameSubmitBtn.addEventListener('click', handleSetUsername);
-}
-
-if (usernameInput) {
-    usernameInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            handleSetUsername();
         }
     });
 }
@@ -2185,103 +1468,52 @@ if (friendSearchInput) {
             handleFriendSearch();
         }
     });
+
+    // Add phone number formatting to friend search input
+    friendSearchInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 10) value = value.substring(0, 10);
+
+        if (value.length === 0) {
+            e.target.value = '';
+        } else if (value.length <= 3) {
+            e.target.value = '(' + value;
+        } else if (value.length <= 6) {
+            e.target.value = '(' + value.substring(0, 3) + ') ' + value.substring(3);
+        } else {
+            e.target.value = '(' + value.substring(0, 3) + ') ' + value.substring(3, 6) + '-' + value.substring(6);
+        }
+    });
 }
 
 /**
- * Check if user has username and prompt if not
+ * Format phone number for display
+ * @param {string} phoneNumber - E.164 format phone number
+ * @returns {string} Formatted phone number
  */
-async function checkAndPromptForUsername() {
-    try {
-        const hasUserUsername = await hasUsername();
-        if (!hasUserUsername) {
-            console.log('User does not have username, showing prompt');
-            showUsernameModal();
-        }
-    } catch (error) {
-        console.error('Error checking username:', error);
+function formatPhoneNumberForDisplay(phoneNumber) {
+    if (!phoneNumber) return 'Unknown';
+
+    // Extract country code and number
+    const match = phoneNumber.match(/^\+(\d{1,3})(\d+)$/);
+    if (!match) return phoneNumber;
+
+    const countryCode = match[1];
+    const number = match[2];
+
+    // Format US/Canada numbers as +1 (234) 567-8901
+    if (countryCode === '1' && number.length === 10) {
+        return `+1 (${number.substring(0, 3)}) ${number.substring(3, 6)}-${number.substring(6)}`;
     }
-}
 
-/**
- * Show username setup modal
- */
-function showUsernameModal() {
-    usernameModal.classList.add('active');
-    usernameInput.value = '';
-    usernameError.textContent = '';
-    usernameInput.focus();
-}
-
-/**
- * Hide username setup modal
- */
-function hideUsernameModal() {
-    usernameModal.classList.remove('active');
-}
-
-/**
- * Handle username submission
- */
-async function handleSetUsername() {
-    try {
-        const username = usernameInput.value.trim();
-
-        // Validate
-        const validation = validateUsername(username);
-        if (!validation.valid) {
-            usernameError.textContent = validation.error;
-            return;
-        }
-
-        usernameSubmitBtn.disabled = true;
-        usernameSubmitBtn.textContent = 'Checking...';
-
-        // Check availability
-        const available = await isUsernameAvailable(username);
-        if (!available) {
-            usernameError.textContent = 'Username is already taken';
-            usernameSubmitBtn.disabled = false;
-            usernameSubmitBtn.textContent = 'Set Username';
-            return;
-        }
-
-        usernameSubmitBtn.textContent = 'Setting...';
-
-        // Set username
-        await setUsername(username);
-
-        // Hide modal
-        hideUsernameModal();
-
-        // Show success message
-        showNotification(`Username set to @${username}!\n\nYou can now add friends.`, 'Username Set');
-
-        // Show friends button
-        if (friendsBtn) {
-            friendsBtn.style.display = 'flex';
-        }
-
-        usernameSubmitBtn.disabled = false;
-        usernameSubmitBtn.textContent = 'Set Username';
-    } catch (error) {
-        console.error('Error setting username:', error);
-        usernameError.textContent = error.message || 'Error setting username';
-        usernameSubmitBtn.disabled = false;
-        usernameSubmitBtn.textContent = 'Set Username';
-    }
+    // For other countries, show as +CC XXXX...
+    return `+${countryCode} ${number}`;
 }
 
 /**
  * Open Friends modal
  */
 async function openFriendsModal() {
-    // Check if user has username
-    const hasUserUsername = await hasUsername();
-    if (!hasUserUsername) {
-        showUsernameModal();
-        return;
-    }
-
     friendsModal.classList.add('active');
     // Load initial tab
     await loadFriendsList();
@@ -2366,12 +1598,12 @@ function createFriendCard(friend) {
     name.className = 'friend-name';
     name.textContent = friend.displayName || friend.firstName || 'Player';
 
-    const username = document.createElement('div');
-    username.className = 'friend-username';
-    username.textContent = `@${friend.username}`;
+    const phoneNumber = document.createElement('div');
+    phoneNumber.className = 'friend-username';
+    phoneNumber.textContent = formatPhoneNumberForDisplay(friend.phoneNumber);
 
     info.appendChild(name);
-    info.appendChild(username);
+    info.appendChild(phoneNumber);
 
     const actions = document.createElement('div');
     actions.className = 'friend-actions';
@@ -2452,12 +1684,12 @@ function createIncomingRequestCard(request) {
     name.className = 'friend-name';
     name.textContent = request.displayName || 'Player';
 
-    const username = document.createElement('div');
-    username.className = 'friend-username';
-    username.textContent = `@${request.username}`;
+    const phoneNumber = document.createElement('div');
+    phoneNumber.className = 'friend-username';
+    phoneNumber.textContent = formatPhoneNumberForDisplay(request.phoneNumber);
 
     info.appendChild(name);
-    info.appendChild(username);
+    info.appendChild(phoneNumber);
 
     const actions = document.createElement('div');
     actions.className = 'friend-actions';
@@ -2495,12 +1727,12 @@ function createOutgoingRequestCard(request) {
     name.className = 'friend-name';
     name.textContent = request.displayName || 'Player';
 
-    const username = document.createElement('div');
-    username.className = 'friend-username';
-    username.textContent = `@${request.username}`;
+    const phoneNumber = document.createElement('div');
+    phoneNumber.className = 'friend-username';
+    phoneNumber.textContent = formatPhoneNumberForDisplay(request.phoneNumber);
 
     info.appendChild(name);
-    info.appendChild(username);
+    info.appendChild(phoneNumber);
 
     const actions = document.createElement('div');
     actions.className = 'friend-actions';
@@ -2523,10 +1755,12 @@ function createOutgoingRequestCard(request) {
  */
 async function handleFriendSearch() {
     try {
-        const username = friendSearchInput.value.trim();
+        const friendSearchCountryCode = document.getElementById('friendSearchCountryCode');
+        const phoneDigits = friendSearchInput.value.replace(/\D/g, ''); // Extract only digits
+        const phoneNumber = friendSearchCountryCode.value + phoneDigits;
 
-        if (!username) {
-            friendSearchError.textContent = 'Please enter a username';
+        if (!phoneDigits || phoneDigits.length < 7) {
+            friendSearchError.textContent = 'Please enter a valid phone number';
             return;
         }
 
@@ -2535,7 +1769,7 @@ async function handleFriendSearch() {
         friendSearchError.textContent = '';
         friendSearchResults.innerHTML = '';
 
-        const user = await searchUserByUsername(username);
+        const user = await searchUserByPhoneNumber(phoneNumber);
 
         if (!user) {
             friendSearchError.textContent = 'User not found';
@@ -2572,12 +1806,12 @@ function createSearchResultCard(user) {
     name.className = 'friend-name';
     name.textContent = user.displayName || user.firstName || 'Player';
 
-    const username = document.createElement('div');
-    username.className = 'friend-username';
-    username.textContent = `@${user.username}`;
+    const phoneNumber = document.createElement('div');
+    phoneNumber.className = 'friend-username';
+    phoneNumber.textContent = formatPhoneNumberForDisplay(user.phoneNumber);
 
     info.appendChild(name);
-    info.appendChild(username);
+    info.appendChild(phoneNumber);
 
     const actions = document.createElement('div');
     actions.className = 'friend-actions';
@@ -2585,7 +1819,7 @@ function createSearchResultCard(user) {
     const addBtn = document.createElement('button');
     addBtn.className = 'friend-action-btn';
     addBtn.textContent = 'Add Friend';
-    addBtn.onclick = () => handleSendFriendRequest(user.username, addBtn);
+    addBtn.onclick = () => handleSendFriendRequest(user.phoneNumber, addBtn);
 
     actions.appendChild(addBtn);
 
@@ -2598,12 +1832,12 @@ function createSearchResultCard(user) {
 /**
  * Handle send friend request
  */
-async function handleSendFriendRequest(username, button) {
+async function handleSendFriendRequest(phoneNumber, button) {
     try {
         button.disabled = true;
         button.textContent = 'Sending...';
 
-        await sendFriendRequest(username);
+        await sendFriendRequest(phoneNumber);
 
         button.textContent = 'Request Sent!';
         button.classList.add('disabled');
@@ -2837,91 +2071,24 @@ async function updateFriendsBadges() {
  */
 async function loadFriendsData() {
     if (currentUser && currentUserFirstName) {
-        // Check if user has username
-        const hasUserUsername = await hasUsername();
-        if (hasUserUsername) {
-            // Show friends button
-            if (friendsBtn) {
-                friendsBtn.style.display = 'flex';
-            }
+        // Phone users always have phone numbers, no validation needed
+        // Show friends button
+        if (friendsBtn) {
+            friendsBtn.style.display = 'flex';
+        }
 
-            // Friends nav button is always visible, no need to show/hide
+        // Friends nav button is always visible, no need to show/hide
 
-            // Update badges
+        // Update badges
+        await updateFriendsBadges();
+        await loadActiveGames(); // Also load active games (includes invites)
+
+        // Set up periodic badge updates
+        setInterval(async () => {
             await updateFriendsBadges();
-            await loadActiveGames(); // Also load active games (includes invites)
-
-            // Set up periodic badge updates
-            setInterval(async () => {
-                await updateFriendsBadges();
-                await loadActiveGames();
-            }, 30000); // Update every 30 seconds
-        } else {
-            // Prompt for username after a short delay
-            setTimeout(checkAndPromptForUsername, 1000);
-        }
+            await loadActiveGames();
+        }, 30000); // Update every 30 seconds
     }
-}
-
-// Signup form - add username field handling
-const signupUsername = document.getElementById('signupUsername');
-const signupPhoneUsername = document.getElementById('signupPhoneUsername');
-
-// Modify existing signup handlers to include username
-if (signupBtn) {
-    signupBtn.removeEventListener('click', signupBtn.onclick);
-    signupBtn.addEventListener('click', async () => {
-        const firstName = signupFirstName.value.trim();
-        const username = signupUsername.value.trim();
-        const email = signupEmail.value.trim();
-        const password = signupPassword.value;
-
-        if (!firstName || !username || !email || !password) {
-            showAuthError(signupError, 'Please fill in all fields');
-            return;
-        }
-
-        if (firstName.length < 2) {
-            showAuthError(signupError, 'First name must be at least 2 characters');
-            return;
-        }
-
-        // Validate username
-        const validation = validateUsername(username);
-        if (!validation.valid) {
-            showAuthError(signupError, validation.error);
-            return;
-        }
-
-        if (password.length < 6) {
-            showAuthError(signupError, 'Password must be at least 6 characters');
-            return;
-        }
-
-        signupBtn.disabled = true;
-        signupBtn.textContent = 'Checking username...';
-
-        try {
-            // Check username availability
-            const available = await isUsernameAvailable(username);
-            if (!available) {
-                showAuthError(signupError, 'Username is already taken');
-                signupBtn.disabled = false;
-                signupBtn.textContent = 'Create Account';
-                return;
-            }
-
-            signupBtn.textContent = 'Creating account...';
-            await signUpUser(email, password, firstName, username);
-            closeAuthModal();
-            // Auth state listener will handle the redirect
-        } catch (error) {
-            console.error('Signup error:', error);
-            showAuthError(signupError, getAuthErrorMessage(error));
-            signupBtn.disabled = false;
-            signupBtn.textContent = 'Create Account';
-        }
-    });
 }
 
 console.log('Landing page ready!');

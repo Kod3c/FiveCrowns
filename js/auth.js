@@ -4,14 +4,13 @@
 console.log('Auth service loaded');
 
 /**
- * Sign up a new user with email, password, first name, and username
+ * Sign up a new user with email, password, and first name
  * @param {string} email - User's email
  * @param {string} password - User's password
  * @param {string} firstName - User's first name
- * @param {string} username - User's unique username (optional, can be set later)
  * @returns {Promise<object>} User object
  */
-async function signUpUser(email, password, firstName, username = null) {
+async function signUpUser(email, password, firstName) {
     try {
         // Create user with email and password
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
@@ -54,11 +53,6 @@ async function signUpUser(email, password, firstName, username = null) {
                 longestStreak: 0
             }
         };
-
-        // Add username if provided
-        if (username) {
-            userData.username = username.toLowerCase().trim();
-        }
 
         await firestore.collection('users').doc(user.uid).set(userData);
 
@@ -189,10 +183,14 @@ async function updateUserName(firstName) {
  */
 async function getUserFirstName(uid) {
     try {
+        console.log('Getting user first name for uid:', uid);
         const doc = await firestore.collection('users').doc(uid).get();
         if (doc.exists) {
             const data = doc.data();
-            return data.firstName || data.displayName || 'Player';
+            console.log('User document data:', data);
+            const firstName = data.firstName || data.displayName || 'Player';
+            console.log('Returning firstName:', firstName);
+            return firstName;
         } else {
             // Document doesn't exist - user was created before Firestore was enabled
             // Try to create it now from auth data
@@ -200,13 +198,20 @@ async function getUserFirstName(uid) {
             const user = auth.currentUser;
             if (user) {
                 const firstName = user.displayName || 'Player';
-                await firestore.collection('users').doc(uid).set({
+                console.log('Creating user document with firstName:', firstName);
+
+                // Build user data based on what's available
+                const userData = {
                     uid: uid,
-                    email: user.email,
                     firstName: firstName,
                     displayName: firstName,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    friends: [],
+                    friendRequests: {
+                        incoming: [],
+                        outgoing: []
+                    },
                     stats: {
                         gamesPlayed: 0,
                         gamesWon: 0,
@@ -216,8 +221,20 @@ async function getUserFirstName(uid) {
                         currentStreak: 0,
                         longestStreak: 0
                     }
-                });
-                console.log('User document created successfully');
+                };
+
+                // Add email or phone based on what's available
+                if (user.email) {
+                    userData.email = user.email;
+                    userData.emailVerified = user.emailVerified;
+                }
+                if (user.phoneNumber) {
+                    userData.phoneNumber = user.phoneNumber;
+                    userData.provider = 'phone';
+                }
+
+                await firestore.collection('users').doc(uid).set(userData);
+                console.log('User document created successfully with data:', userData);
                 return firstName;
             }
         }
@@ -436,10 +453,9 @@ async function sendPhoneVerificationCode(phoneNumber, recaptchaVerifier) {
  * @param {object} confirmationResult - Result from sendPhoneVerificationCode
  * @param {string} verificationCode - 6-digit code from SMS
  * @param {string} firstName - User's first name (for new users, REQUIRED for new users)
- * @param {string} username - User's username (optional, for new users)
  * @returns {Promise<object>} User object with isNewUser flag
  */
-async function verifyPhoneCode(confirmationResult, verificationCode, firstName = null, username = null) {
+async function verifyPhoneCode(confirmationResult, verificationCode, firstName = null) {
     try {
         // First, verify the code and sign in the user
         const userCredential = await confirmationResult.confirm(verificationCode);
@@ -485,11 +501,6 @@ async function verifyPhoneCode(confirmationResult, verificationCode, firstName =
                     longestStreak: 0
                 }
             };
-
-            // Add username if provided
-            if (username) {
-                userData.username = username.toLowerCase().trim();
-            }
 
             console.log('Creating user document with data:', { ...userData, firstName, displayName: firstName });
             await firestore.collection('users').doc(user.uid).set(userData);
