@@ -84,6 +84,14 @@ const closeCreateJoinBtn = document.getElementById('closeCreateJoinBtn');
 const menuModal = document.getElementById('menuModal');
 const closeMenuBtn = document.getElementById('closeMenuBtn');
 
+// Edit Display Name Modal Elements
+const editDisplayNameModal = document.getElementById('editDisplayNameModal');
+const closeEditDisplayNameBtn = document.getElementById('closeEditDisplayNameBtn');
+const cancelEditDisplayNameBtn = document.getElementById('cancelEditDisplayNameBtn');
+const editDisplayNameInput = document.getElementById('editDisplayNameInput');
+const saveDisplayNameBtn = document.getElementById('saveDisplayNameBtn');
+const editDisplayNameError = document.getElementById('editDisplayNameError');
+
 // Old Menu Elements (deprecated, keeping for reference)
 const menuButton = document.getElementById('menuButton');
 const menuDropdown = document.getElementById('menuDropdown');
@@ -276,21 +284,7 @@ if (menuSignUp) {
 if (menuEditProfile) {
     menuEditProfile.addEventListener('click', () => {
         closeMenuModal();
-        // Prompt for new name
-        const newName = prompt('Enter your first name:', currentUserFirstName !== 'Player' ? currentUserFirstName : '');
-        if (newName && newName.trim() && newName.trim() !== currentUserFirstName) {
-            updateUserName(newName.trim())
-                .then(() => {
-                    currentUserFirstName = newName.trim();
-                    window.currentUserFirstName = newName.trim();
-                    if (menuUserName) menuUserName.textContent = newName.trim();
-                    alert('Name updated successfully!');
-                })
-                .catch((error) => {
-                    console.error('Error updating name:', error);
-                    alert('Error updating name. Please try again.');
-                });
-        }
+        openEditDisplayNameModal();
     });
 }
 
@@ -362,6 +356,34 @@ if (menuModal) {
     menuModal.addEventListener('click', (e) => {
         if (e.target === menuModal) {
             closeMenuModal();
+        }
+    });
+}
+
+if (closeEditDisplayNameBtn) {
+    closeEditDisplayNameBtn.addEventListener('click', closeEditDisplayNameModal);
+}
+
+if (cancelEditDisplayNameBtn) {
+    cancelEditDisplayNameBtn.addEventListener('click', closeEditDisplayNameModal);
+}
+
+if (saveDisplayNameBtn) {
+    saveDisplayNameBtn.addEventListener('click', handleSaveDisplayName);
+}
+
+if (editDisplayNameModal) {
+    editDisplayNameModal.addEventListener('click', (e) => {
+        if (e.target === editDisplayNameModal) {
+            closeEditDisplayNameModal();
+        }
+    });
+}
+
+if (editDisplayNameInput) {
+    editDisplayNameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleSaveDisplayName();
         }
     });
 }
@@ -2088,6 +2110,78 @@ async function loadFriendsData() {
             await updateFriendsBadges();
             await loadActiveGames();
         }, 30000); // Update every 30 seconds
+    }
+}
+
+// ======================
+// Edit Display Name Modal Functions
+// ======================
+
+/**
+ * Open Edit Display Name modal
+ */
+function openEditDisplayNameModal() {
+    editDisplayNameInput.value = currentUserFirstName !== 'Player' ? currentUserFirstName : '';
+    editDisplayNameError.textContent = '';
+    editDisplayNameModal.classList.add('active');
+    setTimeout(() => editDisplayNameInput.focus(), 100);
+}
+
+/**
+ * Close Edit Display Name modal
+ */
+function closeEditDisplayNameModal() {
+    editDisplayNameModal.classList.remove('active');
+    editDisplayNameInput.value = '';
+    editDisplayNameError.textContent = '';
+}
+
+/**
+ * Handle save display name
+ */
+async function handleSaveDisplayName() {
+    const newName = editDisplayNameInput.value.trim();
+
+    // Validate input
+    if (!newName) {
+        editDisplayNameError.textContent = 'Please enter a name';
+        return;
+    }
+
+    if (newName === currentUserFirstName) {
+        // No change, just close modal
+        closeEditDisplayNameModal();
+        return;
+    }
+
+    try {
+        // Disable button while saving
+        saveDisplayNameBtn.disabled = true;
+        saveDisplayNameBtn.textContent = 'Saving...';
+        editDisplayNameError.textContent = '';
+
+        // Update name in database
+        await updateUserName(newName);
+
+        // Update local state
+        currentUserFirstName = newName;
+        window.currentUserFirstName = newName;
+        if (menuUserName) menuUserName.textContent = newName;
+
+        // Close modal
+        closeEditDisplayNameModal();
+
+        // Show success message
+        showNotification('Display name updated successfully!', 'Success');
+
+        // Re-enable button
+        saveDisplayNameBtn.disabled = false;
+        saveDisplayNameBtn.textContent = 'Save';
+    } catch (error) {
+        console.error('Error updating name:', error);
+        editDisplayNameError.textContent = error.message || 'Error updating name. Please try again.';
+        saveDisplayNameBtn.disabled = false;
+        saveDisplayNameBtn.textContent = 'Save';
     }
 }
 

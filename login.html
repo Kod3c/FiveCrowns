@@ -86,6 +86,7 @@
             color: #ff6b6b;
             font-size: 13px;
             margin-top: 8px;
+            margin-bottom: 15px;
             display: none;
         }
 
@@ -289,12 +290,11 @@
         @media (max-width: 480px) {
             body {
                 padding: 8px;
-                align-items: flex-start;
                 min-height: 100vh;
             }
 
             .container {
-                margin-top: 5px;
+                margin-top: 0;
             }
 
             .logo-section {
@@ -361,11 +361,6 @@
                 padding: 9px 11px;
             }
 
-            /* Hide social sign-in on mobile to save space */
-            .social-signin {
-                display: none;
-            }
-
             .auth-toggle {
                 font-size: 12px;
                 margin-top: 12px;
@@ -387,7 +382,7 @@
             }
 
             .container {
-                margin-top: 3px;
+                margin-top: 0;
             }
 
             .logo-section {
@@ -470,7 +465,7 @@
             }
 
             .container {
-                margin-top: 2px;
+                margin-top: 0;
             }
 
             .logo-section {
@@ -739,6 +734,7 @@
         // State variables for phone auth
         let loginConfirmationResult = null;
         let signupConfirmationResult = null;
+        let isVerifyingLogin = false; // Flag to prevent auto-redirect during login verification
 
         // Toggle links
         const showSignupLink = document.getElementById('showSignupLink');
@@ -780,12 +776,52 @@
         loginVerificationCode.addEventListener('input', () => formatVerificationCode(loginVerificationCode));
         signupVerificationCode.addEventListener('input', () => formatVerificationCode(signupVerificationCode));
 
+        // Add Enter key handlers for login form
+        loginPhone.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+
+        loginVerificationCode.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+
+        // Add Enter key handlers for signup form
+        signupFirstName.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') signupBtn.click();
+        });
+
+        signupPhone.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') signupBtn.click();
+        });
+
+        signupVerificationCode.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') signupBtn.click();
+        });
+
+        // Check for debug mode (prevents redirect to see console logs)
+        const urlParams = new URLSearchParams(window.location.search);
+        const debugMode = urlParams.has('debug');
+        if (debugMode) {
+            console.log('%c🔧 DEBUG MODE ENABLED - Auto-redirect disabled', 'background: #ff6b6b; color: white; padding: 5px; font-weight: bold;');
+        }
+
         // Check if user is already logged in
         auth.onAuthStateChanged((user) => {
             if (user) {
                 console.log('User already logged in:', user.uid);
-                // Redirect to home page
-                window.location.href = 'index.html';
+                // Don't redirect if we're in the middle of verifying login
+                // (need to check Firestore account existence first)
+                if (!isVerifyingLogin) {
+                    // Don't redirect in debug mode
+                    if (debugMode) {
+                        console.log('%c🔧 DEBUG: Would redirect to index.html but debug mode is on', 'background: #4CAF50; color: white; padding: 5px;');
+                        loadingSpinner.classList.remove('show');
+                        loginForm.style.display = 'block';
+                    } else {
+                        // Redirect to home page
+                        window.location.href = 'index.html';
+                    }
+                }
             } else {
                 // Hide loading, show login form
                 loadingSpinner.classList.remove('show');
@@ -827,7 +863,7 @@
                 }
 
                 loginBtn.disabled = true;
-                loginBtn.textContent = 'Checking...';
+                loginBtn.textContent = 'Checking account...';
 
                 try {
                     // Check if account exists before sending code
@@ -872,10 +908,41 @@
                 loginBtn.textContent = 'Verifying...';
 
                 try {
-                    await verifyPhoneCode(loginConfirmationResult, code);
-                    // Redirect handled by onAuthStateChanged
+                    // Set flag to prevent auto-redirect
+                    isVerifyingLogin = true;
+
+                    const result = await verifyPhoneCode(loginConfirmationResult, code);
+
+                    // Check if user has a Firestore account (now authenticated, can query)
+                    const phoneNumber = loginCountryCode.value + loginPhone.value.replace(/\D/g, '');
+                    console.log('Checking Firestore account for:', phoneNumber);
+                    const hasAccount = await phoneNumberHasFirestoreAccount(phoneNumber);
+                    console.log('Firestore account exists:', hasAccount);
+
+                    if (!hasAccount) {
+                        // User verified phone but has no account - sign them out and show error
+                        console.log('No Firestore account found - signing out');
+                        await auth.signOut();
+                        isVerifyingLogin = false; // Reset flag
+                        showError(loginError, 'No account exists with this phone number. Please sign up first.');
+                        loginBtn.disabled = false;
+                        loginBtn.textContent = 'Send Code';
+                        loginConfirmationResult = null;
+                        loginVerificationCodeGroup.style.display = 'none';
+                        loginVerificationCode.value = '';
+                        return;
+                    }
+
+                    // Has account - manually redirect
+                    console.log('Firestore account found - redirecting to index.html');
+                    if (!debugMode) {
+                        window.location.href = 'index.html';
+                    } else {
+                        console.log('%c🔧 DEBUG: Would redirect to index.html but debug mode is on', 'background: #4CAF50; color: white; padding: 5px;');
+                    }
                 } catch (error) {
                     console.error('Verification error:', error);
+                    isVerifyingLogin = false; // Reset flag on error
                     showError(loginError, getAuthErrorMessage(error));
                     loginBtn.disabled = false;
                     loginBtn.textContent = 'Verify Code';
@@ -886,6 +953,7 @@
         // Signup - Phone only
         signupBtn.addEventListener('click', async () => {
             const firstName = signupFirstName.value.trim();
+            console.log('Signup button clicked, firstName:', firstName);
 
             if (!firstName || firstName.length < 2) {
                 showError(signupError, 'First name must be at least 2 characters');
@@ -937,8 +1005,15 @@
                 signupBtn.textContent = 'Creating account...';
 
                 try {
+                    console.log('Calling verifyPhoneCode with firstName:', firstName);
                     await verifyPhoneCode(signupConfirmationResult, code, firstName);
-                    // Redirect handled by onAuthStateChanged
+
+                    if (debugMode) {
+                        console.log('%c🔧 DEBUG: Signup complete! Check logs above. Would normally redirect to index.html', 'background: #4CAF50; color: white; padding: 5px; font-weight: bold;');
+                        console.log('%c🔧 User UID:', 'font-weight: bold;', auth.currentUser?.uid);
+                        console.log('%c🔧 DisplayName:', 'font-weight: bold;', auth.currentUser?.displayName);
+                    }
+                    // Redirect handled by onAuthStateChanged (unless debug mode)
                 } catch (error) {
                     console.error('Signup error:', error);
                     showError(signupError, getAuthErrorMessage(error));

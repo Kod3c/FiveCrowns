@@ -382,7 +382,7 @@
                 </div>
                 <div class="menu-divider" id="menuDivider" style="display: none;"></div>
                 <button class="menu-item" id="menuEditProfile" style="display: none;">
-                    <span>Edit Profile</span>
+                    <span>Edit Display Name</span>
                 </button>
                 <button class="menu-item" id="menuSignIn">
                     <span>Sign In</span>
@@ -393,6 +393,32 @@
                 <button class="menu-item" id="menuSignOut" style="display: none;">
                     <span>Sign Out</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Display Name Modal -->
+    <div class="modal" id="editDisplayNameModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h2>Edit Display Name</h2>
+                <button class="close-btn" id="closeEditDisplayNameBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-instruction">Enter your new display name:</p>
+                <input
+                    type="text"
+                    id="editDisplayNameInput"
+                    class="player-name-input"
+                    maxlength="20"
+                    placeholder="Display Name"
+                    autocomplete="off"
+                >
+                <p class="error-message" id="editDisplayNameError"></p>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" id="cancelEditDisplayNameBtn" style="flex: 1;">Cancel</button>
+                <button class="btn btn-primary" id="saveDisplayNameBtn" style="flex: 1;">Save</button>
             </div>
         </div>
     </div>
