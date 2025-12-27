@@ -697,33 +697,100 @@ async function verifyAndAddPhoneToUser(confirmationResult, verificationCode) {
             throw new Error('No user is currently signed in');
         }
 
-        console.log('Verifying phone code for existing user:', currentUser.uid);
+        console.log('verifyAndAddPhoneToUser: Starting for user:', currentUser.uid);
+        console.log('verifyAndAddPhoneToUser: Current user email:', currentUser.email);
+        console.log('verifyAndAddPhoneToUser: Current user provider:', currentUser.providerData);
         const currentUid = currentUser.uid;
 
-        // Verify the code - this will sign in as the phone number temporarily
+        // Create phone credential from verification code
         const phoneCredential = firebase.auth.PhoneAuthProvider.credential(
             confirmationResult.verificationId,
             verificationCode
         );
 
+        console.log('verifyAndAddPhoneToUser: Phone credential created');
+
         // Link the phone credential to the existing account
         // This adds the phone number to the existing Google/Apple account
-        await currentUser.linkWithCredential(phoneCredential);
+        try {
+            const linkResult = await currentUser.linkWithCredential(phoneCredential);
+            console.log('✅ Phone credential linked to account:', linkResult.user.uid);
+            console.log('Phone number after linking:', linkResult.user.phoneNumber);
+        } catch (linkError) {
+            console.error('❌ Error linking phone credential:', linkError);
+            console.error('Error code:', linkError.code);
+            console.error('Error message:', linkError.message);
+            throw linkError;
+        }
 
-        console.log('Phone credential linked to account');
+        // Verify we're still the same user
+        const afterLinkUser = auth.currentUser;
+        console.log('verifyAndAddPhoneToUser: User after linking:', afterLinkUser.uid);
+        console.log('verifyAndAddPhoneToUser: UIDs match:', afterLinkUser.uid === currentUid);
 
-        // Update Firestore document with phone number
-        const phoneNumber = currentUser.phoneNumber;
-        await firestore.collection('users').doc(currentUid).update({
-            phoneNumber: phoneNumber
-        });
+        if (afterLinkUser.uid !== currentUid) {
+            console.error('❌ ERROR: User changed after linking! Original:', currentUid, 'New:', afterLinkUser.uid);
+            throw new Error('User account changed unexpectedly after phone linking');
+        }
+
+        // Get the phone number
+        const phoneNumber = afterLinkUser.phoneNumber;
+        console.log('verifyAndAddPhoneToUser: Phone number to save:', phoneNumber);
+
+        if (!phoneNumber) {
+            throw new Error('Phone number not found on user after linking');
+        }
+
+        // Check if Firestore document exists
+        const userDoc = await firestore.collection('users').doc(currentUid).get();
+        if (!userDoc.exists) {
+            console.warn('⚠️ WARNING: Firestore document does not exist for user:', currentUid);
+            console.log('Creating Firestore document for Google/Apple user with phone number...');
+
+            // Create the document instead of updating it
+            const userData = {
+                uid: currentUid,
+                firstName: afterLinkUser.displayName ? afterLinkUser.displayName.split(' ')[0] : 'Player',
+                displayName: afterLinkUser.displayName || 'Player',
+                phoneNumber: phoneNumber,
+                photoURL: afterLinkUser.photoURL || null,
+                provider: afterLinkUser.providerData[0]?.providerId || 'unknown',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                friends: [],
+                friendRequests: {
+                    incoming: [],
+                    outgoing: []
+                },
+                stats: {
+                    gamesPlayed: 0,
+                    gamesWon: 0,
+                    totalScore: 0,
+                    averageScore: 0,
+                    bestScore: 999,
+                    currentStreak: 0,
+                    longestStreak: 0
+                }
+            };
+
+            await firestore.collection('users').doc(currentUid).set(userData);
+            console.log('✅ Firestore document created with phone number');
+        } else {
+            console.log('verifyAndAddPhoneToUser: Firestore document exists, updating...');
+
+            // Update Firestore document with phone number
+            await firestore.collection('users').doc(currentUid).update({
+                phoneNumber: phoneNumber
+            });
+            console.log('✅ Firestore document updated with phone number');
+        }
 
         // Register phone number in public collection
         await registerPhoneNumber(phoneNumber);
 
-        console.log('Phone number added to user account:', phoneNumber);
+        console.log('✅ Phone number added to user account successfully:', phoneNumber);
     } catch (error) {
-        console.error('Error verifying and adding phone number:', error);
+        console.error('❌ Error in verifyAndAddPhoneToUser:', error);
         throw error;
     }
 }

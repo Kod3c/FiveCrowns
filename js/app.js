@@ -752,6 +752,12 @@ function findPlayerByName(players, name) {
     console.log('Searching for normalized name:', normalizedName);
 
     for (const [playerId, playerData] of Object.entries(players)) {
+        // Skip invited placeholders - they should be replaced, not rejoined
+        if (playerData.isInvited) {
+            console.log(`Skipping invited placeholder: ${playerId}`);
+            continue;
+        }
+
         const playerNormalizedName = playerData.name ? playerData.name.trim().toLowerCase() : '';
         console.log(`Comparing with player ${playerId}: "${playerNormalizedName}" === "${normalizedName}"?`, playerNormalizedName === normalizedName);
 
@@ -831,37 +837,55 @@ function rejoinExistingGame(gameCode, playerId, playerName) {
 /**
  * Join an existing game
  */
-function joinExistingGame(gameCode, playerName) {
+async function joinExistingGame(gameCode, playerName) {
     const playerId = generatePlayerId();
     const gameRef = database.ref('games/' + gameCode);
 
-    // Add player to game
-    const playerData = {
-        id: playerId,
-        name: playerName,
-        isHost: false,
-        isReady: true,
-        joinedAt: firebase.database.ServerValue.TIMESTAMP
-    };
+    try {
+        // Check if there's an invited placeholder for this user
+        const user = auth.currentUser;
+        if (user) {
+            const gameSnapshot = await gameRef.once('value');
+            const gameData = gameSnapshot.val();
 
-    gameRef.child('players/' + playerId).set(playerData)
-        .then(() => {
-            console.log('Joined game successfully:', gameCode);
-            // Store player info in session
-            sessionStorage.setItem('playerId', playerId);
-            sessionStorage.setItem('gameCode', gameCode);
-            sessionStorage.setItem('playerName', playerName);
-            // Save active game to user profile
-            return saveActiveGame(gameCode, 'waiting');
-        })
-        .then(() => {
-            // Redirect to lobby
-            window.location.href = 'lobby.html?code=' + gameCode;
-        })
-        .catch((error) => {
-            console.error('Error joining game:', error);
-            showJoinError('Error joining game. Please try again.');
-        });
+            // Find and remove invited placeholder for this user
+            if (gameData && gameData.players) {
+                for (const [pid, playerData] of Object.entries(gameData.players)) {
+                    if (playerData.isInvited && playerData.uid === user.uid) {
+                        console.log('Removing invited placeholder:', pid);
+                        await gameRef.child('players/' + pid).remove();
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Add player to game
+        const playerData = {
+            id: playerId,
+            name: playerName,
+            isHost: false,
+            isReady: true,
+            joinedAt: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        await gameRef.child('players/' + playerId).set(playerData);
+
+        console.log('Joined game successfully:', gameCode);
+        // Store player info in session
+        sessionStorage.setItem('playerId', playerId);
+        sessionStorage.setItem('gameCode', gameCode);
+        sessionStorage.setItem('playerName', playerName);
+
+        // Save active game to user profile
+        await saveActiveGame(gameCode, 'waiting');
+
+        // Redirect to lobby
+        window.location.href = 'lobby.html?code=' + gameCode;
+    } catch (error) {
+        console.error('Error joining game:', error);
+        showJoinError('Error joining game. Please try again.');
+    }
 }
 
 /**
@@ -1516,20 +1540,17 @@ if (friendSearchInput) {
 function formatPhoneNumberForDisplay(phoneNumber) {
     if (!phoneNumber) return 'Unknown';
 
-    // Extract country code and number
-    const match = phoneNumber.match(/^\+(\d{1,3})(\d+)$/);
-    if (!match) return phoneNumber;
+    // Extract just the digits from the phone number
+    const digits = phoneNumber.replace(/\D/g, '');
 
-    const countryCode = match[1];
-    const number = match[2];
-
-    // Format US/Canada numbers as +1 (234) 567-8901
-    if (countryCode === '1' && number.length === 10) {
-        return `+1 (${number.substring(0, 3)}) ${number.substring(3, 6)}-${number.substring(6)}`;
+    // Get the last 10 digits
+    if (digits.length >= 10) {
+        const last10 = digits.slice(-10);
+        return `(${last10.substring(0, 3)}) ${last10.substring(3, 6)}-${last10.substring(6)}`;
     }
 
-    // For other countries, show as +CC XXXX...
-    return `+${countryCode} ${number}`;
+    // Fallback if less than 10 digits
+    return phoneNumber;
 }
 
 /**
@@ -2061,19 +2082,23 @@ async function updateFriendsBadges() {
         const requestCount = await getFriendRequestCount();
 
         // Update main friends button badge
-        if (requestCount > 0) {
-            friendRequestsCount.textContent = requestCount;
-            friendRequestsCount.style.display = 'inline-block';
-        } else {
-            friendRequestsCount.style.display = 'none';
+        if (friendRequestsCount) {
+            if (requestCount > 0) {
+                friendRequestsCount.textContent = requestCount;
+                friendRequestsCount.style.display = 'inline-block';
+            } else {
+                friendRequestsCount.style.display = 'none';
+            }
         }
 
         // Update requests tab badge
-        if (requestCount > 0) {
-            requestsCountBadge.textContent = requestCount;
-            requestsCountBadge.style.display = 'inline-block';
-        } else {
-            requestsCountBadge.style.display = 'none';
+        if (requestsCountBadge) {
+            if (requestCount > 0) {
+                requestsCountBadge.textContent = requestCount;
+                requestsCountBadge.style.display = 'inline-block';
+            } else {
+                requestsCountBadge.style.display = 'none';
+            }
         }
 
         // Update bottom nav friends badge

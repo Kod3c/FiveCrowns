@@ -59,7 +59,23 @@ async function sendGameInvite(friendUid, gameCode) {
 
         const inviteRef = await firestore.collection('gameInvites').add(inviteData);
 
-        console.log('Game invite sent to:', friendData.username, 'for game:', gameCode);
+        // Add invited player to the lobby
+        const gameData = gameSnapshot.val();
+        const invitedPlayerId = 'player_invited_' + friendUid + '_' + Date.now();
+
+        // Add player to game with invited status
+        await gameRef.child('players/' + invitedPlayerId).set({
+            id: invitedPlayerId,
+            name: friendData.displayName || friendData.firstName || 'Player',
+            uid: friendUid, // Store the user's UID for later verification
+            isHost: false,
+            isReady: false,
+            isInvited: true, // Mark as invited
+            invitedAt: firebase.database.ServerValue.TIMESTAMP,
+            inviteId: inviteRef.id // Link to the invite for cleanup
+        });
+
+        console.log('Game invite sent to:', friendData.displayName || friendData.firstName, 'for game:', gameCode);
         return inviteRef.id;
     } catch (error) {
         console.error('Error sending game invite:', error);
@@ -127,7 +143,54 @@ async function getGameInvites() {
                 .catch(err => console.error('Error deleting expired invite:', err));
         });
 
-        return validInvites;
+        // Validate that games still exist and are joinable
+        const validatedInvites = [];
+        const invalidInvites = [];
+
+        for (const invite of validInvites) {
+            try {
+                const gameRef = database.ref('games/' + invite.gameCode);
+                const gameSnapshot = await gameRef.once('value');
+
+                if (!gameSnapshot.exists()) {
+                    // Game no longer exists
+                    console.log('Game no longer exists for invite:', invite.gameCode);
+                    invalidInvites.push(invite);
+                    continue;
+                }
+
+                const gameData = gameSnapshot.val();
+
+                // Check if game has started or is full
+                if (gameData.status !== 'waiting') {
+                    console.log('Game has already started:', invite.gameCode);
+                    invalidInvites.push(invite);
+                    continue;
+                }
+
+                const playerCount = gameData.players ? Object.keys(gameData.players).length : 0;
+                if (playerCount >= 6) {
+                    console.log('Game is full:', invite.gameCode);
+                    invalidInvites.push(invite);
+                    continue;
+                }
+
+                // Game is valid
+                validatedInvites.push(invite);
+            } catch (error) {
+                console.error('Error validating game invite:', error);
+                // On error, keep the invite to avoid accidentally hiding valid invites
+                validatedInvites.push(invite);
+            }
+        }
+
+        // Clean up invalid invites in background
+        invalidInvites.forEach(invite => {
+            firestore.collection('gameInvites').doc(invite.id).delete()
+                .catch(err => console.error('Error deleting invalid invite:', err));
+        });
+
+        return validatedInvites;
     } catch (error) {
         console.error('Error getting game invites:', error);
         return [];
@@ -185,6 +248,23 @@ async function acceptGameInvite(inviteId) {
             // Game no longer exists, delete invite
             await firestore.collection('gameInvites').doc(inviteId).delete();
             throw new Error('This game no longer exists');
+        }
+
+        const gameData = gameSnapshot.val();
+
+        // Verify game is still in waiting state
+        if (gameData.status !== 'waiting') {
+            // Game has already started or finished, delete invite
+            await firestore.collection('gameInvites').doc(inviteId).delete();
+            throw new Error('This game has already started');
+        }
+
+        // Verify game is not full (max 6 players)
+        const playerCount = gameData.players ? Object.keys(gameData.players).length : 0;
+        if (playerCount >= 6) {
+            // Game is full, delete invite
+            await firestore.collection('gameInvites').doc(inviteId).delete();
+            throw new Error('This game is full');
         }
 
         // Update invite status

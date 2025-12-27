@@ -687,7 +687,7 @@ body {
     align-items: center;
     gap: 0;
     background: rgba(30, 15, 60, 0.98);
-    padding: 8px;
+    padding: 12px 8px;
     border-radius: 16px;
     border: 1px solid rgba(255, 215, 0, 0.2);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
@@ -743,7 +743,7 @@ body {
 }
 
 .nav-label-center {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.4px;
@@ -753,31 +753,35 @@ body {
 
 /* Center Button - Modern Floating Style */
 .nav-btn-center {
-    flex: 1.3;
-    height: 76px;
+    flex: 1.5;
+    height: 84px;
     background: var(--primary-purple);
     border: 1px solid var(--gold);
     border-radius: 16px;
     margin: 0 4px;
     box-shadow: 0 4px 12px rgba(123, 63, 242, 0.4);
-    transform: translateY(-8px);
-    border-right: none;
+    transform: translateY(0);
     color: var(--white);
+}
+
+/* Remove divider border from button before center button (Games button) */
+#activeGamesNavBtn {
+    border-right: none !important;
 }
 
 .nav-btn-center:hover {
     background: var(--deep-purple);
     border-color: var(--royal-gold);
-    transform: translateY(-10px) scale(1.03);
+    transform: translateY(-2px) scale(1.03);
     box-shadow: 0 6px 16px rgba(123, 63, 242, 0.5);
 }
 
 .nav-btn-center:active {
-    transform: translateY(-6px) scale(1);
+    transform: translateY(0) scale(1);
 }
 
 .nav-btn-center .nav-icon {
-    font-size: 32px;
+    font-size: 36px;
     color: var(--gold);
     opacity: 1;
 }
@@ -830,7 +834,7 @@ body {
 @media (max-width: 640px) {
     .bottom-nav {
         bottom: 12px;
-        padding: 6px;
+        padding: 10px 6px;
         border-radius: 14px;
     }
 
@@ -853,18 +857,18 @@ body {
     }
 
     .nav-btn-center {
-        flex: 1.3;
-        height: 68px;
-        transform: translateY(-6px);
+        flex: 1.5;
+        height: 76px;
+        transform: translateY(0);
         margin: 0 3px;
     }
 
     .nav-btn-center:hover {
-        transform: translateY(-8px) scale(1.03);
+        transform: translateY(-2px) scale(1.03);
     }
 
     .nav-btn-center .nav-icon {
-        font-size: 28px;
+        font-size: 32px;
     }
 
     .nav-badge {
@@ -879,7 +883,7 @@ body {
 @media (max-width: 480px) {
     .bottom-nav {
         bottom: 10px;
-        padding: 6px;
+        padding: 10px 6px;
         border-radius: 12px;
     }
 
@@ -902,20 +906,20 @@ body {
     }
 
     .nav-btn-center {
-        flex: 1.3;
-        height: 64px;
-        transform: translateY(-5px);
+        flex: 1.5;
+        height: 72px;
+        transform: translateY(0);
     }
 
     .nav-btn-center .nav-icon {
-        font-size: 26px;
+        font-size: 30px;
     }
 }
 
 @media (max-width: 400px) {
     .bottom-nav {
         bottom: 8px;
-        padding: 5px;
+        padding: 8px 5px;
         border-radius: 12px;
     }
 
@@ -938,14 +942,14 @@ body {
     }
 
     .nav-btn-center {
-        flex: 1.3;
-        height: 60px;
-        transform: translateY(-4px);
+        flex: 1.5;
+        height: 68px;
+        transform: translateY(0);
         margin: 0 2px;
     }
 
     .nav-btn-center .nav-icon {
-        font-size: 24px;
+        font-size: 28px;
     }
 
     .nav-badge {
@@ -960,7 +964,7 @@ body {
 @media (max-width: 360px) {
     .bottom-nav {
         bottom: 6px;
-        padding: 4px;
+        padding: 8px 4px;
         border-radius: 10px;
     }
 
@@ -984,14 +988,14 @@ body {
     }
 
     .nav-btn-center {
-        flex: 1.3;
-        height: 56px;
-        transform: translateY(-3px);
+        flex: 1.5;
+        height: 64px;
+        transform: translateY(0);
         margin: 0 2px;
     }
 
     .nav-btn-center .nav-icon {
-        font-size: 22px;
+        font-size: 26px;
     }
 
     .nav-badge {
@@ -1007,7 +1011,7 @@ body {
 @media (max-width: 320px) {
     .bottom-nav {
         bottom: 4px;
-        padding: 4px;
+        padding: 7px 4px;
         border-radius: 10px;
     }
 
@@ -1031,14 +1035,14 @@ body {
     }
 
     .nav-btn-center {
-        flex: 1.3;
-        height: 52px;
-        transform: translateY(-3px);
+        flex: 1.5;
+        height: 60px;
+        transform: translateY(0);
         margin: 0 1px;
     }
 
     .nav-btn-center .nav-icon {
-        font-size: 20px;
+        font-size: 24px;
     }
 
     .nav-badge {
@@ -1385,6 +1389,10 @@ body {
     transition: all 0.3s ease;
 }
 
+.friend-card:first-child {
+    margin-top: 2px;
+}
+
 .friend-card:hover {
     border-color: var(--gold);
     background: rgba(45, 25, 80, 0.6);
@@ -1579,6 +1587,28 @@ body {
         font-size: 11px;
         padding: 8px 4px;
         min-height: 55px;
+    }
+
+    /* Stack game invitation cards vertically on narrow screens */
+    #gameInvitesList .friend-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    #gameInvitesList .friend-info {
+        text-align: center;
+    }
+
+    #gameInvitesList .friend-actions {
+        width: 100%;
+        gap: 8px;
+    }
+
+    #gameInvitesList .friend-action-btn {
+        flex: 1;
+        padding: 10px 12px;
+        font-size: 14px;
     }
 
     .friend-action-btn {

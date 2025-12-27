@@ -1333,7 +1333,18 @@
                     // Verify the code and add phone to existing user account
                     await verifyAndAddPhoneToUser(modalConfirmationResult, code);
 
-                    console.log('Phone number successfully added to account');
+                    console.log('✅ Phone number successfully added to account');
+
+                    // Wait a moment for Firestore to sync
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    // Verify the phone number was saved
+                    const hasPhone = await currentUserHasPhoneNumber();
+                    console.log('Verification check - user has phone number:', hasPhone);
+
+                    if (!hasPhone) {
+                        console.error('⚠️ WARNING: Phone number verification returned false after save!');
+                    }
 
                     // Close modal and redirect to home
                     phoneCollectionModal.classList.remove('show');
@@ -1343,7 +1354,7 @@
                         console.log('%c🔧 DEBUG: Would redirect to index.html but debug mode is on', 'background: #4CAF50; color: white; padding: 5px;');
                     }
                 } catch (error) {
-                    console.error('Verification error:', error);
+                    console.error('❌ Verification error:', error);
                     showError(modalPhoneError, getAuthErrorMessage(error));
                     modalPhoneBtn.disabled = false;
                     modalPhoneBtn.textContent = 'Verify & Continue';

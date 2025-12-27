@@ -3,6 +3,28 @@
 
 console.log('🏠 LOBBY.JS LOADED - You are on lobby.html');
 
+// Helper Functions
+/**
+ * Format phone number for display (last 10 digits only)
+ * @param {string} phoneNumber - E.164 format phone number
+ * @returns {string} Formatted phone number
+ */
+function formatPhoneNumberForDisplay(phoneNumber) {
+    if (!phoneNumber) return 'Unknown';
+
+    // Extract just the digits from the phone number
+    const digits = phoneNumber.replace(/\D/g, '');
+
+    // Get the last 10 digits
+    if (digits.length >= 10) {
+        const last10 = digits.slice(-10);
+        return `(${last10.substring(0, 3)}) ${last10.substring(3, 6)}-${last10.substring(6)}`;
+    }
+
+    // Fallback if less than 10 digits
+    return phoneNumber;
+}
+
 // Modal Helper Function
 function showErrorModal(message, details = null) {
     const errorModal = document.getElementById('errorModal');
@@ -373,10 +395,23 @@ function createPlayerCard(player) {
     }
 
     if (!player.isHost) {
-        const readyBadge = document.createElement('span');
-        readyBadge.className = player.isReady ? 'badge ready' : 'badge waiting';
-        readyBadge.textContent = player.isReady ? 'Ready' : 'Not Ready';
-        badges.appendChild(readyBadge);
+        const statusBadge = document.createElement('span');
+
+        if (player.isInvited) {
+            // Invited player - not yet accepted
+            statusBadge.className = 'badge invited';
+            statusBadge.textContent = 'Invited';
+        } else if (player.isReady) {
+            // Ready player
+            statusBadge.className = 'badge ready';
+            statusBadge.textContent = 'Ready';
+        } else {
+            // Not ready player
+            statusBadge.className = 'badge waiting';
+            statusBadge.textContent = 'Not Ready';
+        }
+
+        badges.appendChild(statusBadge);
     }
 
     // Assemble card
@@ -988,11 +1023,13 @@ function createInvitableFriendCard(friend) {
     const card = document.createElement('div');
     card.className = 'friend-card';
     card.style.cursor = 'pointer';
+    card.style.overflow = 'visible'; // Prevent border cutoff on hover
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.id = `friend-${friend.uid}`;
     checkbox.className = 'friend-checkbox';
+    checkbox.style.flexShrink = '0'; // Prevent checkbox from shrinking
     checkbox.addEventListener('change', (e) => {
         handleFriendSelection(friend.uid, e.target.checked);
     });
@@ -1008,17 +1045,18 @@ function createInvitableFriendCard(friend) {
     const info = document.createElement('div');
     info.className = 'friend-info';
     info.style.flex = '1';
+    info.style.minWidth = '0'; // Allow text to truncate properly
 
     const name = document.createElement('div');
     name.className = 'friend-name';
     name.textContent = friend.displayName || friend.firstName || 'Player';
 
-    const username = document.createElement('div');
-    username.className = 'friend-username';
-    username.textContent = `@${friend.username}`;
+    const phoneNumber = document.createElement('div');
+    phoneNumber.className = 'friend-username';
+    phoneNumber.textContent = formatPhoneNumberForDisplay(friend.phoneNumber || '');
 
     info.appendChild(name);
-    info.appendChild(username);
+    info.appendChild(phoneNumber);
 
     label.appendChild(checkbox);
     label.appendChild(info);
@@ -1047,7 +1085,7 @@ function handleFriendSelection(friendUid, isSelected) {
  * Update selected friends count
  */
 function updateSelectedCount() {
-    selectedFriendsCount.textContent = selectedFriendUids.length;
+    // Enable/disable button based on selection
     sendInvitesBtn.disabled = selectedFriendUids.length === 0;
 }
 
@@ -1065,6 +1103,9 @@ async function handleSendInvites() {
         sendInvitesBtn.textContent = 'Sending...';
         inviteError.textContent = '';
 
+        // Store count before clearing
+        const inviteCount = selectedFriendUids.length;
+
         // Send invites
         await sendGameInvites(selectedFriendUids, gameCode);
 
@@ -1072,31 +1113,35 @@ async function handleSendInvites() {
         closeInviteFriendsModal();
 
         // Show success message
+        const friendWord = inviteCount === 1 ? 'friend' : 'friends';
         showNotification(
-            `Invites sent to ${selectedFriendUids.length} friend(s)!`,
+            `Invites sent to ${inviteCount} ${friendWord}!`,
             'Invites Sent'
         );
 
+        // Reset button
         sendInvitesBtn.disabled = false;
-        sendInvitesBtn.textContent = `Send Invites (${selectedFriendUids.length})`;
+        sendInvitesBtn.textContent = 'Send Invites';
     } catch (error) {
         console.error('Error sending invites:', error);
         inviteError.textContent = error.message || 'Error sending invites';
         sendInvitesBtn.disabled = false;
-        sendInvitesBtn.textContent = `Send Invites (${selectedFriendUids.length})`;
+        sendInvitesBtn.textContent = 'Send Invites';
     }
 }
 
 /**
- * Show invite friends button for authenticated users with username
+ * Show invite friends button for authenticated users with phone number
  */
 async function checkAndShowInviteButton() {
     try {
         const user = auth.currentUser;
+        const container = document.getElementById('inviteFriendsContainer');
         if (user && isHost) {
-            const hasUserUsername = await hasUsername();
-            if (hasUserUsername && inviteFriendsBtn) {
-                inviteFriendsBtn.style.display = 'block';
+            // Check if user has a phone number (required for friends system)
+            const hasPhone = await currentUserHasPhoneNumber();
+            if (hasPhone && container) {
+                container.style.display = 'block';
             }
         }
     } catch (error) {

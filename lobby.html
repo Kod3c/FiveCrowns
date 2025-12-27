@@ -52,10 +52,12 @@
             <div class="copy-toast" id="copyToast">Copied! 📋</div>
 
             <!-- Invite Friends Button (Host Only) -->
-            <button class="btn btn-secondary" id="inviteFriendsBtn" style="display: none; margin-top: 15px;">
-                <span class="btn-icon">👥</span>
-                Invite Friends
-            </button>
+            <div id="inviteFriendsContainer">
+                <button class="btn btn-primary" id="inviteFriendsBtn">
+                    <span class="btn-icon">👥</span>
+                    Invite Friends
+                </button>
+            </div>
         </div>
 
         <!-- Players List -->
@@ -169,7 +171,7 @@
             <div class="modal-footer" style="display: flex; gap: 12px;">
                 <button class="btn btn-secondary" id="cancelInviteBtn" style="flex: 1;">Cancel</button>
                 <button class="btn btn-primary" id="sendInvitesBtn" style="flex: 1;" disabled>
-                    Send Invites (<span id="selectedFriendsCount">0</span>)
+                    Send Invites
                 </button>
             </div>
         </div>
