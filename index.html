@@ -54,11 +54,18 @@
             line-height: 1;
         }
 
+        .menu-dropdown-container {
+            position: fixed;
+            z-index: 998;
+            pointer-events: none;
+        }
+
         .menu-dropdown {
-            position: absolute;
-            top: 56px;
-            right: 0;
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
             background: rgba(45, 25, 80, 0.98);
+            backdrop-filter: blur(10px);
             border: 2px solid rgba(255, 215, 0, 0.3);
             border-radius: 12px;
             min-width: 200px;
@@ -66,8 +73,9 @@
             overflow: hidden;
             opacity: 0;
             visibility: hidden;
-            transform: translateY(-10px);
+            transform: translateY(10px);
             transition: all 0.3s ease;
+            pointer-events: auto;
         }
 
         .menu-dropdown.active {
@@ -361,25 +369,28 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Menu Button (top right) -->
-    <div class="menu-button-container">
-        <button class="menu-button" id="menuButton">
-            <span class="menu-icon">⋮</span>
-        </button>
-        <div class="menu-dropdown" id="menuDropdown">
-            <div class="menu-item" id="menuUserInfo" style="display: none;">
-                <span id="menuUserName" style="color: var(--gold); font-weight: 600;">Player</span>
+    <!-- Menu Modal (accessed from bottom nav menu button) -->
+    <div class="modal" id="menuModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h2>Menu</h2>
+                <button class="close-btn" id="closeMenuBtn">&times;</button>
             </div>
-            <div class="menu-divider" id="menuDivider" style="display: none;"></div>
-            <button class="menu-item" id="menuSignIn">
-                <span>Sign In</span>
-            </button>
-            <button class="menu-item" id="menuSignUp">
-                <span>Sign Up</span>
-            </button>
-            <button class="menu-item" id="menuSignOut" style="display: none;">
-                <span>Sign Out</span>
-            </button>
+            <div class="modal-body" style="padding: 0;">
+                <div class="menu-item" id="menuUserInfo" style="display: none;">
+                    <span id="menuUserName" style="color: var(--gold); font-weight: 600;">Player</span>
+                </div>
+                <div class="menu-divider" id="menuDivider" style="display: none;"></div>
+                <button class="menu-item" id="menuSignIn">
+                    <span>Sign In</span>
+                </button>
+                <button class="menu-item" id="menuSignUp">
+                    <span>Sign Up</span>
+                </button>
+                <button class="menu-item" id="menuSignOut" style="display: none;">
+                    <span>Sign Out</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -397,33 +408,58 @@
             </div>
         </div>
 
-        <!-- Main Menu Buttons -->
-        <div class="menu-section" id="mainMenu">
-            <button class="btn btn-primary btn-large" id="createGameBtn">
-                <span class="btn-icon">👑</span>
-                Create Game
-            </button>
-
-            <button class="btn btn-secondary btn-large" id="joinGameBtn">
-                <span class="btn-icon">🎴</span>
-                Join Game
-            </button>
-
-            <button class="btn btn-secondary btn-large" id="activeGamesBtn" style="display: none;">
-                <span class="btn-icon">🎮</span>
-                Active Games
-                <span id="activeGamesCount" style="margin-left: 8px; background: rgba(255, 215, 0, 0.2); padding: 2px 8px; border-radius: 12px; font-size: 14px;"></span>
-            </button>
-
-            <button class="btn btn-secondary btn-large" id="friendsBtn" style="display: none;">
-                <span class="btn-icon">👥</span>
-                Friends
-            </button>
+        <!-- Main Menu Buttons - Hidden, replaced by bottom nav -->
+        <div class="menu-section" id="mainMenu" style="display: none;">
         </div>
+    </div>
 
-        <!-- How to Play Link -->
-        <div class="footer-section">
-            <a href="#" class="link-text" id="howToPlayBtn">How to Play</a>
+    <!-- Floating Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <button class="nav-btn" id="friendsNavBtn" data-tooltip="Friends">
+            <span class="nav-icon">👥</span>
+            <span class="nav-label">Friends</span>
+            <span class="nav-badge" id="friendsNavBadge" style="display: none;">0</span>
+        </button>
+
+        <button class="nav-btn" id="activeGamesNavBtn" data-tooltip="Active Games">
+            <span class="nav-icon">🎮</span>
+            <span class="nav-label">Games</span>
+            <span class="nav-badge" id="activeGamesNavBadge" style="display: none;">0</span>
+        </button>
+
+        <button class="nav-btn nav-btn-center" id="createJoinBtn" data-tooltip="New Game">
+            <span class="nav-icon">➕</span>
+            <span class="nav-label-center">New</span>
+        </button>
+
+        <button class="nav-btn" id="rulesNavBtn" data-tooltip="How to Play">
+            <span class="nav-icon">📖</span>
+            <span class="nav-label">Rules</span>
+        </button>
+
+        <button class="nav-btn" id="menuNavBtn" data-tooltip="Menu">
+            <span class="nav-icon">⋮</span>
+            <span class="nav-label">Menu</span>
+        </button>
+    </nav>
+
+    <!-- Create/Join Game Modal -->
+    <div class="modal" id="createJoinModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h2>New Game</h2>
+                <button class="close-btn" id="closeCreateJoinBtn">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px 24px;">
+                <button class="btn btn-primary btn-large" id="createGameBtn" style="margin-bottom: 12px;">
+                    <span class="btn-icon">👑</span>
+                    Create Game
+                </button>
+                <button class="btn btn-secondary btn-large" id="joinGameBtn">
+                    <span class="btn-icon">🎴</span>
+                    Join Game
+                </button>
+            </div>
         </div>
     </div>
 

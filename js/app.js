@@ -67,7 +67,24 @@ const activeGamesBtn = document.getElementById('activeGamesBtn');
 const activeGamesCount = document.getElementById('activeGamesCount');
 const howToPlayBtn = document.getElementById('howToPlayBtn');
 
-// Menu Elements
+// Bottom Navigation Elements
+const friendsNavBtn = document.getElementById('friendsNavBtn');
+const activeGamesNavBtn = document.getElementById('activeGamesNavBtn');
+const createJoinBtn = document.getElementById('createJoinBtn');
+const rulesNavBtn = document.getElementById('rulesNavBtn');
+const menuNavBtn = document.getElementById('menuNavBtn');
+const friendsNavBadge = document.getElementById('friendsNavBadge');
+const activeGamesNavBadge = document.getElementById('activeGamesNavBadge');
+
+// Create/Join Modal Elements
+const createJoinModal = document.getElementById('createJoinModal');
+const closeCreateJoinBtn = document.getElementById('closeCreateJoinBtn');
+
+// Menu Modal Elements
+const menuModal = document.getElementById('menuModal');
+const closeMenuBtn = document.getElementById('closeMenuBtn');
+
+// Old Menu Elements (deprecated, keeping for reference)
 const menuButton = document.getElementById('menuButton');
 const menuDropdown = document.getElementById('menuDropdown');
 const menuUserInfo = document.getElementById('menuUserInfo');
@@ -139,6 +156,12 @@ auth.onAuthStateChanged(async (user) => {
             activeGamesCount.textContent = '...'; // Loading indicator
         }
 
+        // Active Games nav button is always visible, just update badge if needed
+        if (activeGamesNavBadge) {
+            // Don't show badge until we have actual count
+            activeGamesNavBadge.style.display = 'none';
+        }
+
         // Load active games and user data in parallel for faster page load
         const [firstName] = await Promise.all([
             getUserFirstName(user.uid),
@@ -198,6 +221,8 @@ auth.onAuthStateChanged(async (user) => {
         if (menuSignUp) menuSignUp.style.display = 'block';
         if (menuSignOut) menuSignOut.style.display = 'none';
         if (activeGamesBtn) activeGamesBtn.style.display = 'none';
+        // Active Games nav button stays visible, just hide badge
+        if (activeGamesNavBadge) activeGamesNavBadge.style.display = 'none';
     }
 });
 
@@ -213,14 +238,20 @@ console.log('DOM elements:', {
 
 // Event Listeners
 if (createGameBtn) {
-    createGameBtn.addEventListener('click', handleCreateGameClick);
+    createGameBtn.addEventListener('click', () => {
+        closeCreateJoinModal();
+        handleCreateGameClick();
+    });
     console.log('Create game button listener added');
 } else {
     console.error('Create game button not found!');
 }
 
 if (joinGameBtn) {
-    joinGameBtn.addEventListener('click', openJoinModal);
+    joinGameBtn.addEventListener('click', () => {
+        closeCreateJoinModal();
+        openJoinModal();
+    });
 }
 
 if (activeGamesBtn) {
@@ -239,39 +270,33 @@ if (activeGamesModal) {
     });
 }
 
-// Menu button toggle
+// Old menu button toggle (deprecated - now using modal)
+// Keeping code for backwards compatibility
 if (menuButton) {
     menuButton.addEventListener('click', (e) => {
         e.stopPropagation();
-        menuDropdown.classList.toggle('active');
+        openMenuModal();
     });
 }
-
-// Close menu when clicking outside
-document.addEventListener('click', (e) => {
-    if (menuDropdown && !menuButton.contains(e.target) && !menuDropdown.contains(e.target)) {
-        menuDropdown.classList.remove('active');
-    }
-});
 
 // Menu item actions
 if (menuSignIn) {
     menuSignIn.addEventListener('click', () => {
-        menuDropdown.classList.remove('active');
+        closeMenuModal();
         showAuthModal('login');
     });
 }
 
 if (menuSignUp) {
     menuSignUp.addEventListener('click', () => {
-        menuDropdown.classList.remove('active');
+        closeMenuModal();
         showAuthModal('signup');
     });
 }
 
 if (menuSignOut) {
     menuSignOut.addEventListener('click', async () => {
-        menuDropdown.classList.remove('active');
+        closeMenuModal();
         try {
             await signOutUser();
             // Redirect happens in auth state listener
@@ -294,6 +319,51 @@ if (joinSubmitBtn) {
 
 if (howToPlayBtn) {
     howToPlayBtn.addEventListener('click', showHowToPlay);
+}
+
+// Bottom Navigation Event Listeners
+if (friendsNavBtn) {
+    friendsNavBtn.addEventListener('click', openFriendsModal);
+}
+
+if (activeGamesNavBtn) {
+    activeGamesNavBtn.addEventListener('click', openActiveGamesModal);
+}
+
+if (createJoinBtn) {
+    createJoinBtn.addEventListener('click', openCreateJoinModal);
+}
+
+if (rulesNavBtn) {
+    rulesNavBtn.addEventListener('click', showHowToPlay);
+}
+
+if (menuNavBtn) {
+    menuNavBtn.addEventListener('click', openMenuModal);
+}
+
+if (closeCreateJoinBtn) {
+    closeCreateJoinBtn.addEventListener('click', closeCreateJoinModal);
+}
+
+if (createJoinModal) {
+    createJoinModal.addEventListener('click', (e) => {
+        if (e.target === createJoinModal) {
+            closeCreateJoinModal();
+        }
+    });
+}
+
+if (closeMenuBtn) {
+    closeMenuBtn.addEventListener('click', closeMenuModal);
+}
+
+if (menuModal) {
+    menuModal.addEventListener('click', (e) => {
+        if (e.target === menuModal) {
+            closeMenuModal();
+        }
+    });
 }
 
 // Auth Modal Event Listeners
@@ -1042,6 +1112,34 @@ function closeJoinModal() {
 }
 
 /**
+ * Open the Create/Join Game modal
+ */
+function openCreateJoinModal() {
+    createJoinModal.classList.add('active');
+}
+
+/**
+ * Close the Create/Join Game modal
+ */
+function closeCreateJoinModal() {
+    createJoinModal.classList.remove('active');
+}
+
+/**
+ * Open the Menu modal
+ */
+function openMenuModal() {
+    menuModal.classList.add('active');
+}
+
+/**
+ * Close the Menu modal
+ */
+function closeMenuModal() {
+    menuModal.classList.remove('active');
+}
+
+/**
  * Join an existing game
  */
 function handleJoinGame() {
@@ -1461,6 +1559,15 @@ async function loadActiveGames() {
             activeGamesBtn.style.display = 'flex';
             activeGamesCount.textContent = totalCount;
         }
+        // Update nav badge (button always visible)
+        if (activeGamesNavBadge) {
+            if (totalCount > 0) {
+                activeGamesNavBadge.textContent = totalCount;
+                activeGamesNavBadge.style.display = 'inline-flex';
+            } else {
+                activeGamesNavBadge.style.display = 'none';
+            }
+        }
 
         // Then clean up stale games in the background and update if needed
         const validGames = await cleanupStaleGames();
@@ -1472,6 +1579,16 @@ async function loadActiveGames() {
             activeGamesCount.textContent = finalCount;
         } else if (activeGamesBtn) {
             activeGamesBtn.style.display = 'none';
+        }
+
+        // Update nav badge (button always visible)
+        if (activeGamesNavBadge) {
+            if (finalCount > 0) {
+                activeGamesNavBadge.textContent = finalCount;
+                activeGamesNavBadge.style.display = 'inline-flex';
+            } else {
+                activeGamesNavBadge.style.display = 'none';
+            }
         }
     } catch (error) {
         console.error('Error loading active games:', error);
@@ -2010,6 +2127,18 @@ const invitesCountBadge2 = document.getElementById('invitesCountBadge2');
 // Friends Event Listeners
 if (friendsBtn) {
     friendsBtn.addEventListener('click', openFriendsModal);
+}
+
+// Friends Nav Button - handle both with/without username
+if (friendsNavBtn) {
+    friendsNavBtn.addEventListener('click', async () => {
+        const hasUserUsername = await hasUsername();
+        if (!hasUserUsername) {
+            showUsernameModal();
+        } else {
+            openFriendsModal();
+        }
+    });
 }
 
 if (closeFriendsBtn) {
@@ -2690,6 +2819,14 @@ async function updateFriendsBadges() {
         } else {
             requestsCountBadge.style.display = 'none';
         }
+
+        // Update bottom nav friends badge
+        if (requestCount > 0 && friendsNavBadge) {
+            friendsNavBadge.textContent = requestCount;
+            friendsNavBadge.style.display = 'inline-flex';
+        } else if (friendsNavBadge) {
+            friendsNavBadge.style.display = 'none';
+        }
     } catch (error) {
         console.error('Error updating friends badges:', error);
     }
@@ -2707,6 +2844,8 @@ async function loadFriendsData() {
             if (friendsBtn) {
                 friendsBtn.style.display = 'flex';
             }
+
+            // Friends nav button is always visible, no need to show/hide
 
             // Update badges
             await updateFriendsBadges();
