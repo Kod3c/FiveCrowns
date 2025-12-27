@@ -500,12 +500,12 @@
 
                     <!-- Auth Method Toggle -->
                     <div class="auth-toggle-methods">
-                        <button class="auth-method-btn active" id="loginEmailMethodBtn">Email</button>
-                        <button class="auth-method-btn" id="loginPhoneMethodBtn">Phone</button>
+                        <button class="auth-method-btn active" id="loginPhoneMethodBtn">Phone</button>
+                        <button class="auth-method-btn" id="loginEmailMethodBtn">Email</button>
                     </div>
 
                     <!-- Email Login Section -->
-                    <div id="loginEmailSection" class="auth-form-section active">
+                    <div id="loginEmailSection" class="auth-form-section">
                         <div style="margin-bottom: 15px;">
                             <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Email</label>
                             <input type="email" id="loginEmail" class="player-name-input" placeholder="your@email.com" autocomplete="email">
@@ -526,7 +526,7 @@
                     </div>
 
                     <!-- Phone Login Section -->
-                    <div id="loginPhoneSection" class="auth-form-section">
+                    <div id="loginPhoneSection" class="auth-form-section active">
                         <div style="margin-bottom: 15px;">
                             <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Phone Number</label>
                             <div class="phone-input-group">
@@ -538,13 +538,13 @@
                                     <option value="+81">🇯🇵 +81</option>
                                     <option value="+86">🇨🇳 +86</option>
                                 </select>
-                                <input type="tel" id="loginPhone" class="player-name-input" style="flex: 1;" placeholder="1234567890" autocomplete="tel">
+                                <input type="tel" id="loginPhone" class="player-name-input" style="flex: 1;" placeholder="(123) 456-7890" autocomplete="tel">
                             </div>
                         </div>
 
                         <div id="loginVerificationCodeSection" style="display: none; margin-bottom: 15px;">
                             <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Verification Code</label>
-                            <input type="text" id="loginVerificationCode" class="player-name-input" placeholder="123456" maxlength="6" inputmode="numeric">
+                            <input type="text" id="loginVerificationCode" class="player-name-input" placeholder="123 - 456" maxlength="9" inputmode="numeric">
                         </div>
 
                         <div id="recaptcha-container-login"></div>
@@ -555,7 +555,7 @@
                         <button class="btn btn-primary btn-large" id="loginPhoneVerifyBtn" style="display: none;">Verify & Sign In</button>
                     </div>
 
-                    <div class="social-signin">
+                    <div class="social-signin" id="loginSocialSection">
                         <p class="social-signin-text">Or continue with</p>
                         <div class="social-buttons">
                             <button class="btn-social" id="googleSignInBtn">
@@ -587,12 +587,12 @@
 
                     <!-- Auth Method Toggle -->
                     <div class="auth-toggle-methods">
-                        <button class="auth-method-btn active" id="signupEmailMethodBtn">Email</button>
-                        <button class="auth-method-btn" id="signupPhoneMethodBtn">Phone</button>
+                        <button class="auth-method-btn active" id="signupPhoneMethodBtn">Phone</button>
+                        <button class="auth-method-btn" id="signupEmailMethodBtn">Email</button>
                     </div>
 
                     <!-- Email Signup Section -->
-                    <div id="signupEmailSection" class="auth-form-section active">
+                    <div id="signupEmailSection" class="auth-form-section">
                         <div style="margin-bottom: 15px;">
                             <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">First Name</label>
                             <input type="text" id="signupFirstName" class="player-name-input" placeholder="Your name" autocomplete="given-name">
@@ -614,7 +614,7 @@
                     </div>
 
                     <!-- Phone Signup Section -->
-                    <div id="signupPhoneSection" class="auth-form-section">
+                    <div id="signupPhoneSection" class="auth-form-section active">
                         <div style="margin-bottom: 15px;">
                             <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">First Name</label>
                             <input type="text" id="signupPhoneFirstName" class="player-name-input" placeholder="Your name" autocomplete="given-name">
@@ -631,13 +631,13 @@
                                     <option value="+81">🇯🇵 +81</option>
                                     <option value="+86">🇨🇳 +86</option>
                                 </select>
-                                <input type="tel" id="signupPhone" class="player-name-input" style="flex: 1;" placeholder="1234567890" autocomplete="tel">
+                                <input type="tel" id="signupPhone" class="player-name-input" style="flex: 1;" placeholder="(123) 456-7890" autocomplete="tel">
                             </div>
                         </div>
 
                         <div id="signupVerificationCodeSection" style="display: none; margin-bottom: 15px;">
                             <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Verification Code</label>
-                            <input type="text" id="signupVerificationCode" class="player-name-input" placeholder="123456" maxlength="6" inputmode="numeric">
+                            <input type="text" id="signupVerificationCode" class="player-name-input" placeholder="123 - 456" maxlength="9" inputmode="numeric">
                         </div>
 
                         <div id="recaptcha-container-signup"></div>
@@ -648,7 +648,7 @@
                         <button class="btn btn-primary btn-large" id="signupPhoneVerifyBtn" style="display: none;">Verify & Create Account</button>
                     </div>
 
-                    <div class="social-signin">
+                    <div class="social-signin" id="signupSocialSection">
                         <p class="social-signin-text">Or continue with</p>
                         <div class="social-buttons">
                             <button class="btn-social" id="googleSignUpBtn">

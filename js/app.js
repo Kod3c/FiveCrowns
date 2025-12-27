@@ -4,6 +4,8 @@
 console.log('Five Crowns app loaded!');
 
 // Global variables for current user
+window.currentUser = null;
+window.currentUserFirstName = null;
 let currentUser = null;
 let currentUserFirstName = null;
 let pendingAction = null; // 'createGame' or 'joinGame'
@@ -129,6 +131,7 @@ auth.onAuthStateChanged(async (user) => {
     if (user) {
         // User is logged in
         currentUser = user;
+        window.currentUser = user;
 
         // Show Active Games button immediately for logged-in users
         if (activeGamesBtn) {
@@ -145,6 +148,7 @@ auth.onAuthStateChanged(async (user) => {
         // Get user's first name from Firestore
         try {
             currentUserFirstName = firstName;
+            window.currentUserFirstName = firstName;
             console.log('User first name:', currentUserFirstName);
 
             // Update menu UI
@@ -545,6 +549,42 @@ if (signupEmailMethodBtn && signupPhoneMethodBtn) {
     });
 }
 
+// Phone number formatting function
+function formatPhoneNumber(value, countryCode) {
+    // Remove all non-numeric characters
+    const cleaned = value.replace(/\D/g, '');
+
+    // Format based on country code
+    if (countryCode === '+1') {
+        // US/Canada format: (123) 456-7890
+        if (cleaned.length === 0) return '';
+        if (cleaned.length <= 3) return `(${cleaned}`;
+        if (cleaned.length <= 6) return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+        return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
+    }
+
+    // For other countries, just return the digits (can add more formats later)
+    return cleaned;
+}
+
+// Extract clean phone number from formatted input
+function cleanPhoneNumber(formatted) {
+    return formatted.replace(/\D/g, '');
+}
+
+// Format verification code as "123 - 456"
+function formatVerificationCode(value) {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length === 0) return '';
+    if (cleaned.length <= 3) return cleaned;
+    return `${cleaned.slice(0, 3)} - ${cleaned.slice(3, 6)}`;
+}
+
+// Extract clean verification code from formatted input
+function cleanVerificationCode(formatted) {
+    return formatted.replace(/\D/g, '');
+}
+
 // Phone login handlers
 const loginPhoneSendCodeBtn = document.getElementById('loginPhoneSendCodeBtn');
 const loginPhoneVerifyBtn = document.getElementById('loginPhoneVerifyBtn');
@@ -556,9 +596,48 @@ const loginPhoneError = document.getElementById('loginPhoneError');
 
 let loginConfirmationResult = null;
 
+// Add phone number formatting to login phone input
+if (loginPhone && loginCountryCode) {
+    loginPhone.addEventListener('input', (e) => {
+        const cursorPos = e.target.selectionStart;
+        const oldLength = e.target.value.length;
+
+        e.target.value = formatPhoneNumber(e.target.value, loginCountryCode.value);
+
+        const newLength = e.target.value.length;
+        const diff = newLength - oldLength;
+
+        // Adjust cursor position if formatting added characters
+        e.target.setSelectionRange(cursorPos + diff, cursorPos + diff);
+    });
+
+    // Reformat when country code changes
+    loginCountryCode.addEventListener('change', () => {
+        if (loginPhone.value) {
+            loginPhone.value = formatPhoneNumber(loginPhone.value, loginCountryCode.value);
+        }
+    });
+}
+
+// Add verification code formatting to login verification code input
+if (loginVerificationCode) {
+    loginVerificationCode.addEventListener('input', (e) => {
+        const cursorPos = e.target.selectionStart;
+        const oldLength = e.target.value.length;
+
+        e.target.value = formatVerificationCode(e.target.value);
+
+        const newLength = e.target.value.length;
+        const diff = newLength - oldLength;
+
+        // Adjust cursor position if formatting added characters
+        e.target.setSelectionRange(cursorPos + diff, cursorPos + diff);
+    });
+}
+
 if (loginPhoneSendCodeBtn) {
     loginPhoneSendCodeBtn.addEventListener('click', async () => {
-        const phoneNumber = loginCountryCode.value + loginPhone.value.trim();
+        const phoneNumber = loginCountryCode.value + cleanPhoneNumber(loginPhone.value);
 
         if (!loginPhone.value.trim()) {
             showAuthError(loginPhoneError, 'Please enter your phone number');
@@ -566,16 +645,30 @@ if (loginPhoneSendCodeBtn) {
         }
 
         loginPhoneSendCodeBtn.disabled = true;
-        loginPhoneSendCodeBtn.textContent = 'Sending...';
+        loginPhoneSendCodeBtn.textContent = 'Checking...';
 
         try {
-            const recaptchaVerifier = initializeRecaptcha('recaptcha-container-login');
+            // Check if account exists before sending code
+            const exists = await phoneNumberExists(phoneNumber);
+            if (!exists) {
+                showAuthError(loginPhoneError, 'No account exists with this phone number. Please sign up first.');
+                loginPhoneSendCodeBtn.disabled = false;
+                loginPhoneSendCodeBtn.textContent = 'Send Code';
+                return;
+            }
+
+            loginPhoneSendCodeBtn.textContent = 'Sending...';
+            const recaptchaVerifier = await initializeRecaptcha('recaptcha-container-login');
             loginConfirmationResult = await sendPhoneVerificationCode(phoneNumber, recaptchaVerifier);
 
-            // Show verification code input
+            // Show verification code input and hide social signin
             loginVerificationCodeSection.style.display = 'block';
             loginPhoneSendCodeBtn.style.display = 'none';
             loginPhoneVerifyBtn.style.display = 'block';
+
+            // Hide social signin options
+            const loginSocialSection = document.getElementById('loginSocialSection');
+            if (loginSocialSection) loginSocialSection.style.display = 'none';
 
             showAuthError(loginPhoneError, '✅ Code sent! Check your phone.');
             loginPhoneError.style.color = '#4ade80';
@@ -590,7 +683,7 @@ if (loginPhoneSendCodeBtn) {
 
 if (loginPhoneVerifyBtn) {
     loginPhoneVerifyBtn.addEventListener('click', async () => {
-        const code = loginVerificationCode.value.trim();
+        const code = cleanVerificationCode(loginVerificationCode.value);
 
         if (!code || code.length !== 6) {
             showAuthError(loginPhoneError, 'Please enter the 6-digit code');
@@ -601,6 +694,7 @@ if (loginPhoneVerifyBtn) {
         loginPhoneVerifyBtn.textContent = 'Verifying...';
 
         try {
+            // Verify the code - account already confirmed to exist
             await verifyPhoneCode(loginConfirmationResult, code);
             closeAuthModal();
             // Auth state listener will handle the redirect
@@ -625,9 +719,48 @@ const signupPhoneFirstName = document.getElementById('signupPhoneFirstName');
 
 let signupConfirmationResult = null;
 
+// Add phone number formatting to signup phone input
+if (signupPhone && signupCountryCode) {
+    signupPhone.addEventListener('input', (e) => {
+        const cursorPos = e.target.selectionStart;
+        const oldLength = e.target.value.length;
+
+        e.target.value = formatPhoneNumber(e.target.value, signupCountryCode.value);
+
+        const newLength = e.target.value.length;
+        const diff = newLength - oldLength;
+
+        // Adjust cursor position if formatting added characters
+        e.target.setSelectionRange(cursorPos + diff, cursorPos + diff);
+    });
+
+    // Reformat when country code changes
+    signupCountryCode.addEventListener('change', () => {
+        if (signupPhone.value) {
+            signupPhone.value = formatPhoneNumber(signupPhone.value, signupCountryCode.value);
+        }
+    });
+}
+
+// Add verification code formatting to signup verification code input
+if (signupVerificationCode) {
+    signupVerificationCode.addEventListener('input', (e) => {
+        const cursorPos = e.target.selectionStart;
+        const oldLength = e.target.value.length;
+
+        e.target.value = formatVerificationCode(e.target.value);
+
+        const newLength = e.target.value.length;
+        const diff = newLength - oldLength;
+
+        // Adjust cursor position if formatting added characters
+        e.target.setSelectionRange(cursorPos + diff, cursorPos + diff);
+    });
+}
+
 if (signupPhoneSendCodeBtn) {
     signupPhoneSendCodeBtn.addEventListener('click', async () => {
-        const phoneNumber = signupCountryCode.value + signupPhone.value.trim();
+        const phoneNumber = signupCountryCode.value + cleanPhoneNumber(signupPhone.value);
         const firstName = signupPhoneFirstName.value.trim();
 
         if (!firstName || firstName.length < 2) {
@@ -644,13 +777,17 @@ if (signupPhoneSendCodeBtn) {
         signupPhoneSendCodeBtn.textContent = 'Sending...';
 
         try {
-            const recaptchaVerifier = initializeRecaptcha('recaptcha-container-signup');
+            const recaptchaVerifier = await initializeRecaptcha('recaptcha-container-signup');
             signupConfirmationResult = await sendPhoneVerificationCode(phoneNumber, recaptchaVerifier);
 
-            // Show verification code input
+            // Show verification code input and hide social signin
             signupVerificationCodeSection.style.display = 'block';
             signupPhoneSendCodeBtn.style.display = 'none';
             signupPhoneVerifyBtn.style.display = 'block';
+
+            // Hide social signin options
+            const signupSocialSection = document.getElementById('signupSocialSection');
+            if (signupSocialSection) signupSocialSection.style.display = 'none';
 
             showAuthError(signupPhoneError, '✅ Code sent! Check your phone.');
             signupPhoneError.style.color = '#4ade80';
@@ -665,7 +802,7 @@ if (signupPhoneSendCodeBtn) {
 
 if (signupPhoneVerifyBtn) {
     signupPhoneVerifyBtn.addEventListener('click', async () => {
-        const code = signupVerificationCode.value.trim();
+        const code = cleanVerificationCode(signupVerificationCode.value);
         const firstName = signupPhoneFirstName.value.trim();
 
         if (!code || code.length !== 6) {
@@ -690,21 +827,61 @@ if (signupPhoneVerifyBtn) {
 }
 
 // Enter key handlers for auth modal
+// Email login form
+if (loginEmail) {
+    loginEmail.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && loginBtn) loginBtn.click();
+    });
+}
+
 if (loginPassword) {
     loginPassword.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') loginBtn.click();
+        if (e.key === 'Enter' && loginBtn) loginBtn.click();
+    });
+}
+
+// Email signup form
+if (signupFirstName) {
+    signupFirstName.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && signupBtn) signupBtn.click();
+    });
+}
+
+if (signupEmail) {
+    signupEmail.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && signupBtn) signupBtn.click();
     });
 }
 
 if (signupPassword) {
     signupPassword.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') signupBtn.click();
+        if (e.key === 'Enter' && signupBtn) signupBtn.click();
+    });
+}
+
+// Phone login form
+if (loginPhone) {
+    loginPhone.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && loginPhoneSendCodeBtn) loginPhoneSendCodeBtn.click();
     });
 }
 
 if (loginVerificationCode) {
     loginVerificationCode.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && loginPhoneVerifyBtn) loginPhoneVerifyBtn.click();
+    });
+}
+
+// Phone signup form
+if (signupPhoneFirstName) {
+    signupPhoneFirstName.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && signupPhoneSendCodeBtn) signupPhoneSendCodeBtn.click();
+    });
+}
+
+if (signupPhone) {
+    signupPhone.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && signupPhoneSendCodeBtn) signupPhoneSendCodeBtn.click();
     });
 }
 

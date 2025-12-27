@@ -123,9 +123,44 @@ function init() {
     // NOTE: onAuthStateChanged fires TWICE - once with null, then with user
     // We need to wait for both callbacks before deciding
     let authCheckCount = 0;
-    auth.onAuthStateChanged((user) => {
+    auth.onAuthStateChanged(async (user) => {
         authCheckCount++;
         console.log(`Auth state change #${authCheckCount} in lobby, user:`, user ? user.uid : 'none');
+
+        // If user is authenticated, sync their name from Firestore
+        if (user) {
+            try {
+                const firstName = await getUserFirstName(user.uid);
+                const oldName = sessionStorage.getItem('playerName');
+
+                console.log('Checking player name - Firestore:', firstName, 'Session:', oldName);
+
+                if (firstName && firstName !== 'Player' && firstName !== oldName) {
+                    console.log(`Updating player name from "${oldName}" to "${firstName}"`);
+
+                    // Update sessionStorage
+                    sessionStorage.setItem('playerName', firstName);
+
+                    // Update player name in Firebase game
+                    const gameCode = sessionStorage.getItem('gameCode');
+                    const playerId = sessionStorage.getItem('playerId');
+
+                    if (gameCode && playerId) {
+                        const gameRef = database.ref(`games/${gameCode}`);
+                        const snapshot = await gameRef.once('value');
+                        const gameData = snapshot.val();
+
+                        if (gameData && gameData.players && gameData.players[playerId]) {
+                            // Update player name in lobby
+                            await gameRef.child(`players/${playerId}/name`).set(firstName);
+                            console.log('Player name updated in Firebase game');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error syncing player name:', error);
+            }
+        }
 
         // Only set up disconnect handler after second callback (or after 500ms timeout)
         // This gives auth time to restore the session

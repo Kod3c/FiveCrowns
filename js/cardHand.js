@@ -445,6 +445,15 @@ class CardHandManager {
             `;
             cardEl.appendChild(cornerRank);
 
+            // Bottom-right corner (for classic/minimal design)
+            const cornerBottom = document.createElement('div');
+            cornerBottom.className = `card-corner-bottom ${card.suit}`;
+            cornerBottom.innerHTML = `
+                <span class="corner-rank">${card.rank}</span>
+                <span class="corner-suit">${this.getSuitSymbol(card.suit)}</span>
+            `;
+            cardEl.appendChild(cornerBottom);
+
             // Center content
             const content = document.createElement('div');
             content.className = 'card-content';

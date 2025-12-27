@@ -14,7 +14,8 @@
       "Bash(findstr:*)",
       "Bash(move mobile-app-migration.md ..Planning )",
       "Bash(move:*)",
-      "Bash(move quick-start-guide.md ..Planning)"
+      "Bash(move quick-start-guide.md ..Planning)",
+      "Read(///**)"
     ],
     "deny": [],
     "ask": []

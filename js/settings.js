@@ -13,13 +13,13 @@ const SETTINGS_CONFIG = {
     CARD_DESIGNS: [
         {
             id: 'classic',
-            name: 'Classic',
-            description: 'Traditional playing card design'
+            name: 'Minimal',
+            description: 'Clean design with corner indicators only'
         },
         {
             id: 'minimal',
-            name: 'Minimal',
-            description: 'Clean design with corner indicators only'
+            name: 'Classic',
+            description: 'Traditional playing card design'
         }
         // Future designs:
         // { id: 'realistic', name: 'Realistic', description: 'Authentic real-world playing card look' }

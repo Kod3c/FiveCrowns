@@ -21,6 +21,16 @@ body.card-design-classic .card {
     /* No overrides needed - this is the base design */
 }
 
+/* Hide center content in classic design */
+body.card-design-classic .card-content {
+    display: none;
+}
+
+/* Show center content for joker cards */
+body.card-design-classic .card[data-rank="Joker"] .card-content {
+    display: flex;
+}
+
 /* Removed shadows/strokes for better suit visibility on small screens */
 body.card-design-classic .card-rank {
     text-shadow: none;
@@ -117,54 +127,80 @@ body.card-design-minimal .card-corner {
 }
 
 body.card-design-minimal .corner-rank {
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 700;
     text-shadow: none;
 }
 
 body.card-design-minimal .corner-suit {
-    font-size: 30px;
-    margin-top: 4px;
+    font-size: 28px;
+    margin-top: 2px;
     filter: none;
 }
 
-/* Add bottom-right corner for better visibility */
-body.card-design-minimal .card::after {
-    content: attr(data-rank) ' ' attr(data-suit);
+/* Show and style bottom-right corner for standard playing card look */
+body.card-design-minimal .card-corner-bottom {
+    display: flex !important;
     position: absolute;
     bottom: 6px;
     right: 6px;
-    display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 2px;
     line-height: 1;
-    gap: 4px;
     transform: rotate(180deg);
-    font-size: 32px;
+}
+
+body.card-design-minimal .card-corner-bottom .corner-rank {
+    font-size: 24px;
     font-weight: 700;
     text-shadow: none;
+    display: block;
+}
+
+body.card-design-minimal .card-corner-bottom .corner-suit {
+    font-size: 28px;
+    margin-top: 2px;
+    filter: none;
+    display: block;
 }
 
 /* Hand card adjustments for minimal design */
 body.card-design-minimal .hand-card .corner-rank {
-    font-size: 26px;
+    font-size: 18px;
     text-shadow: none;
 }
 
 body.card-design-minimal .hand-card .corner-suit {
-    font-size: 24px;
+    font-size: 20px;
     filter: none;
 }
 
-/* Discard pile cards - slightly larger */
+body.card-design-minimal .hand-card .card-corner-bottom .corner-rank {
+    font-size: 18px;
+}
+
+body.card-design-minimal .hand-card .card-corner-bottom .corner-suit {
+    font-size: 20px;
+}
+
+/* Discard pile cards - same size as hand cards for consistency */
 body.card-design-minimal .discard-pile .corner-rank {
-    font-size: 36px;
+    font-size: 18px;
     text-shadow: none;
 }
 
 body.card-design-minimal .discard-pile .corner-suit {
-    font-size: 34px;
+    font-size: 20px;
     filter: none;
+}
+
+body.card-design-minimal .discard-pile .card-corner-bottom .corner-rank {
+    font-size: 18px;
+}
+
+body.card-design-minimal .discard-pile .card-corner-bottom .corner-suit {
+    font-size: 20px;
 }
 
 /* Card back remains the same */

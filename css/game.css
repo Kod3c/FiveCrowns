@@ -438,6 +438,11 @@
     font-size: 14px;
 }
 
+/* Bottom-right corner - hidden by default, shown by card designs that need it */
+.card-corner-bottom {
+    display: none;
+}
+
 /* Card Content (center) */
 .card-content {
     display: flex;
@@ -482,7 +487,9 @@
 .card-rank.clubs,
 .card-suit.clubs,
 .card-corner.spades,
-.card-corner.clubs {
+.card-corner.clubs,
+.card-corner-bottom.spades,
+.card-corner-bottom.clubs {
     color: #000000;
 }
 
@@ -491,13 +498,16 @@
 .card-rank.diamonds,
 .card-suit.diamonds,
 .card-corner.hearts,
-.card-corner.diamonds {
+.card-corner.diamonds,
+.card-corner-bottom.hearts,
+.card-corner-bottom.diamonds {
     color: #DC2626;
 }
 
 .card-rank.stars,
 .card-suit.stars,
-.card-corner.stars {
+.card-corner.stars,
+.card-corner-bottom.stars {
     color: #FFD700;
     filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6));
 }

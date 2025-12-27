@@ -140,6 +140,36 @@ function getCurrentUser() {
 }
 
 /**
+ * Update user's display name
+ * @param {string} firstName - New first name
+ * @returns {Promise<void>}
+ */
+async function updateUserName(firstName) {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error('No user is currently signed in');
+        }
+
+        // Update Firebase Auth profile
+        await user.updateProfile({
+            displayName: firstName
+        });
+
+        // Update Firestore document
+        await firestore.collection('users').doc(user.uid).update({
+            firstName: firstName,
+            displayName: firstName
+        });
+
+        console.log('User name updated to:', firstName);
+    } catch (error) {
+        console.error('Error updating user name:', error);
+        throw error;
+    }
+}
+
+/**
  * Get user's first name from Firestore
  * @param {string} uid - User ID
  * @returns {Promise<string>} User's first name
@@ -334,6 +364,33 @@ async function signInWithApple() {
 }
 
 /**
+ * Check if a phone number has an existing account
+ * @param {string} phoneNumber - Phone number in E.164 format
+ * @returns {Promise<boolean>} True if account exists
+ */
+async function phoneNumberExists(phoneNumber) {
+    try {
+        console.log('Checking if phone number exists:', phoneNumber);
+        const snapshot = await firestore.collection('users')
+            .where('phoneNumber', '==', phoneNumber)
+            .limit(1)
+            .get();
+        const exists = !snapshot.empty;
+        console.log('Phone number exists:', exists);
+        return exists;
+    } catch (error) {
+        console.error('Error checking phone number:', error);
+        // If permission denied, we can't check - skip the validation
+        // Return true to allow the process to continue and let Firebase handle auth
+        if (error.code === 'permission-denied') {
+            console.warn('Cannot check phone number due to Firestore rules - skipping validation');
+            return true;
+        }
+        return true;
+    }
+}
+
+/**
  * Send phone verification code
  * @param {string} phoneNumber - Phone number in E.164 format (e.g., +1234567890)
  * @param {object} recaptchaVerifier - reCAPTCHA verifier instance
@@ -355,22 +412,32 @@ async function sendPhoneVerificationCode(phoneNumber, recaptchaVerifier) {
  * Verify phone code and complete sign-in
  * @param {object} confirmationResult - Result from sendPhoneVerificationCode
  * @param {string} verificationCode - 6-digit code from SMS
- * @param {string} firstName - User's first name (for new users)
- * @returns {Promise<object>} User object
+ * @param {string} firstName - User's first name (for new users, REQUIRED for new users)
+ * @returns {Promise<object>} User object with isNewUser flag
  */
-async function verifyPhoneCode(confirmationResult, verificationCode, firstName = 'Player') {
+async function verifyPhoneCode(confirmationResult, verificationCode, firstName = null) {
     try {
+        // First, verify the code and sign in the user
         const userCredential = await confirmationResult.confirm(verificationCode);
         const user = userCredential.user;
+        const isNewUser = userCredential.additionalUserInfo?.isNewUser || false;
 
-        console.log('Phone verified, user signed in:', user.uid);
+        console.log('Phone verified, user signed in:', user.uid, 'New user:', isNewUser);
 
-        // Check if user document exists, create if not
+        // Check if user document exists
         const userDoc = await firestore.collection('users').doc(user.uid).get();
+        const needsUserDoc = !userDoc.exists;
 
-        if (!userDoc.exists) {
+        if (needsUserDoc) {
+            // IMPORTANT: For new users, firstName must be provided
+            // If not provided, this is a login flow that needs to handle new user differently
+            if (!firstName) {
+                console.warn('New user detected but no firstName provided - document will be created with placeholder');
+                return { user, isNewUser: true, needsName: true };
+            }
+
             // Create user document for new phone sign-in
-            await firestore.collection('users').doc(user.uid).set({
+            const userData = {
                 uid: user.uid,
                 phoneNumber: user.phoneNumber,
                 firstName: firstName,
@@ -388,8 +455,14 @@ async function verifyPhoneCode(confirmationResult, verificationCode, firstName =
                     currentStreak: 0,
                     longestStreak: 0
                 }
-            });
-            console.log('New phone user profile created in Firestore');
+            };
+            console.log('Creating user document with data:', { ...userData, firstName, displayName: firstName });
+            await firestore.collection('users').doc(user.uid).set(userData);
+            console.log('New phone user profile created in Firestore with name:', firstName);
+
+            // Update Firebase Auth display name
+            await user.updateProfile({ displayName: firstName });
+            console.log('Firebase Auth displayName updated to:', firstName);
         } else {
             // Update last login for existing user
             await firestore.collection('users').doc(user.uid).update({
@@ -397,7 +470,7 @@ async function verifyPhoneCode(confirmationResult, verificationCode, firstName =
             });
         }
 
-        return user;
+        return { user, isNewUser: needsUserDoc, needsName: false };
     } catch (error) {
         console.error('Error verifying phone code:', error);
         throw error;
@@ -407,9 +480,10 @@ async function verifyPhoneCode(confirmationResult, verificationCode, firstName =
 /**
  * Initialize reCAPTCHA verifier for phone authentication
  * @param {string} containerId - ID of the container element for reCAPTCHA
- * @returns {object} RecaptchaVerifier instance
+ * @param {boolean} useVisible - Use visible reCAPTCHA (default: false)
+ * @returns {Promise<object>} RecaptchaVerifier instance (after rendering)
  */
-function initializeRecaptcha(containerId) {
+async function initializeRecaptcha(containerId, useVisible = false) {
     // Clear any existing verifier
     if (window.recaptchaVerifier) {
         try {
@@ -420,11 +494,20 @@ function initializeRecaptcha(containerId) {
         window.recaptchaVerifier = null;
     }
 
-    // Create new verifier
+    // Verify container exists
+    const container = document.getElementById(containerId);
+    if (!container) {
+        throw new Error(`reCAPTCHA container not found: ${containerId}`);
+    }
+
+    // Clear container contents
+    container.innerHTML = '';
+
+    // Create new verifier with visible option as fallback
     window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier(containerId, {
-        'size': 'invisible',
+        'size': useVisible ? 'normal' : 'invisible',
         'callback': (response) => {
-            console.log('reCAPTCHA solved');
+            console.log('reCAPTCHA solved', response);
         },
         'expired-callback': () => {
             console.log('reCAPTCHA expired - clearing verifier');
@@ -436,8 +519,22 @@ function initializeRecaptcha(containerId) {
                 }
             }
             window.recaptchaVerifier = null;
+        },
+        'error-callback': (error) => {
+            console.error('reCAPTCHA error:', error);
         }
     });
+
+    // Render the verifier (required before use)
+    try {
+        const widgetId = await window.recaptchaVerifier.render();
+        console.log('reCAPTCHA rendered successfully, widget ID:', widgetId);
+    } catch (error) {
+        console.error('Error rendering reCAPTCHA:', error);
+        // Clear failed verifier
+        window.recaptchaVerifier = null;
+        throw error;
+    }
 
     return window.recaptchaVerifier;
 }
@@ -460,9 +557,11 @@ function getAuthErrorMessage(error) {
         case 'auth/user-disabled':
             return 'This account has been disabled.';
         case 'auth/user-not-found':
-            return 'No account found with this email.';
+            return 'No account exists with this email. Please sign up first.';
         case 'auth/wrong-password':
             return 'Incorrect password.';
+        case 'auth/invalid-credential':
+            return 'No account exists with this email or incorrect password.';
         case 'auth/too-many-requests':
             return 'Too many failed attempts. Please try again later.';
         case 'auth/email-not-verified':
@@ -473,6 +572,18 @@ function getAuthErrorMessage(error) {
             return 'Only one popup can be open at a time.';
         case 'auth/account-exists-with-different-credential':
             return 'An account already exists with the same email but different sign-in credentials.';
+        case 'auth/invalid-app-credential':
+            return 'Phone authentication is not properly configured. Please contact support.';
+        case 'auth/invalid-phone-number':
+            return 'Invalid phone number format. Use international format (e.g., +1234567890).';
+        case 'auth/missing-phone-number':
+            return 'Please enter a phone number.';
+        case 'auth/quota-exceeded':
+            return 'SMS quota exceeded. Please try again later.';
+        case 'auth/invalid-verification-code':
+            return 'Invalid verification code. Please try again.';
+        case 'auth/code-expired':
+            return 'Verification code has expired. Please request a new one.';
         default:
             return error.message || 'An error occurred. Please try again.';
     }

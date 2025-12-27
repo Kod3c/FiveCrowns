@@ -15,9 +15,9 @@
     <link rel="manifest" href="manifest.json">
 
     <!-- CSS -->
-    <link rel="stylesheet" href="css/style.css?v=20250118h">
-    <link rel="stylesheet" href="css/game.css?v=20250118t">
-    <link rel="stylesheet" href="css/card-designs.css?v=1">
+    <link rel="stylesheet" href="css/style.css?v=20250126a">
+    <link rel="stylesheet" href="css/game.css?v=20250126d">
+    <link rel="stylesheet" href="css/card-designs.css?v=20250126f">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -155,8 +155,15 @@
                     <div class="card-preview-container">
                         <p class="card-preview-label">Preview:</p>
                         <div class="card-preview">
+                            <div class="card hand-card card-back">
+                                <!-- Card back design (no content needed) -->
+                            </div>
                             <div class="card hand-card">
                                 <div class="card-corner hearts">
+                                    <span class="corner-rank">K</span>
+                                    <span class="corner-suit">♥</span>
+                                </div>
+                                <div class="card-corner-bottom hearts">
                                     <span class="corner-rank">K</span>
                                     <span class="corner-suit">♥</span>
                                 </div>
@@ -170,6 +177,10 @@
                                     <span class="corner-rank">7</span>
                                     <span class="corner-suit">♠</span>
                                 </div>
+                                <div class="card-corner-bottom spades">
+                                    <span class="corner-rank">7</span>
+                                    <span class="corner-suit">♠</span>
+                                </div>
                                 <div class="card-content">
                                     <span class="card-rank spades">7</span>
                                     <span class="card-suit spades">♠</span>
@@ -177,6 +188,10 @@
                             </div>
                             <div class="card hand-card">
                                 <div class="card-corner stars">
+                                    <span class="corner-rank">A</span>
+                                    <span class="corner-suit">⭐</span>
+                                </div>
+                                <div class="card-corner-bottom stars">
                                     <span class="corner-rank">A</span>
                                     <span class="corner-suit">⭐</span>
                                 </div>
@@ -353,12 +368,12 @@
     <script src="js/settings.js?v=1"></script>
 
     <!-- Card Hand Manager -->
-    <script src="js/cardHand.js?v=4"></script>
+    <script src="js/cardHand.js?v=20250126a"></script>
 
     <!-- Deck/Discard Manager -->
     <script src="js/deckDiscard.js?v=4"></script>
 
     <!-- Game Logic -->
-    <script src="js/game.js?v=5"></script>
+    <script src="js/game.js?v=20250126a"></script>
 </body>
 </html>
