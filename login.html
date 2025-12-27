@@ -206,6 +206,347 @@
             width: 20px;
             height: 20px;
         }
+
+        /* Login Method Toggle */
+        .login-method-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px;
+            border-radius: 12px;
+        }
+
+        .method-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .method-btn.active {
+            background: rgba(123, 63, 242, 0.6);
+            color: var(--gold);
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+
+        .method-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+        }
+
+        /* Phone Input Styling */
+        .phone-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .phone-input-group .form-input {
+            flex: 1;
+        }
+
+        .country-code-select {
+            width: 100px;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .country-code-select:focus {
+            border-color: var(--gold);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .country-code-select option {
+            background: var(--darker-purple);
+            color: var(--white);
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+                align-items: flex-start;
+                min-height: 100vh;
+            }
+
+            .container {
+                margin-top: 5px;
+            }
+
+            .logo-section {
+                margin-bottom: 15px;
+            }
+
+            .game-title {
+                font-size: 28px;
+            }
+
+            .crown-icon {
+                font-size: 28px;
+            }
+
+            .tagline {
+                font-size: 12px;
+                margin-bottom: 0;
+            }
+
+            .auth-container {
+                padding: 8px;
+            }
+
+            .auth-form {
+                padding: 16px 12px;
+                border-radius: 14px;
+            }
+
+            .auth-title {
+                font-size: 20px;
+                margin-bottom: 6px;
+            }
+
+            .auth-subtitle {
+                font-size: 11px;
+                margin-bottom: 12px;
+            }
+
+            .login-method-toggle {
+                margin-bottom: 12px;
+            }
+
+            .method-btn {
+                font-size: 13px;
+                padding: 8px;
+            }
+
+            .form-group {
+                margin-bottom: 12px;
+            }
+
+            .form-label {
+                font-size: 12px;
+                margin-bottom: 5px;
+            }
+
+            .form-input {
+                font-size: 14px;
+                padding: 9px 11px;
+            }
+
+            .btn-social {
+                font-size: 13px;
+                padding: 9px 11px;
+            }
+
+            /* Hide social sign-in on mobile to save space */
+            .social-signin {
+                display: none;
+            }
+
+            .auth-toggle {
+                font-size: 12px;
+                margin-top: 12px;
+            }
+
+            .forgot-password {
+                margin-bottom: 12px;
+                margin-top: -8px;
+            }
+
+            .forgot-password a {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            body {
+                padding: 6px;
+            }
+
+            .container {
+                margin-top: 3px;
+            }
+
+            .logo-section {
+                margin-bottom: 12px;
+            }
+
+            .game-title {
+                font-size: 26px;
+            }
+
+            .crown-icon {
+                font-size: 26px;
+            }
+
+            .tagline {
+                font-size: 11px;
+            }
+
+            .auth-container {
+                padding: 6px;
+            }
+
+            .auth-form {
+                padding: 14px 10px;
+                border-radius: 12px;
+            }
+
+            .auth-title {
+                font-size: 18px;
+                margin-bottom: 5px;
+            }
+
+            .auth-subtitle {
+                font-size: 10px;
+                margin-bottom: 10px;
+            }
+
+            .login-method-toggle {
+                margin-bottom: 10px;
+                padding: 3px;
+            }
+
+            .method-btn {
+                font-size: 12px;
+                padding: 7px;
+            }
+
+            .form-group {
+                margin-bottom: 10px;
+            }
+
+            .form-label {
+                font-size: 11px;
+                margin-bottom: 4px;
+            }
+
+            .form-input {
+                font-size: 13px;
+                padding: 8px 10px;
+            }
+
+            .auth-toggle {
+                font-size: 11px;
+                margin-top: 10px;
+            }
+
+            .forgot-password {
+                margin-bottom: 10px;
+                margin-top: -6px;
+            }
+
+            .forgot-password a {
+                font-size: 10px;
+            }
+        }
+
+        @media (max-width: 320px) {
+            body {
+                padding: 4px;
+            }
+
+            .container {
+                margin-top: 2px;
+            }
+
+            .logo-section {
+                margin-bottom: 8px;
+            }
+
+            .game-title {
+                font-size: 22px;
+            }
+
+            .crown-icon {
+                font-size: 22px;
+            }
+
+            .tagline {
+                font-size: 10px;
+            }
+
+            .auth-container {
+                padding: 4px;
+            }
+
+            .auth-form {
+                padding: 12px 8px;
+            }
+
+            .auth-title {
+                font-size: 16px;
+                margin-bottom: 4px;
+            }
+
+            .auth-subtitle {
+                font-size: 9px;
+                margin-bottom: 8px;
+            }
+
+            .login-method-toggle {
+                margin-bottom: 8px;
+                padding: 2px;
+            }
+
+            .method-btn {
+                font-size: 10px;
+                padding: 6px;
+            }
+
+            .form-group {
+                margin-bottom: 8px;
+            }
+
+            .form-label {
+                font-size: 10px;
+                margin-bottom: 3px;
+            }
+
+            .form-input {
+                font-size: 12px;
+                padding: 7px 9px;
+            }
+
+            .country-code-select {
+                font-size: 12px;
+                padding: 7px 5px;
+                min-width: 80px;
+            }
+
+            .auth-toggle {
+                font-size: 10px;
+                margin-top: 8px;
+            }
+
+            .forgot-password {
+                margin-bottom: 8px;
+                margin-top: -5px;
+            }
+
+            .forgot-password a {
+                font-size: 9px;
+            }
+
+            .error-text {
+                font-size: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -223,23 +564,33 @@
                 <h2 class="auth-title">Welcome Back</h2>
                 <p class="auth-subtitle">Sign in to continue playing</p>
 
-                <div class="form-group">
-                    <label class="form-label" for="loginEmail">Email</label>
-                    <input type="email" id="loginEmail" class="form-input" placeholder="your@email.com" autocomplete="email">
-                </div>
+                <!-- Phone Login Fields -->
+                <div id="phoneLoginFields">
+                    <div class="form-group">
+                        <label class="form-label" for="loginPhone">Phone Number</label>
+                        <div class="phone-input-group">
+                            <select id="loginCountryCode" class="country-code-select">
+                                <option value="+1">🇺🇸 +1</option>
+                                <option value="+44">🇬🇧 +44</option>
+                                <option value="+91">🇮🇳 +91</option>
+                                <option value="+61">🇦🇺 +61</option>
+                                <option value="+81">🇯🇵 +81</option>
+                                <option value="+86">🇨🇳 +86</option>
+                            </select>
+                            <input type="tel" id="loginPhone" class="form-input" placeholder="(123) 456-7890" autocomplete="tel">
+                        </div>
+                    </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="loginPassword">Password</label>
-                    <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" autocomplete="current-password">
-                </div>
-
-                <div class="forgot-password">
-                    <a href="#" id="forgotPasswordLink">Forgot password?</a>
+                    <div class="form-group" id="loginVerificationCodeGroup" style="display: none;">
+                        <label class="form-label" for="loginVerificationCode">Verification Code</label>
+                        <input type="text" id="loginVerificationCode" class="form-input" placeholder="123 - 456" maxlength="9" inputmode="numeric" autocomplete="one-time-code">
+                    </div>
                 </div>
 
                 <p class="error-text" id="loginError"></p>
 
-                <button class="btn btn-primary btn-large" id="loginBtn">Sign In</button>
+                <button class="btn btn-primary btn-large" id="loginBtn">Send Code</button>
+                <div id="loginRecaptcha"></div>
 
                 <div class="social-signin">
                     <p class="social-signin-text">Or continue with</p>
@@ -277,19 +628,33 @@
                     <input type="text" id="signupFirstName" class="form-input" placeholder="Your name" autocomplete="given-name">
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="signupEmail">Email</label>
-                    <input type="email" id="signupEmail" class="form-input" placeholder="your@email.com" autocomplete="email">
-                </div>
+                <!-- Phone Signup Fields -->
+                <div id="phoneSignupFields">
+                    <div class="form-group">
+                        <label class="form-label" for="signupPhone">Phone Number</label>
+                        <div class="phone-input-group">
+                            <select id="signupCountryCode" class="country-code-select">
+                                <option value="+1">🇺🇸 +1</option>
+                                <option value="+44">🇬🇧 +44</option>
+                                <option value="+91">🇮🇳 +91</option>
+                                <option value="+61">🇦🇺 +61</option>
+                                <option value="+81">🇯🇵 +81</option>
+                                <option value="+86">🇨🇳 +86</option>
+                            </select>
+                            <input type="tel" id="signupPhone" class="form-input" placeholder="(123) 456-7890" autocomplete="tel">
+                        </div>
+                    </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="signupPassword">Password</label>
-                    <input type="password" id="signupPassword" class="form-input" placeholder="At least 6 characters" autocomplete="new-password">
+                    <div class="form-group" id="signupVerificationCodeGroup" style="display: none;">
+                        <label class="form-label" for="signupVerificationCode">Verification Code</label>
+                        <input type="text" id="signupVerificationCode" class="form-input" placeholder="123 - 456" maxlength="9" inputmode="numeric" autocomplete="one-time-code">
+                    </div>
                 </div>
 
                 <p class="error-text" id="signupError"></p>
 
-                <button class="btn btn-primary btn-large" id="signupBtn">Create Account</button>
+                <button class="btn btn-primary btn-large" id="signupBtn">Send Code</button>
+                <div id="signupRecaptcha"></div>
 
                 <div class="social-signin">
                     <p class="social-signin-text">Or continue with</p>
@@ -346,23 +711,46 @@
         const signupForm = document.getElementById('signupForm');
         const loadingSpinner = document.getElementById('loadingSpinner');
 
-        // Login elements
-        const loginEmail = document.getElementById('loginEmail');
-        const loginPassword = document.getElementById('loginPassword');
+        // Phone login elements
+        const loginCountryCode = document.getElementById('loginCountryCode');
+        const loginPhone = document.getElementById('loginPhone');
+        const loginVerificationCodeGroup = document.getElementById('loginVerificationCodeGroup');
+        const loginVerificationCode = document.getElementById('loginVerificationCode');
         const loginBtn = document.getElementById('loginBtn');
         const loginError = document.getElementById('loginError');
 
-        // Signup elements
+        // Phone signup elements
         const signupFirstName = document.getElementById('signupFirstName');
-        const signupEmail = document.getElementById('signupEmail');
-        const signupPassword = document.getElementById('signupPassword');
+        const signupCountryCode = document.getElementById('signupCountryCode');
+        const signupPhone = document.getElementById('signupPhone');
+        const signupVerificationCodeGroup = document.getElementById('signupVerificationCodeGroup');
+        const signupVerificationCode = document.getElementById('signupVerificationCode');
         const signupBtn = document.getElementById('signupBtn');
         const signupError = document.getElementById('signupError');
+
+        // State variables for phone auth
+        let loginConfirmationResult = null;
+        let signupConfirmationResult = null;
 
         // Toggle links
         const showSignupLink = document.getElementById('showSignupLink');
         const showLoginLink = document.getElementById('showLoginLink');
-        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+
+        // Format verification code input as "XXX - XXX"
+        function formatVerificationCode(input) {
+            let value = input.value.replace(/\D/g, ''); // Remove all non-digits
+            if (value.length > 6) value = value.substring(0, 6); // Limit to 6 digits
+
+            if (value.length > 3) {
+                input.value = value.substring(0, 3) + ' - ' + value.substring(3);
+            } else {
+                input.value = value;
+            }
+        }
+
+        // Add formatting to verification code inputs
+        loginVerificationCode.addEventListener('input', () => formatVerificationCode(loginVerificationCode));
+        signupVerificationCode.addEventListener('input', () => formatVerificationCode(signupVerificationCode));
 
         // Check if user is already logged in
         auth.onAuthStateChanged((user) => {
@@ -398,126 +786,124 @@
             signupError.classList.remove('show');
         });
 
-        // Login
+        // Login - Phone only
         loginBtn.addEventListener('click', async () => {
-            const email = loginEmail.value.trim();
-            const password = loginPassword.value;
+            if (!loginConfirmationResult) {
+                // Step 1: Send verification code
+                const phoneNumber = loginCountryCode.value + loginPhone.value.trim();
 
-            // Validate
-            if (!email || !password) {
-                showError(loginError, 'Please fill in all fields');
-                return;
-            }
-
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Signing in...';
-
-            try {
-                await signInUser(email, password);
-                // Redirect handled by onAuthStateChanged
-            } catch (error) {
-                console.error('Login error:', error);
-                const errorMessage = getAuthErrorMessage(error);
-
-                // If email not verified, show resend option
-                if (error.code === 'auth/email-not-verified') {
-                    showError(loginError, errorMessage + ' <a href="#" id="resendVerificationLink" style="color: var(--gold); text-decoration: underline; cursor: pointer;">Resend verification email</a>');
-
-                    // Add event listener for resend link
-                    setTimeout(() => {
-                        const resendLink = document.getElementById('resendVerificationLink');
-                        if (resendLink) {
-                            resendLink.addEventListener('click', async (e) => {
-                                e.preventDefault();
-                                try {
-                                    // Sign in temporarily to send verification
-                                    const userCred = await auth.signInWithEmailAndPassword(email, password);
-                                    await userCred.user.sendEmailVerification();
-                                    await auth.signOut();
-                                    showError(loginError, '✅ Verification email sent! Please check your inbox.', false);
-                                } catch (resendError) {
-                                    showError(loginError, 'Failed to send verification email. Please try again.');
-                                }
-                            });
-                        }
-                    }, 100);
-                } else {
-                    showError(loginError, errorMessage);
+                if (!loginPhone.value.trim()) {
+                    showError(loginError, 'Please enter your phone number');
+                    return;
                 }
 
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Sign In';
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Sending code...';
+
+                try {
+                    // Initialize reCAPTCHA
+                    await initializeRecaptcha('loginRecaptcha');
+
+                    // Send verification code
+                    loginConfirmationResult = await sendPhoneVerificationCode(phoneNumber, window.recaptchaVerifier);
+
+                    // Show verification code input
+                    loginVerificationCodeGroup.style.display = 'block';
+                    loginBtn.textContent = 'Verify Code';
+                    showError(loginError, '✅ Code sent! Check your phone.', false);
+                    loginBtn.disabled = false;
+                } catch (error) {
+                    console.error('Error sending code:', error);
+                    showError(loginError, getAuthErrorMessage(error));
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Send Code';
+                    loginConfirmationResult = null;
+                }
+            } else {
+                // Step 2: Verify code and sign in
+                const code = loginVerificationCode.value.replace(/\D/g, ''); // Extract only digits
+
+                if (!code || code.length !== 6) {
+                    showError(loginError, 'Please enter the 6-digit code');
+                    return;
+                }
+
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Verifying...';
+
+                try {
+                    await verifyPhoneCode(loginConfirmationResult, code);
+                    // Redirect handled by onAuthStateChanged
+                } catch (error) {
+                    console.error('Verification error:', error);
+                    showError(loginError, getAuthErrorMessage(error));
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Verify Code';
+                }
             }
         });
 
-        // Signup
+        // Signup - Phone only
         signupBtn.addEventListener('click', async () => {
             const firstName = signupFirstName.value.trim();
-            const email = signupEmail.value.trim();
-            const password = signupPassword.value;
 
-            // Validate
-            if (!firstName || !email || !password) {
-                showError(signupError, 'Please fill in all fields');
-                return;
-            }
-
-            if (firstName.length < 2) {
+            if (!firstName || firstName.length < 2) {
                 showError(signupError, 'First name must be at least 2 characters');
                 return;
             }
 
-            if (password.length < 6) {
-                showError(signupError, 'Password must be at least 6 characters');
-                return;
-            }
+            if (!signupConfirmationResult) {
+                // Step 1: Send verification code
+                const phoneNumber = signupCountryCode.value + signupPhone.value.trim();
 
-            signupBtn.disabled = true;
-            signupBtn.textContent = 'Creating account...';
+                if (!signupPhone.value.trim()) {
+                    showError(signupError, 'Please enter your phone number');
+                    return;
+                }
 
-            try {
-                await signUpUser(email, password, firstName);
-                // Show success message instead of auto-redirect
-                await auth.signOut(); // Sign out the user
-                showError(signupError, '✅ Account created! Please check your email to verify your address before signing in.', false);
-                signupBtn.disabled = false;
-                signupBtn.textContent = 'Create Account';
+                signupBtn.disabled = true;
+                signupBtn.textContent = 'Sending code...';
 
-                // Clear form fields
-                signupFirstName.value = '';
-                signupEmail.value = '';
-                signupPassword.value = '';
+                try {
+                    // Initialize reCAPTCHA
+                    await initializeRecaptcha('signupRecaptcha');
 
-                // Optionally switch to login form after a delay
-                setTimeout(() => {
-                    signupForm.style.display = 'none';
-                    loginForm.style.display = 'block';
-                    loginEmail.value = email; // Pre-fill email
-                    signupError.classList.remove('show');
-                }, 3000);
-            } catch (error) {
-                console.error('Signup error:', error);
-                showError(signupError, getAuthErrorMessage(error));
-                signupBtn.disabled = false;
-                signupBtn.textContent = 'Create Account';
-            }
-        });
+                    // Send verification code
+                    signupConfirmationResult = await sendPhoneVerificationCode(phoneNumber, window.recaptchaVerifier);
 
-        // Forgot password
-        forgotPasswordLink.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const email = loginEmail.value.trim();
+                    // Show verification code input
+                    signupVerificationCodeGroup.style.display = 'block';
+                    signupBtn.textContent = 'Create Account';
+                    showError(signupError, '✅ Code sent! Check your phone.', false);
+                    signupBtn.disabled = false;
+                } catch (error) {
+                    console.error('Error sending code:', error);
+                    showError(signupError, getAuthErrorMessage(error));
+                    signupBtn.disabled = false;
+                    signupBtn.textContent = 'Send Code';
+                    signupConfirmationResult = null;
+                }
+            } else {
+                // Step 2: Verify code and create account
+                const code = signupVerificationCode.value.replace(/\D/g, ''); // Extract only digits
 
-            if (!email) {
-                showError(loginError, 'Please enter your email address first');
-                return;
-            }
+                if (!code || code.length !== 6) {
+                    showError(signupError, 'Please enter the 6-digit code');
+                    return;
+                }
 
-            try {
-                await sendPasswordReset(email);
-                showError(loginError, '✅ Password reset email sent! Check your inbox.', false);
-            } catch (error) {
-                showError(loginError, getAuthErrorMessage(error));
+                signupBtn.disabled = true;
+                signupBtn.textContent = 'Creating account...';
+
+                try {
+                    await verifyPhoneCode(signupConfirmationResult, code, firstName);
+                    // Redirect handled by onAuthStateChanged
+                } catch (error) {
+                    console.error('Signup error:', error);
+                    showError(signupError, getAuthErrorMessage(error));
+                    signupBtn.disabled = false;
+                    signupBtn.textContent = 'Create Account';
+                }
             }
         });
 
