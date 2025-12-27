@@ -957,6 +957,20 @@
     <!-- Auth Service -->
     <script src="js/auth.js"></script>
 
+    <!-- Auth Check - Redirect if not logged in -->
+    <script>
+        // Check authentication state on page load
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                // User is not logged in, redirect to login page
+                console.log('User not authenticated, redirecting to login page');
+                window.location.href = 'login.html';
+            } else {
+                console.log('User authenticated:', user.uid);
+            }
+        });
+    </script>
+
     <!-- Game Persistence -->
     <script src="js/game-persistence.js"></script>
 
