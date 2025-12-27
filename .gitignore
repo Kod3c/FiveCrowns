@@ -4,9 +4,6 @@
 firebase-debug.log
 firebase-debug.*.log
 
-# Firebase config (uncomment if you move to env vars)
-# firebase-config.js
-
 # IDE and Editor
 .vscode/
 .idea/
@@ -14,9 +11,6 @@ firebase-debug.*.log
 *.swo
 *~
 .DS_Store
-
-# Claude AI
-.claude/
 
 # Windows
 Thumbs.db
@@ -26,19 +20,15 @@ nul
 # XAMPP / Development
 *.log
 
-# Environment variables (if you add them later)
+# Environment variables
 .env
 .env.local
-
-# Test files (optional - uncomment to exclude from repo)
-# test.html
-# test-validation.html
 
 # Build artifacts
 dist/
 build/
 
-# Dependencies (if you add npm later)
+# Dependencies
 node_modules/
 package-lock.json
 yarn.lock
