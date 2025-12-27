@@ -4,14 +4,13 @@
 console.log('Auth service loaded');
 
 /**
- * Sign up a new user with email, password, first name, and username
+ * Sign up a new user with email, password, and first name
  * @param {string} email - User's email
  * @param {string} password - User's password
  * @param {string} firstName - User's first name
- * @param {string} username - User's unique username (optional, can be set later)
  * @returns {Promise<object>} User object
  */
-async function signUpUser(email, password, firstName, username = null) {
+async function signUpUser(email, password, firstName) {
     try {
         // Create user with email and password
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
@@ -54,11 +53,6 @@ async function signUpUser(email, password, firstName, username = null) {
                 longestStreak: 0
             }
         };
-
-        // Add username if provided
-        if (username) {
-            userData.username = username.toLowerCase().trim();
-        }
 
         await firestore.collection('users').doc(user.uid).set(userData);
 
@@ -189,24 +183,42 @@ async function updateUserName(firstName) {
  */
 async function getUserFirstName(uid) {
     try {
+        console.log('Getting user first name for uid:', uid);
         const doc = await firestore.collection('users').doc(uid).get();
         if (doc.exists) {
             const data = doc.data();
-            return data.firstName || data.displayName || 'Player';
+            console.log('User document data:', data);
+            const firstName = data.firstName || data.displayName || 'Player';
+            console.log('Returning firstName:', firstName);
+            return firstName;
         } else {
-            // Document doesn't exist - user was created before Firestore was enabled
-            // Try to create it now from auth data
-            console.log('User document does not exist, creating from auth data...');
+            // Document doesn't exist - might be a race condition during signup
+            // Return displayName from auth if available, otherwise create document
+            console.log('User document does not exist, checking auth displayName...');
             const user = auth.currentUser;
             if (user) {
-                const firstName = user.displayName || 'Player';
-                await firestore.collection('users').doc(uid).set({
+                // If displayName is set in auth, use it (set during verifyPhoneCode)
+                if (user.displayName) {
+                    console.log('Using Firebase Auth displayName:', user.displayName);
+                    return user.displayName;
+                }
+
+                // Otherwise create document with fallback
+                const firstName = 'Player';
+                console.log('Creating user document with firstName:', firstName);
+
+                // Build user data based on what's available
+                const userData = {
                     uid: uid,
-                    email: user.email,
                     firstName: firstName,
                     displayName: firstName,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    friends: [],
+                    friendRequests: {
+                        incoming: [],
+                        outgoing: []
+                    },
                     stats: {
                         gamesPlayed: 0,
                         gamesWon: 0,
@@ -216,8 +228,20 @@ async function getUserFirstName(uid) {
                         currentStreak: 0,
                         longestStreak: 0
                     }
-                });
-                console.log('User document created successfully');
+                };
+
+                // Add email or phone based on what's available
+                if (user.email) {
+                    userData.email = user.email;
+                    userData.emailVerified = user.emailVerified;
+                }
+                if (user.phoneNumber) {
+                    userData.phoneNumber = user.phoneNumber;
+                    userData.provider = 'phone';
+                }
+
+                await firestore.collection('users').doc(uid).set(userData);
+                console.log('User document created successfully with data:', userData);
                 return firstName;
             }
         }
@@ -387,29 +411,83 @@ async function signInWithApple() {
 }
 
 /**
- * Check if a phone number has an existing account
+ * Check if a phone number has an existing account in Firestore
+ * Note: This check happens AFTER phone auth verification, when user is authenticated
  * @param {string} phoneNumber - Phone number in E.164 format
- * @returns {Promise<boolean>} True if account exists
+ * @returns {Promise<boolean>} True if Firestore user document exists
  */
-async function phoneNumberExists(phoneNumber) {
+async function phoneNumberHasFirestoreAccount(phoneNumber) {
     try {
-        console.log('Checking if phone number exists:', phoneNumber);
+        console.log('Checking if Firestore account exists for:', phoneNumber);
         const snapshot = await firestore.collection('users')
             .where('phoneNumber', '==', phoneNumber)
             .limit(1)
             .get();
         const exists = !snapshot.empty;
-        console.log('Phone number exists:', exists);
+        console.log('Firestore account exists:', exists);
         return exists;
     } catch (error) {
-        console.error('Error checking phone number:', error);
-        // If permission denied, we can't check - skip the validation
-        // Return true to allow the process to continue and let Firebase handle auth
-        if (error.code === 'permission-denied') {
-            console.warn('Cannot check phone number due to Firestore rules - skipping validation');
-            return true;
-        }
+        console.error('Error checking Firestore account:', error);
+        return false;
+    }
+}
+
+/**
+ * Check if a phone number has an existing account (pre-verification)
+ * Uses a public registrations collection to check without authentication
+ * @param {string} phoneNumber - Phone number in E.164 format
+ * @returns {Promise<boolean>} True if account exists
+ */
+async function phoneNumberExists(phoneNumber) {
+    try {
+        console.log('Checking if phone number is registered:', phoneNumber);
+
+        // Hash the phone number for privacy in public collection
+        const phoneHash = await hashPhoneNumber(phoneNumber);
+
+        // Check the public registrations collection
+        const registrationDoc = await firestore.collection('registrations').doc(phoneHash).get();
+
+        const exists = registrationDoc.exists;
+        console.log('Phone number registered:', exists);
+        return exists;
+    } catch (error) {
+        console.error('Error checking phone registration:', error);
+        // If we can't check, allow the process to continue
+        // Better UX than blocking the user
         return true;
+    }
+}
+
+/**
+ * Hash phone number for privacy (simple hash for lookup)
+ * @param {string} phoneNumber - Phone number in E.164 format
+ * @returns {Promise<string>} Hashed phone number
+ */
+async function hashPhoneNumber(phoneNumber) {
+    // Simple base64 encoding for now (can upgrade to SHA-256 if needed)
+    return btoa(phoneNumber);
+}
+
+/**
+ * Register a phone number in the public registrations collection
+ * Called when a new user signs up
+ * @param {string} phoneNumber - Phone number in E.164 format
+ * @returns {Promise<void>}
+ */
+async function registerPhoneNumber(phoneNumber) {
+    try {
+        const phoneHash = await hashPhoneNumber(phoneNumber);
+
+        await firestore.collection('registrations').doc(phoneHash).set({
+            registered: true,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        console.log('Phone number registered in public collection');
+    } catch (error) {
+        console.error('Error registering phone number:', error);
+        // Non-critical error, don't throw
     }
 }
 
@@ -436,17 +514,26 @@ async function sendPhoneVerificationCode(phoneNumber, recaptchaVerifier) {
  * @param {object} confirmationResult - Result from sendPhoneVerificationCode
  * @param {string} verificationCode - 6-digit code from SMS
  * @param {string} firstName - User's first name (for new users, REQUIRED for new users)
- * @param {string} username - User's username (optional, for new users)
  * @returns {Promise<object>} User object with isNewUser flag
  */
-async function verifyPhoneCode(confirmationResult, verificationCode, firstName = null, username = null) {
+async function verifyPhoneCode(confirmationResult, verificationCode, firstName = null) {
     try {
+        console.log('verifyPhoneCode called with firstName:', firstName);
+
         // First, verify the code and sign in the user
         const userCredential = await confirmationResult.confirm(verificationCode);
         const user = userCredential.user;
         const isNewUser = userCredential.additionalUserInfo?.isNewUser || false;
 
         console.log('Phone verified, user signed in:', user.uid, 'New user:', isNewUser);
+        console.log('firstName parameter value:', firstName);
+
+        // Update Firebase Auth display name FIRST before checking document
+        // This ensures onAuthStateChanged can get the name even if document doesn't exist yet
+        if (firstName && firstName.trim()) {
+            await user.updateProfile({ displayName: firstName });
+            console.log('Firebase Auth displayName updated to:', firstName);
+        }
 
         // Check if user document exists
         const userDoc = await firestore.collection('users').doc(user.uid).get();
@@ -486,18 +573,12 @@ async function verifyPhoneCode(confirmationResult, verificationCode, firstName =
                 }
             };
 
-            // Add username if provided
-            if (username) {
-                userData.username = username.toLowerCase().trim();
-            }
-
             console.log('Creating user document with data:', { ...userData, firstName, displayName: firstName });
             await firestore.collection('users').doc(user.uid).set(userData);
             console.log('New phone user profile created in Firestore with name:', firstName);
 
-            // Update Firebase Auth display name
-            await user.updateProfile({ displayName: firstName });
-            console.log('Firebase Auth displayName updated to:', firstName);
+            // Register phone number in public collection for pre-auth lookups
+            await registerPhoneNumber(user.phoneNumber);
         } else {
             // Update last login for existing user
             await firestore.collection('users').doc(user.uid).update({
