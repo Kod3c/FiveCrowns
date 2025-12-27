@@ -176,6 +176,9 @@ auth.onAuthStateChanged(async (user) => {
                 pendingAction = null;
                 openJoinModal();
             }
+
+            // Load friends data
+            await loadFriendsData();
         } catch (error) {
             console.error('Error getting user data:', error);
             currentUserFirstName = user.displayName || 'Player';
@@ -762,9 +765,22 @@ if (signupPhoneSendCodeBtn) {
     signupPhoneSendCodeBtn.addEventListener('click', async () => {
         const phoneNumber = signupCountryCode.value + cleanPhoneNumber(signupPhone.value);
         const firstName = signupPhoneFirstName.value.trim();
+        const username = signupPhoneUsername.value.trim();
 
         if (!firstName || firstName.length < 2) {
             showAuthError(signupPhoneError, 'Please enter your name (at least 2 characters)');
+            return;
+        }
+
+        if (!username) {
+            showAuthError(signupPhoneError, 'Please enter a username');
+            return;
+        }
+
+        // Validate username
+        const validation = validateUsername(username);
+        if (!validation.valid) {
+            showAuthError(signupPhoneError, validation.error);
             return;
         }
 
@@ -774,9 +790,20 @@ if (signupPhoneSendCodeBtn) {
         }
 
         signupPhoneSendCodeBtn.disabled = true;
-        signupPhoneSendCodeBtn.textContent = 'Sending...';
+        signupPhoneSendCodeBtn.textContent = 'Checking username...';
 
         try {
+            // Check username availability
+            const available = await isUsernameAvailable(username);
+            if (!available) {
+                showAuthError(signupPhoneError, 'Username is already taken');
+                signupPhoneSendCodeBtn.disabled = false;
+                signupPhoneSendCodeBtn.textContent = 'Send Code';
+                return;
+            }
+
+            signupPhoneSendCodeBtn.textContent = 'Sending...';
+
             const recaptchaVerifier = await initializeRecaptcha('recaptcha-container-signup');
             signupConfirmationResult = await sendPhoneVerificationCode(phoneNumber, recaptchaVerifier);
 
@@ -804,6 +831,7 @@ if (signupPhoneVerifyBtn) {
     signupPhoneVerifyBtn.addEventListener('click', async () => {
         const code = cleanVerificationCode(signupVerificationCode.value);
         const firstName = signupPhoneFirstName.value.trim();
+        const username = signupPhoneUsername.value.trim();
 
         if (!code || code.length !== 6) {
             showAuthError(signupPhoneError, 'Please enter the 6-digit code');
@@ -814,7 +842,7 @@ if (signupPhoneVerifyBtn) {
         signupPhoneVerifyBtn.textContent = 'Verifying...';
 
         try {
-            await verifyPhoneCode(signupConfirmationResult, code, firstName);
+            await verifyPhoneCode(signupConfirmationResult, code, firstName, username);
             closeAuthModal();
             // Auth state listener will handle the redirect
         } catch (error) {
@@ -1425,20 +1453,23 @@ async function loadActiveGames() {
     try {
         // First, quickly get games from Firestore without validation
         const allGames = await getActiveGames();
+        const invites = await getGameInvites();
 
-        // Show button immediately if there are any games
-        if (allGames.length > 0 && activeGamesBtn) {
+        // Show button immediately if there are any games or invites
+        const totalCount = allGames.length + invites.length;
+        if (totalCount > 0 && activeGamesBtn) {
             activeGamesBtn.style.display = 'flex';
-            activeGamesCount.textContent = allGames.length;
+            activeGamesCount.textContent = totalCount;
         }
 
         // Then clean up stale games in the background and update if needed
         const validGames = await cleanupStaleGames();
 
-        // Update button with final count
-        if (validGames.length > 0 && activeGamesBtn) {
+        // Update button with final count (games + invites)
+        const finalCount = validGames.length + invites.length;
+        if (finalCount > 0 && activeGamesBtn) {
             activeGamesBtn.style.display = 'flex';
-            activeGamesCount.textContent = validGames.length;
+            activeGamesCount.textContent = finalCount;
         } else if (activeGamesBtn) {
             activeGamesBtn.style.display = 'none';
         }
@@ -1456,6 +1487,9 @@ async function openActiveGamesModal() {
 
         // Clean up any existing listeners
         cleanupActiveGamesListeners();
+
+        // Load game invites first
+        await loadGameInvites();
 
         // Get fresh list of active games
         const validGames = await cleanupStaleGames();
@@ -1511,6 +1545,18 @@ async function openActiveGamesModal() {
             }
         }
 
+        // Set up real-time listener for game invites
+        if (typeof listenToGameInvites === 'function') {
+            const unsubscribe = listenToGameInvites(async () => {
+                // Reload invites when they change
+                await loadGameInvites();
+                // Also update Active Games badge count
+                await loadActiveGames();
+            });
+            // Store unsubscribe function
+            activeGamesListeners.push({ unsubscribe });
+        }
+
         // Show modal
         activeGamesModal.classList.add('active');
     } catch (error) {
@@ -1532,8 +1578,13 @@ function closeActiveGamesModal() {
  * Clean up Firebase listeners for active games
  */
 function cleanupActiveGamesListeners() {
-    activeGamesListeners.forEach(({ ref, listener }) => {
-        ref.off('value', listener);
+    activeGamesListeners.forEach(({ ref, listener, unsubscribe }) => {
+        if (ref && listener) {
+            ref.off('value', listener);
+        }
+        if (unsubscribe && typeof unsubscribe === 'function') {
+            unsubscribe();
+        }
     });
     activeGamesListeners = [];
 }
@@ -1807,6 +1858,931 @@ async function removeActiveGame(gameCode) {
         console.error('Error removing active game:', error);
         showErrorModal('Error removing game. Please try again.');
     }
+}
+
+// ======================
+// Notification & Confirmation Modals
+// ======================
+
+const notificationModal = document.getElementById('notificationModal');
+const notificationTitle = document.getElementById('notificationTitle');
+const notificationMessage = document.getElementById('notificationMessage');
+const notificationOkBtn = document.getElementById('notificationOkBtn');
+
+const confirmModal = document.getElementById('confirmModal');
+const confirmTitle = document.getElementById('confirmTitle');
+const confirmMessage = document.getElementById('confirmMessage');
+const confirmOkBtn = document.getElementById('confirmOkBtn');
+const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
+let confirmResolve = null;
+
+/**
+ * Show notification modal (replaces alert)
+ * @param {string} message - Message to display
+ * @param {string} title - Optional title (defaults to "Success")
+ * @param {string} icon - Optional icon (defaults to "✓")
+ */
+function showNotification(message, title = 'Success', icon = '✓') {
+    notificationTitle.textContent = `${icon} ${title}`;
+    notificationMessage.textContent = message;
+    notificationModal.classList.add('active');
+}
+
+/**
+ * Hide notification modal
+ */
+function hideNotification() {
+    notificationModal.classList.remove('active');
+}
+
+/**
+ * Show confirmation modal (replaces confirm)
+ * @param {string} message - Message to display
+ * @param {string} title - Optional title
+ * @returns {Promise<boolean>} True if confirmed, false if cancelled
+ */
+function showConfirm(message, title = 'Confirm Action') {
+    return new Promise((resolve) => {
+        confirmTitle.textContent = title;
+        confirmMessage.textContent = message;
+        confirmModal.classList.add('active');
+        confirmResolve = resolve;
+    });
+}
+
+/**
+ * Hide confirmation modal
+ */
+function hideConfirm() {
+    confirmModal.classList.remove('active');
+}
+
+// Notification modal event listeners
+if (notificationOkBtn) {
+    notificationOkBtn.addEventListener('click', hideNotification);
+}
+
+if (notificationModal) {
+    notificationModal.addEventListener('click', (e) => {
+        if (e.target === notificationModal) {
+            hideNotification();
+        }
+    });
+}
+
+// Confirmation modal event listeners
+if (confirmOkBtn) {
+    confirmOkBtn.addEventListener('click', () => {
+        hideConfirm();
+        if (confirmResolve) {
+            confirmResolve(true);
+            confirmResolve = null;
+        }
+    });
+}
+
+if (confirmCancelBtn) {
+    confirmCancelBtn.addEventListener('click', () => {
+        hideConfirm();
+        if (confirmResolve) {
+            confirmResolve(false);
+            confirmResolve = null;
+        }
+    });
+}
+
+if (confirmModal) {
+    confirmModal.addEventListener('click', (e) => {
+        if (e.target === confirmModal) {
+            hideConfirm();
+            if (confirmResolve) {
+                confirmResolve(false);
+                confirmResolve = null;
+            }
+        }
+    });
+}
+
+// ======================
+// Friends System
+// ======================
+
+// Friends DOM Elements
+const friendsBtn = document.getElementById('friendsBtn');
+const friendRequestsCount = document.getElementById('friendRequestsCount');
+const friendsModal = document.getElementById('friendsModal');
+const closeFriendsBtn = document.getElementById('closeFriendsBtn');
+
+// Username Modal Elements
+const usernameModal = document.getElementById('usernameModal');
+const usernameInput = document.getElementById('usernameInput');
+const usernameSubmitBtn = document.getElementById('usernameSubmitBtn');
+const usernameError = document.getElementById('usernameError');
+
+// Friends Tab Elements
+const friendsTabs = document.querySelectorAll('.friends-tab');
+const friendsTabPanes = document.querySelectorAll('.tab-pane');
+const friendsList = document.getElementById('friendsList');
+const noFriendsMessage = document.getElementById('noFriendsMessage');
+
+// Friend Requests Elements
+const incomingRequestsList = document.getElementById('incomingRequestsList');
+const outgoingRequestsList = document.getElementById('outgoingRequestsList');
+const noIncomingRequestsMessage = document.getElementById('noIncomingRequestsMessage');
+const noOutgoingRequestsMessage = document.getElementById('noOutgoingRequestsMessage');
+
+// Add Friend Elements
+const friendSearchInput = document.getElementById('friendSearchInput');
+const searchFriendBtn = document.getElementById('searchFriendBtn');
+const friendSearchError = document.getElementById('friendSearchError');
+const friendSearchResults = document.getElementById('friendSearchResults');
+
+// Badge Elements
+const friendsCountBadge = document.getElementById('friendsCountBadge');
+const requestsCountBadge = document.getElementById('requestsCountBadge');
+
+// Game Invites Elements (now in Active Games modal)
+const gameInvitesSection = document.getElementById('gameInvitesSection');
+const gameInvitesList = document.getElementById('gameInvitesList');
+const invitesCountBadge2 = document.getElementById('invitesCountBadge2');
+
+// Friends Event Listeners
+if (friendsBtn) {
+    friendsBtn.addEventListener('click', openFriendsModal);
+}
+
+if (closeFriendsBtn) {
+    closeFriendsBtn.addEventListener('click', closeFriendsModal);
+}
+
+if (friendsModal) {
+    friendsModal.addEventListener('click', (e) => {
+        if (e.target === friendsModal) {
+            closeFriendsModal();
+        }
+    });
+}
+
+// Username Modal Event Listeners
+if (usernameSubmitBtn) {
+    usernameSubmitBtn.addEventListener('click', handleSetUsername);
+}
+
+if (usernameInput) {
+    usernameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleSetUsername();
+        }
+    });
+}
+
+// Friends Tab Navigation
+friendsTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        switchFriendsTab(tabName);
+    });
+});
+
+// Friend Search
+if (searchFriendBtn) {
+    searchFriendBtn.addEventListener('click', handleFriendSearch);
+}
+
+if (friendSearchInput) {
+    friendSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleFriendSearch();
+        }
+    });
+}
+
+/**
+ * Check if user has username and prompt if not
+ */
+async function checkAndPromptForUsername() {
+    try {
+        const hasUserUsername = await hasUsername();
+        if (!hasUserUsername) {
+            console.log('User does not have username, showing prompt');
+            showUsernameModal();
+        }
+    } catch (error) {
+        console.error('Error checking username:', error);
+    }
+}
+
+/**
+ * Show username setup modal
+ */
+function showUsernameModal() {
+    usernameModal.classList.add('active');
+    usernameInput.value = '';
+    usernameError.textContent = '';
+    usernameInput.focus();
+}
+
+/**
+ * Hide username setup modal
+ */
+function hideUsernameModal() {
+    usernameModal.classList.remove('active');
+}
+
+/**
+ * Handle username submission
+ */
+async function handleSetUsername() {
+    try {
+        const username = usernameInput.value.trim();
+
+        // Validate
+        const validation = validateUsername(username);
+        if (!validation.valid) {
+            usernameError.textContent = validation.error;
+            return;
+        }
+
+        usernameSubmitBtn.disabled = true;
+        usernameSubmitBtn.textContent = 'Checking...';
+
+        // Check availability
+        const available = await isUsernameAvailable(username);
+        if (!available) {
+            usernameError.textContent = 'Username is already taken';
+            usernameSubmitBtn.disabled = false;
+            usernameSubmitBtn.textContent = 'Set Username';
+            return;
+        }
+
+        usernameSubmitBtn.textContent = 'Setting...';
+
+        // Set username
+        await setUsername(username);
+
+        // Hide modal
+        hideUsernameModal();
+
+        // Show success message
+        showNotification(`Username set to @${username}!\n\nYou can now add friends.`, 'Username Set');
+
+        // Show friends button
+        if (friendsBtn) {
+            friendsBtn.style.display = 'flex';
+        }
+
+        usernameSubmitBtn.disabled = false;
+        usernameSubmitBtn.textContent = 'Set Username';
+    } catch (error) {
+        console.error('Error setting username:', error);
+        usernameError.textContent = error.message || 'Error setting username';
+        usernameSubmitBtn.disabled = false;
+        usernameSubmitBtn.textContent = 'Set Username';
+    }
+}
+
+/**
+ * Open Friends modal
+ */
+async function openFriendsModal() {
+    // Check if user has username
+    const hasUserUsername = await hasUsername();
+    if (!hasUserUsername) {
+        showUsernameModal();
+        return;
+    }
+
+    friendsModal.classList.add('active');
+    // Load initial tab
+    await loadFriendsList();
+    await loadFriendRequests();
+    updateFriendsBadges();
+}
+
+/**
+ * Close Friends modal
+ */
+function closeFriendsModal() {
+    friendsModal.classList.remove('active');
+}
+
+/**
+ * Switch between friends tabs
+ */
+function switchFriendsTab(tabName) {
+    // Update tab buttons
+    friendsTabs.forEach(tab => {
+        if (tab.dataset.tab === tabName) {
+            tab.classList.add('active');
+        } else {
+            tab.classList.remove('active');
+        }
+    });
+
+    // Update tab panes
+    friendsTabPanes.forEach(pane => {
+        if (pane.id === tabName) {
+            pane.classList.add('active');
+        } else {
+            pane.classList.remove('active');
+        }
+    });
+
+    // Load data for tab
+    if (tabName === 'friends-list') {
+        loadFriendsList();
+    } else if (tabName === 'friend-requests') {
+        loadFriendRequests();
+    }
+}
+
+/**
+ * Load and display friends list
+ */
+async function loadFriendsList() {
+    try {
+        const friends = await getFriends();
+
+        if (friends.length === 0) {
+            friendsList.innerHTML = '';
+            noFriendsMessage.style.display = 'block';
+            return;
+        }
+
+        noFriendsMessage.style.display = 'none';
+
+        // Create friend cards
+        friendsList.innerHTML = '';
+        friends.forEach(friend => {
+            const card = createFriendCard(friend);
+            friendsList.appendChild(card);
+        });
+    } catch (error) {
+        console.error('Error loading friends list:', error);
+    }
+}
+
+/**
+ * Create a friend card element
+ */
+function createFriendCard(friend) {
+    const card = document.createElement('div');
+    card.className = 'friend-card';
+
+    const info = document.createElement('div');
+    info.className = 'friend-info';
+
+    const name = document.createElement('div');
+    name.className = 'friend-name';
+    name.textContent = friend.displayName || friend.firstName || 'Player';
+
+    const username = document.createElement('div');
+    username.className = 'friend-username';
+    username.textContent = `@${friend.username}`;
+
+    info.appendChild(name);
+    info.appendChild(username);
+
+    const actions = document.createElement('div');
+    actions.className = 'friend-actions';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'friend-action-btn danger-btn';
+    removeBtn.textContent = 'Remove';
+    removeBtn.onclick = () => handleRemoveFriend(friend);
+
+    actions.appendChild(removeBtn);
+
+    card.appendChild(info);
+    card.appendChild(actions);
+
+    return card;
+}
+
+/**
+ * Load and display friend requests
+ */
+async function loadFriendRequests() {
+    try {
+        const incoming = await getIncomingFriendRequests();
+        const outgoing = await getOutgoingFriendRequests();
+
+        // Update badge
+        if (incoming.length > 0) {
+            requestsCountBadge.textContent = incoming.length;
+            requestsCountBadge.style.display = 'inline-block';
+            friendRequestsCount.textContent = incoming.length;
+            friendRequestsCount.style.display = 'inline-block';
+        } else {
+            requestsCountBadge.style.display = 'none';
+            friendRequestsCount.style.display = 'none';
+        }
+
+        // Incoming requests
+        if (incoming.length === 0) {
+            incomingRequestsList.innerHTML = '';
+            noIncomingRequestsMessage.style.display = 'block';
+        } else {
+            noIncomingRequestsMessage.style.display = 'none';
+            incomingRequestsList.innerHTML = '';
+            incoming.forEach(request => {
+                const card = createIncomingRequestCard(request);
+                incomingRequestsList.appendChild(card);
+            });
+        }
+
+        // Outgoing requests
+        if (outgoing.length === 0) {
+            outgoingRequestsList.innerHTML = '';
+            noOutgoingRequestsMessage.style.display = 'block';
+        } else {
+            noOutgoingRequestsMessage.style.display = 'none';
+            outgoingRequestsList.innerHTML = '';
+            outgoing.forEach(request => {
+                const card = createOutgoingRequestCard(request);
+                outgoingRequestsList.appendChild(card);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading friend requests:', error);
+    }
+}
+
+/**
+ * Create incoming friend request card
+ */
+function createIncomingRequestCard(request) {
+    const card = document.createElement('div');
+    card.className = 'friend-card';
+
+    const info = document.createElement('div');
+    info.className = 'friend-info';
+
+    const name = document.createElement('div');
+    name.className = 'friend-name';
+    name.textContent = request.displayName || 'Player';
+
+    const username = document.createElement('div');
+    username.className = 'friend-username';
+    username.textContent = `@${request.username}`;
+
+    info.appendChild(name);
+    info.appendChild(username);
+
+    const actions = document.createElement('div');
+    actions.className = 'friend-actions';
+
+    const acceptBtn = document.createElement('button');
+    acceptBtn.className = 'friend-action-btn';
+    acceptBtn.textContent = 'Accept';
+    acceptBtn.onclick = () => handleAcceptFriendRequest(request.from);
+
+    const declineBtn = document.createElement('button');
+    declineBtn.className = 'friend-action-btn danger-btn';
+    declineBtn.textContent = 'Decline';
+    declineBtn.onclick = () => handleDeclineFriendRequest(request.from);
+
+    actions.appendChild(acceptBtn);
+    actions.appendChild(declineBtn);
+
+    card.appendChild(info);
+    card.appendChild(actions);
+
+    return card;
+}
+
+/**
+ * Create outgoing friend request card
+ */
+function createOutgoingRequestCard(request) {
+    const card = document.createElement('div');
+    card.className = 'friend-card';
+
+    const info = document.createElement('div');
+    info.className = 'friend-info';
+
+    const name = document.createElement('div');
+    name.className = 'friend-name';
+    name.textContent = request.displayName || 'Player';
+
+    const username = document.createElement('div');
+    username.className = 'friend-username';
+    username.textContent = `@${request.username}`;
+
+    info.appendChild(name);
+    info.appendChild(username);
+
+    const actions = document.createElement('div');
+    actions.className = 'friend-actions';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'friend-action-btn danger-btn';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = () => handleCancelFriendRequest(request.to);
+
+    actions.appendChild(cancelBtn);
+
+    card.appendChild(info);
+    card.appendChild(actions);
+
+    return card;
+}
+
+/**
+ * Handle friend search
+ */
+async function handleFriendSearch() {
+    try {
+        const username = friendSearchInput.value.trim();
+
+        if (!username) {
+            friendSearchError.textContent = 'Please enter a username';
+            return;
+        }
+
+        searchFriendBtn.disabled = true;
+        searchFriendBtn.textContent = 'Searching...';
+        friendSearchError.textContent = '';
+        friendSearchResults.innerHTML = '';
+
+        const user = await searchUserByUsername(username);
+
+        if (!user) {
+            friendSearchError.textContent = 'User not found';
+            searchFriendBtn.disabled = false;
+            searchFriendBtn.textContent = 'Search';
+            return;
+        }
+
+        // Display search result
+        const resultCard = createSearchResultCard(user);
+        friendSearchResults.appendChild(resultCard);
+
+        searchFriendBtn.disabled = false;
+        searchFriendBtn.textContent = 'Search';
+    } catch (error) {
+        console.error('Error searching for friend:', error);
+        friendSearchError.textContent = error.message || 'Error searching for user';
+        searchFriendBtn.disabled = false;
+        searchFriendBtn.textContent = 'Search';
+    }
+}
+
+/**
+ * Create search result card
+ */
+function createSearchResultCard(user) {
+    const card = document.createElement('div');
+    card.className = 'friend-card';
+
+    const info = document.createElement('div');
+    info.className = 'friend-info';
+
+    const name = document.createElement('div');
+    name.className = 'friend-name';
+    name.textContent = user.displayName || user.firstName || 'Player';
+
+    const username = document.createElement('div');
+    username.className = 'friend-username';
+    username.textContent = `@${user.username}`;
+
+    info.appendChild(name);
+    info.appendChild(username);
+
+    const actions = document.createElement('div');
+    actions.className = 'friend-actions';
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'friend-action-btn';
+    addBtn.textContent = 'Add Friend';
+    addBtn.onclick = () => handleSendFriendRequest(user.username, addBtn);
+
+    actions.appendChild(addBtn);
+
+    card.appendChild(info);
+    card.appendChild(actions);
+
+    return card;
+}
+
+/**
+ * Handle send friend request
+ */
+async function handleSendFriendRequest(username, button) {
+    try {
+        button.disabled = true;
+        button.textContent = 'Sending...';
+
+        await sendFriendRequest(username);
+
+        button.textContent = 'Request Sent!';
+        button.classList.add('disabled');
+
+        // Refresh requests list
+        setTimeout(() => {
+            loadFriendRequests();
+        }, 500);
+    } catch (error) {
+        console.error('Error sending friend request:', error);
+        showNotification(error.message || 'Error sending friend request', 'Error', '⚠️');
+        button.disabled = false;
+        button.textContent = 'Add Friend';
+    }
+}
+
+/**
+ * Handle accept friend request
+ */
+async function handleAcceptFriendRequest(fromUid) {
+    try {
+        await acceptFriendRequest(fromUid);
+        await loadFriendRequests();
+        await loadFriendsList();
+        showNotification('Friend request accepted!', 'Success');
+    } catch (error) {
+        console.error('Error accepting friend request:', error);
+        showNotification(error.message || 'Error accepting friend request', 'Error', '⚠️');
+    }
+}
+
+/**
+ * Handle decline friend request
+ */
+async function handleDeclineFriendRequest(fromUid) {
+    try {
+        await declineFriendRequest(fromUid);
+        await loadFriendRequests();
+        showNotification('Friend request declined', 'Declined');
+    } catch (error) {
+        console.error('Error declining friend request:', error);
+        showNotification(error.message || 'Error declining friend request', 'Error', '⚠️');
+    }
+}
+
+/**
+ * Handle cancel friend request
+ */
+async function handleCancelFriendRequest(toUid) {
+    try {
+        await cancelFriendRequest(toUid);
+        await loadFriendRequests();
+        showNotification('Friend request cancelled', 'Cancelled');
+    } catch (error) {
+        console.error('Error cancelling friend request:', error);
+        showNotification(error.message || 'Error cancelling friend request', 'Error', '⚠️');
+    }
+}
+
+/**
+ * Handle remove friend
+ */
+async function handleRemoveFriend(friend) {
+    try {
+        const confirmed = await showConfirm(
+            `Remove ${friend.displayName} from your friends list?`,
+            'Remove Friend'
+        );
+        if (!confirmed) return;
+
+        await removeFriend(friend.uid);
+        await loadFriendsList();
+        showNotification('Friend removed', 'Removed');
+    } catch (error) {
+        console.error('Error removing friend:', error);
+        showNotification(error.message || 'Error removing friend', 'Error', '⚠️');
+    }
+}
+
+/**
+ * Load and display game invites
+ */
+async function loadGameInvites() {
+    try {
+        const invites = await getGameInvites();
+
+        if (invites.length === 0) {
+            // Hide invites section when no invites
+            if (gameInvitesSection) {
+                gameInvitesSection.style.display = 'none';
+            }
+            if (invitesCountBadge2) {
+                invitesCountBadge2.style.display = 'none';
+            }
+            return;
+        }
+
+        // Show invites section and update count
+        if (gameInvitesSection) {
+            gameInvitesSection.style.display = 'block';
+        }
+        if (invitesCountBadge2) {
+            invitesCountBadge2.textContent = invites.length;
+            invitesCountBadge2.style.display = 'inline-block';
+        }
+
+        // Create invite cards
+        if (gameInvitesList) {
+            gameInvitesList.innerHTML = '';
+            invites.forEach(invite => {
+                const card = createGameInviteCard(invite);
+                gameInvitesList.appendChild(card);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading game invites:', error);
+    }
+}
+
+/**
+ * Create game invite card
+ */
+function createGameInviteCard(invite) {
+    const card = document.createElement('div');
+    card.className = 'friend-card';
+
+    const info = document.createElement('div');
+    info.className = 'friend-info';
+
+    const title = document.createElement('div');
+    title.className = 'friend-name';
+    title.textContent = `${invite.from.displayName} invited you to a game`;
+
+    const gameCode = document.createElement('div');
+    gameCode.className = 'friend-username';
+    gameCode.textContent = `Game Code: ${invite.gameCode}`;
+
+    info.appendChild(title);
+    info.appendChild(gameCode);
+
+    const actions = document.createElement('div');
+    actions.className = 'friend-actions';
+
+    const joinBtn = document.createElement('button');
+    joinBtn.className = 'friend-action-btn';
+    joinBtn.textContent = 'Join Game';
+    joinBtn.onclick = () => handleAcceptGameInvite(invite.id, invite.gameCode);
+
+    const declineBtn = document.createElement('button');
+    declineBtn.className = 'friend-action-btn danger-btn';
+    declineBtn.textContent = 'Decline';
+    declineBtn.onclick = () => handleDeclineGameInvite(invite.id);
+
+    actions.appendChild(joinBtn);
+    actions.appendChild(declineBtn);
+
+    card.appendChild(info);
+    card.appendChild(actions);
+
+    return card;
+}
+
+/**
+ * Handle accept game invite
+ */
+async function handleAcceptGameInvite(inviteId, gameCode) {
+    try {
+        await acceptGameInvite(inviteId);
+        // Store player name and auto-join
+        const playerName = currentUserFirstName;
+        sessionStorage.setItem('playerName', playerName);
+        checkGameExists(gameCode, playerName);
+        closeFriendsModal();
+    } catch (error) {
+        console.error('Error accepting game invite:', error);
+        showNotification(error.message || 'Error joining game', 'Error', '⚠️');
+        await loadGameInvites();
+    }
+}
+
+/**
+ * Handle decline game invite
+ */
+async function handleDeclineGameInvite(inviteId) {
+    try {
+        await declineGameInvite(inviteId);
+        await loadGameInvites();
+    } catch (error) {
+        console.error('Error declining game invite:', error);
+        showNotification(error.message || 'Error declining invite', 'Error', '⚠️');
+    }
+}
+
+/**
+ * Update all friends-related badges
+ */
+async function updateFriendsBadges() {
+    try {
+        const requestCount = await getFriendRequestCount();
+
+        // Update main friends button badge
+        if (requestCount > 0) {
+            friendRequestsCount.textContent = requestCount;
+            friendRequestsCount.style.display = 'inline-block';
+        } else {
+            friendRequestsCount.style.display = 'none';
+        }
+
+        // Update requests tab badge
+        if (requestCount > 0) {
+            requestsCountBadge.textContent = requestCount;
+            requestsCountBadge.style.display = 'inline-block';
+        } else {
+            requestsCountBadge.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error updating friends badges:', error);
+    }
+}
+
+/**
+ * Load friends data on page load for logged-in users
+ */
+async function loadFriendsData() {
+    if (currentUser && currentUserFirstName) {
+        // Check if user has username
+        const hasUserUsername = await hasUsername();
+        if (hasUserUsername) {
+            // Show friends button
+            if (friendsBtn) {
+                friendsBtn.style.display = 'flex';
+            }
+
+            // Update badges
+            await updateFriendsBadges();
+            await loadActiveGames(); // Also load active games (includes invites)
+
+            // Set up periodic badge updates
+            setInterval(async () => {
+                await updateFriendsBadges();
+                await loadActiveGames();
+            }, 30000); // Update every 30 seconds
+        } else {
+            // Prompt for username after a short delay
+            setTimeout(checkAndPromptForUsername, 1000);
+        }
+    }
+}
+
+// Signup form - add username field handling
+const signupUsername = document.getElementById('signupUsername');
+const signupPhoneUsername = document.getElementById('signupPhoneUsername');
+
+// Modify existing signup handlers to include username
+if (signupBtn) {
+    signupBtn.removeEventListener('click', signupBtn.onclick);
+    signupBtn.addEventListener('click', async () => {
+        const firstName = signupFirstName.value.trim();
+        const username = signupUsername.value.trim();
+        const email = signupEmail.value.trim();
+        const password = signupPassword.value;
+
+        if (!firstName || !username || !email || !password) {
+            showAuthError(signupError, 'Please fill in all fields');
+            return;
+        }
+
+        if (firstName.length < 2) {
+            showAuthError(signupError, 'First name must be at least 2 characters');
+            return;
+        }
+
+        // Validate username
+        const validation = validateUsername(username);
+        if (!validation.valid) {
+            showAuthError(signupError, validation.error);
+            return;
+        }
+
+        if (password.length < 6) {
+            showAuthError(signupError, 'Password must be at least 6 characters');
+            return;
+        }
+
+        signupBtn.disabled = true;
+        signupBtn.textContent = 'Checking username...';
+
+        try {
+            // Check username availability
+            const available = await isUsernameAvailable(username);
+            if (!available) {
+                showAuthError(signupError, 'Username is already taken');
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Create Account';
+                return;
+            }
+
+            signupBtn.textContent = 'Creating account...';
+            await signUpUser(email, password, firstName, username);
+            closeAuthModal();
+            // Auth state listener will handle the redirect
+        } catch (error) {
+            console.error('Signup error:', error);
+            showAuthError(signupError, getAuthErrorMessage(error));
+            signupBtn.disabled = false;
+            signupBtn.textContent = 'Create Account';
+        }
+    });
 }
 
 console.log('Landing page ready!');

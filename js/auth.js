@@ -4,13 +4,14 @@
 console.log('Auth service loaded');
 
 /**
- * Sign up a new user with email, password, and first name
+ * Sign up a new user with email, password, first name, and username
  * @param {string} email - User's email
  * @param {string} password - User's password
  * @param {string} firstName - User's first name
+ * @param {string} username - User's unique username (optional, can be set later)
  * @returns {Promise<object>} User object
  */
-async function signUpUser(email, password, firstName) {
+async function signUpUser(email, password, firstName, username = null) {
     try {
         // Create user with email and password
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
@@ -30,7 +31,7 @@ async function signUpUser(email, password, firstName) {
         console.log('Profile updated with name:', firstName);
 
         // Create user document in Firestore
-        await firestore.collection('users').doc(user.uid).set({
+        const userData = {
             uid: user.uid,
             email: email,
             firstName: firstName,
@@ -38,6 +39,11 @@ async function signUpUser(email, password, firstName) {
             emailVerified: false,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+            friends: [],
+            friendRequests: {
+                incoming: [],
+                outgoing: []
+            },
             stats: {
                 gamesPlayed: 0,
                 gamesWon: 0,
@@ -47,7 +53,14 @@ async function signUpUser(email, password, firstName) {
                 currentStreak: 0,
                 longestStreak: 0
             }
-        });
+        };
+
+        // Add username if provided
+        if (username) {
+            userData.username = username.toLowerCase().trim();
+        }
+
+        await firestore.collection('users').doc(user.uid).set(userData);
 
         console.log('User profile created in Firestore');
 
@@ -281,6 +294,11 @@ async function signInWithGoogle() {
                 provider: 'google',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                friends: [],
+                friendRequests: {
+                    incoming: [],
+                    outgoing: []
+                },
                 stats: {
                     gamesPlayed: 0,
                     gamesWon: 0,
@@ -337,6 +355,11 @@ async function signInWithApple() {
                 provider: 'apple',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                friends: [],
+                friendRequests: {
+                    incoming: [],
+                    outgoing: []
+                },
                 stats: {
                     gamesPlayed: 0,
                     gamesWon: 0,
@@ -413,9 +436,10 @@ async function sendPhoneVerificationCode(phoneNumber, recaptchaVerifier) {
  * @param {object} confirmationResult - Result from sendPhoneVerificationCode
  * @param {string} verificationCode - 6-digit code from SMS
  * @param {string} firstName - User's first name (for new users, REQUIRED for new users)
+ * @param {string} username - User's username (optional, for new users)
  * @returns {Promise<object>} User object with isNewUser flag
  */
-async function verifyPhoneCode(confirmationResult, verificationCode, firstName = null) {
+async function verifyPhoneCode(confirmationResult, verificationCode, firstName = null, username = null) {
     try {
         // First, verify the code and sign in the user
         const userCredential = await confirmationResult.confirm(verificationCode);
@@ -446,6 +470,11 @@ async function verifyPhoneCode(confirmationResult, verificationCode, firstName =
                 provider: 'phone',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                friends: [],
+                friendRequests: {
+                    incoming: [],
+                    outgoing: []
+                },
                 stats: {
                     gamesPlayed: 0,
                     gamesWon: 0,
@@ -456,6 +485,12 @@ async function verifyPhoneCode(confirmationResult, verificationCode, firstName =
                     longestStreak: 0
                 }
             };
+
+            // Add username if provided
+            if (username) {
+                userData.username = username.toLowerCase().trim();
+            }
+
             console.log('Creating user document with data:', { ...userData, firstName, displayName: firstName });
             await firestore.collection('users').doc(user.uid).set(userData);
             console.log('New phone user profile created in Firestore with name:', firstName);
