@@ -1,4 +1,4 @@
-// Five Crowns - Game Board JavaScript
+// Wandering Wilds - Game Board JavaScript
 // Handles game state, card interactions, and real-time gameplay
 
 console.log('🎮 GAME.JS LOADED - You are on game.html');
@@ -1064,7 +1064,7 @@ function debugScoreCalculation(playerHand, playerHandState, wildRank, playerId) 
 
 /**
  * Get point value for a card
- * Returns the point value based on Five Crowns rules:
+ * Returns the point value based on Wandering Wilds rules:
  * - Jokers: 50 points
  * - Wild rank for current round: 20 points
  * - Face cards: J=11, Q=12, K=13
@@ -2811,8 +2811,8 @@ async function startNextRound() {
 }
 
 /**
- * Helper function to create Five Crowns deck (same as in lobby.js)
- * Five Crowns has 116 cards total:
+ * Helper function to create Wandering Wilds deck (same as in lobby.js)
+ * Wandering Wilds has 116 cards total:
  * - 5 suits (spades, hearts, diamonds, clubs, stars) × 11 ranks (3-K) × 2 copies = 110 cards
  * - 6 Jokers (always wild, worth 50 points each)
  * Total: 116 cards
@@ -2844,7 +2844,7 @@ function createFiveCrownsDeck() {
         });
     }
 
-    console.log('Created Five Crowns deck with', deck.length, 'cards (110 regular + 6 jokers)');
+    console.log('Created Wandering Wilds deck with', deck.length, 'cards (110 regular + 6 jokers)');
     return deck;
 }
 

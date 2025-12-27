@@ -1,7 +1,7 @@
-# Five Crowns Mobile - Design Guide
+# Wandering Wilds Mobile - Design Guide
 
 ## Design Philosophy
-Create an intuitive, visually appealing mobile card game experience that feels modern and accessible while maintaining the classic Five Crowns gameplay. The design should prioritize clarity, ease of use, and seamless multiplayer interaction.
+Create an intuitive, visually appealing mobile card game experience that feels modern and accessible while maintaining the classic Wandering Wilds gameplay. The design should prioritize clarity, ease of use, and seamless multiplayer interaction.
 
 ---
 
@@ -40,8 +40,8 @@ Create an intuitive, visually appealing mobile card game experience that feels m
 ## Visual Design Specifications
 
 ### Color Palette
-**Five Crowns Brand Colors:**
-- **Primary Purple**: #7B3FF2 (Five Crowns signature brand color - logo, headers, primary buttons)
+**Wandering Wilds Brand Colors:**
+- **Primary Purple**: #7B3FF2 (Wandering Wilds signature brand color - logo, headers, primary buttons)
 - **Deep Purple**: #5B2FB2 (darker shade for hover states, shadows)
 - **Royal Gold**: #FFD700 (crown elements, stars suit, accents, winner highlights)
 - **Light Purple**: #9D6FFF (backgrounds, secondary elements)
@@ -59,7 +59,7 @@ Create an intuitive, visually appealing mobile card game experience that feels m
 - **Error/Invalid**: Red (#EF4444) for invalid plays
 - **Wild Card Highlight**: Bright gold border/glow (#FFD700)
 
-**Suit Colors (Five Crowns specific):**
+**Suit Colors (Wandering Wilds specific):**
 - **Spades**: Black (#000000)
 - **Clubs**: Black (#000000)
 - **Hearts**: Red (#DC2626)
@@ -75,7 +75,7 @@ Create an intuitive, visually appealing mobile card game experience that feels m
 ### Typography
 - **Primary Font**: Clean, rounded sans-serif (e.g., 'Nunito', 'Quicksand', 'Poppins', or system UI)
   - Use a friendly, slightly rounded font to match the fun game aesthetic
-- **Logo Font**: Bold, decorative (consider serif or display font for "Five Crowns" title)
+- **Logo Font**: Bold, decorative (consider serif or display font for "Wandering Wilds" title)
 - **Font Sizes**:
   - H1 (Game Title/Logo): 36-48px, bold
   - H2 (Section Headers): 24-28px, semi-bold
@@ -83,7 +83,7 @@ Create an intuitive, visually appealing mobile card game experience that feels m
   - Small Text (labels): 14px, regular
   - Join Code Display: 56-64px (large, bold, monospace for readability)
 - **Font Weight**: Use weight variation for hierarchy (regular 400, medium 500, semi-bold 600, bold 700)
-- **Crown Icon**: Use alongside "Five Crowns" text (👑 or custom SVG crown in gold)
+- **Crown Icon**: Use alongside "Wandering Wilds" text (👑 or custom SVG crown in gold)
 
 ### Card Design
 - **Dimensions**: Maintain standard playing card ratio (2.5:3.5 or 5:7)
@@ -93,12 +93,12 @@ Create an intuitive, visually appealing mobile card game experience that feels m
   - ♦️ Diamonds (red)
   - ♣️ Clubs (black)
   - ⭐ Stars (GOLD - the signature 5th suit!)
-- **Numbers/Ranks**: 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K (no 2s or Aces in Five Crowns)
+- **Numbers/Ranks**: 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K (no 2s or Aces in Wandering Wilds)
 - **Wild Cards**: Special gold border/glow treatment for current round's wild card
   - Round 1: 3s are wild
   - Round 2: 4s are wild
   - ... up to Round 11: Kings are wild
-- **Card Back**: Purple background with gold crown pattern or Five Crowns logo
+- **Card Back**: Purple background with gold crown pattern or Wandering Wilds logo
 - **Selected State**: Lift up with gold glow/shadow or purple border highlight
 
 ### Layout Components
@@ -106,7 +106,7 @@ Create an intuitive, visually appealing mobile card game experience that feels m
 #### Landing/Home Screen
 ```
 ┌─────────────────────────┐
-│    Five Crowns Logo     │
+│    Wandering Wilds Logo     │
 │                         │
 │  ┌───────────────────┐  │
 │  │   Create Game     │  │ (Large primary button)
@@ -261,7 +261,7 @@ Create an intuitive, visually appealing mobile card game experience that feels m
 ## Design Tools & Assets Needed
 - **Card Graphics**: SVG or high-res PNG card faces
 - **Icons**: UI icons (menu, close, copy, etc.)
-- **Logo**: Five Crowns game logo/branding
+- **Logo**: Wandering Wilds game logo/branding
 - **Background Textures**: Card table felt texture
 - **Sound Effects** (optional): Card flip, shuffle, win/lose sounds
 

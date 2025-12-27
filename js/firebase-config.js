@@ -1,4 +1,4 @@
-// Firebase Configuration for Five Crowns Game
+// Firebase Configuration for Wandering Wilds Game
 // Note: Since we're using vanilla JS without modules, we'll use the CDN version
 // The Firebase initialization will happen in HTML files using script tags
 

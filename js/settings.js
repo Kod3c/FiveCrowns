@@ -1,4 +1,4 @@
-// Five Crowns - Settings Manager
+// Wandering Wilds - Settings Manager
 // Handles user preferences including card design selection
 
 console.log('⚙️ SETTINGS.JS LOADED');

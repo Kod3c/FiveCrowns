@@ -1,4 +1,4 @@
-// Five Crowns - Game Persistence
+// Wandering Wilds - Game Persistence
 // Saves and restores active games for authenticated users
 
 console.log('Game persistence loaded');

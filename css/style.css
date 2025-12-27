@@ -1,9 +1,9 @@
 /* ========================================
-   Five Crowns - Mobile Card Game Styles
+   Wandering Wilds - Mobile Card Game Styles
    Purple & Gold Theme
    ======================================== */
 
-/* CSS Variables - Five Crowns Color Palette */
+/* CSS Variables - Wandering Wilds Color Palette */
 :root {
     /* Purple Palette */
     --primary-purple: #7B3FF2;
@@ -104,6 +104,8 @@ body {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    text-align: center;
+    line-height: 1.2;
 }
 
 .crown-icon {
@@ -476,12 +478,22 @@ body {
         padding: 0 8px;
     }
 
+    .logo-section {
+        margin-bottom: 20px;
+    }
+
     .game-title {
-        font-size: 36px;
+        font-size: 15px;
+        gap: 2px;
+        letter-spacing: -1px;
     }
 
     .crown-icon {
-        font-size: 36px;
+        font-size: 15px;
+    }
+
+    .tagline {
+        font-size: 12px;
     }
 
     .suits-display {
@@ -524,12 +536,22 @@ body {
         padding: 0 6px;
     }
 
+    .logo-section {
+        margin-bottom: 16px;
+    }
+
     .game-title {
-        font-size: 30px;
+        font-size: 13px;
+        gap: 2px;
+        letter-spacing: -1px;
     }
 
     .crown-icon {
-        font-size: 30px;
+        font-size: 13px;
+    }
+
+    .tagline {
+        font-size: 10px;
     }
 
     .suits-display {
@@ -580,16 +602,22 @@ body {
         padding: 0 4px;
     }
 
+    .logo-section {
+        margin-bottom: 12px;
+    }
+
     .game-title {
-        font-size: 26px;
+        font-size: 11px;
+        gap: 2px;
+        letter-spacing: -1px;
     }
 
     .crown-icon {
-        font-size: 26px;
+        font-size: 11px;
     }
 
     .tagline {
-        font-size: 14px;
+        font-size: 9px;
     }
 
     .suits-display {

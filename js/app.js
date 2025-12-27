@@ -1,7 +1,7 @@
-// Five Crowns - Landing Page JavaScript
+// Wandering Wilds - Landing Page JavaScript
 // Handles Create Game, Join Game, and navigation
 
-console.log('Five Crowns app loaded!');
+console.log('Wandering Wilds app loaded!');
 
 // Global variables for current user
 window.currentUser = null;

@@ -1,8 +1,8 @@
-# 👑 Five Crowns - Multiplayer Card Game
+# 👑 Wandering Wilds - Multiplayer Card Game
 
-A mobile-first, multiplayer implementation of the classic Five Crowns card game with real-time synchronization. Play with friends across multiple devices using a simple join code system, similar to Jackbox games.
+A mobile-first, multiplayer implementation of the classic Wandering Wilds card game with real-time synchronization. Play with friends across multiple devices using a simple join code system, similar to Jackbox games.
 
-![Five Crowns](https://img.shields.io/badge/Status-Active-success)
+![Wandering Wilds](https://img.shields.io/badge/Status-Active-success)
 ![Platform](https://img.shields.io/badge/Platform-Web-blue)
 ![Firebase](https://img.shields.io/badge/Firebase-Realtime%20Database-orange)
 
@@ -15,9 +15,9 @@ A mobile-first, multiplayer implementation of the classic Five Crowns card game 
 - **Auto-validation**: Automatic detection of valid sets and runs
 - **Smart Scoring**: Intelligent grouping to minimize penalty points
 
-## 🃏 About Five Crowns
+## 🃏 About Wandering Wilds
 
-Five Crowns is a rummy-style card game that uses a special 5-suited deck (including the unique ⭐ Stars suit!). The game features 11 rounds where the wild card changes each round, starting with 3s and ending with Kings.
+Wandering Wilds is a rummy-style card game that uses a special 5-suited deck (including the unique ⭐ Stars suit!). The game features 11 rounds where the wild card changes each round, starting with 3s and ending with Kings.
 
 ### Game Rules
 
@@ -146,7 +146,7 @@ Five Crowns is a rummy-style card game that uses a special 5-suited deck (includ
 
 ## 🎨 Design
 
-The game features a beautiful purple and gold color scheme inspired by the Five Crowns brand:
+The game features a beautiful purple and gold color scheme inspired by the Wandering Wilds brand:
 
 - **Primary Purple**: `#7B3FF2` - Main brand color
 - **Royal Gold**: `#FFD700` - Accents and highlights
@@ -205,7 +205,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- Five Crowns is a card game by Set Enterprises, Inc.
+- Wandering Wilds is a card game by Set Enterprises, Inc.
 - Inspired by Jackbox Games' lobby system
 - Built with Firebase for real-time multiplayer
 
@@ -217,6 +217,6 @@ For issues, questions, or suggestions:
 
 ---
 
-**Enjoy playing Five Crowns!** 👑
+**Enjoy playing Wandering Wilds!** 👑
 
 Made with 💜 and ⭐

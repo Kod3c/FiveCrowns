@@ -1,4 +1,4 @@
-// Five Crowns - Authentication Service
+// Wandering Wilds - Authentication Service
 // Handles user registration, login, logout, and profile management
 
 console.log('Auth service loaded');
