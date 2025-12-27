@@ -410,6 +410,7 @@ class CardHandManager {
         cardEl.dataset.cardId = card.id;
         cardEl.dataset.stackId = stackId;
         cardEl.dataset.index = index;
+        cardEl.dataset.rank = card.rank;
 
         // Check if selected
         if (this.selectedCards.has(card.id)) {

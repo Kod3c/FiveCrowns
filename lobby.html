@@ -50,6 +50,12 @@
                 </button>
             </div>
             <div class="copy-toast" id="copyToast">Copied! 📋</div>
+
+            <!-- Invite Friends Button (Host Only) -->
+            <button class="btn btn-secondary" id="inviteFriendsBtn" style="display: none; margin-top: 15px;">
+                <span class="btn-icon">👥</span>
+                Invite Friends
+            </button>
         </div>
 
         <!-- Players List -->
@@ -137,6 +143,69 @@
         </div>
     </div>
 
+    <!-- Invite Friends Modal -->
+    <div class="modal" id="inviteFriendsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>👥 Invite Friends</h2>
+                <button class="close-btn" id="closeInviteFriendsBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-instruction" style="text-align: center; margin-bottom: 15px;">
+                    Select friends to invite to this game
+                </p>
+
+                <div id="inviteFriendsList" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Friends will be populated here -->
+                </div>
+
+                <p id="noFriendsToInviteMessage" style="text-align: center; color: var(--text-muted); padding: 40px 20px; display: none;">
+                    No friends available to invite.<br>
+                    Add friends from the main menu!
+                </p>
+
+                <p class="error-message" id="inviteError"></p>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" id="cancelInviteBtn" style="flex: 1;">Cancel</button>
+                <button class="btn btn-primary" id="sendInvitesBtn" style="flex: 1;" disabled>
+                    Send Invites (<span id="selectedFriendsCount">0</span>)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Modal (Success/Info) -->
+    <div class="modal" id="notificationModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h2 id="notificationTitle">✓ Success</h2>
+            </div>
+            <div class="modal-body">
+                <p id="notificationMessage" style="text-align: center; color: var(--white); font-size: 16px; margin: 20px 0; line-height: 1.5;"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="notificationOkBtn" style="width: 100%;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal (Yes/No) -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h2 id="confirmTitle">Confirm Action</h2>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage" style="text-align: center; color: var(--white); font-size: 16px; margin: 20px 0; line-height: 1.5;"></p>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" id="confirmCancelBtn" style="flex: 1;">Cancel</button>
+                <button class="btn btn-primary" id="confirmOkBtn" style="flex: 1;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs (CDN) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -151,6 +220,10 @@
 
     <!-- Game Persistence -->
     <script src="js/game-persistence.js"></script>
+
+    <!-- Friends System -->
+    <script src="js/friends.js"></script>
+    <script src="js/invites.js"></script>
 
     <!-- Lobby Logic -->
     <script src="js/lobby.js?v=7"></script>

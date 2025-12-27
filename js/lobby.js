@@ -246,6 +246,9 @@ function listenToGameChanges() {
         // Check if we're the host
         isHost = (currentGameData.host === playerId);
 
+        // Check and show invite button
+        checkAndShowInviteButton();
+
         // Update UI based on game data
         updateUI();
 
@@ -789,4 +792,318 @@ function cleanup() {
     sessionStorage.removeItem('gameCode');
 }
 
+// ======================
+// Notification & Confirmation Modals
+// ======================
+
+const notificationModal = document.getElementById('notificationModal');
+const notificationTitle = document.getElementById('notificationTitle');
+const notificationMessage = document.getElementById('notificationMessage');
+const notificationOkBtn = document.getElementById('notificationOkBtn');
+
+const confirmModal = document.getElementById('confirmModal');
+const confirmTitle = document.getElementById('confirmTitle');
+const confirmMessage = document.getElementById('confirmMessage');
+const confirmOkBtn = document.getElementById('confirmOkBtn');
+const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
+let confirmResolve = null;
+
+/**
+ * Show notification modal (replaces alert)
+ */
+function showNotification(message, title = 'Success', icon = '✓') {
+    notificationTitle.textContent = `${icon} ${title}`;
+    notificationMessage.textContent = message;
+    notificationModal.classList.add('active');
+}
+
+/**
+ * Hide notification modal
+ */
+function hideNotification() {
+    notificationModal.classList.remove('active');
+}
+
+/**
+ * Show confirmation modal (replaces confirm)
+ */
+function showConfirm(message, title = 'Confirm Action') {
+    return new Promise((resolve) => {
+        confirmTitle.textContent = title;
+        confirmMessage.textContent = message;
+        confirmModal.classList.add('active');
+        confirmResolve = resolve;
+    });
+}
+
+/**
+ * Hide confirmation modal
+ */
+function hideConfirm() {
+    confirmModal.classList.remove('active');
+}
+
+// Notification modal event listeners
+if (notificationOkBtn) {
+    notificationOkBtn.addEventListener('click', hideNotification);
+}
+
+if (notificationModal) {
+    notificationModal.addEventListener('click', (e) => {
+        if (e.target === notificationModal) {
+            hideNotification();
+        }
+    });
+}
+
+// Confirmation modal event listeners
+if (confirmOkBtn) {
+    confirmOkBtn.addEventListener('click', () => {
+        hideConfirm();
+        if (confirmResolve) {
+            confirmResolve(true);
+            confirmResolve = null;
+        }
+    });
+}
+
+if (confirmCancelBtn) {
+    confirmCancelBtn.addEventListener('click', () => {
+        hideConfirm();
+        if (confirmResolve) {
+            confirmResolve(false);
+            confirmResolve = null;
+        }
+    });
+}
+
+if (confirmModal) {
+    confirmModal.addEventListener('click', (e) => {
+        if (e.target === confirmModal) {
+            hideConfirm();
+            if (confirmResolve) {
+                confirmResolve(false);
+                confirmResolve = null;
+            }
+        }
+    });
+}
+
+// ======================
+// Invite Friends System
+// ======================
+
+// Invite Friends DOM Elements
+const inviteFriendsBtn = document.getElementById('inviteFriendsBtn');
+const inviteFriendsModal = document.getElementById('inviteFriendsModal');
+const closeInviteFriendsBtn = document.getElementById('closeInviteFriendsBtn');
+const cancelInviteBtn = document.getElementById('cancelInviteBtn');
+const sendInvitesBtn = document.getElementById('sendInvitesBtn');
+const inviteFriendsList = document.getElementById('inviteFriendsList');
+const noFriendsToInviteMessage = document.getElementById('noFriendsToInviteMessage');
+const selectedFriendsCount = document.getElementById('selectedFriendsCount');
+const inviteError = document.getElementById('inviteError');
+
+// Track selected friends
+let selectedFriendUids = [];
+
+// Event Listeners
+if (inviteFriendsBtn) {
+    inviteFriendsBtn.addEventListener('click', openInviteFriendsModal);
+}
+
+if (closeInviteFriendsBtn) {
+    closeInviteFriendsBtn.addEventListener('click', closeInviteFriendsModal);
+}
+
+if (cancelInviteBtn) {
+    cancelInviteBtn.addEventListener('click', closeInviteFriendsModal);
+}
+
+if (sendInvitesBtn) {
+    sendInvitesBtn.addEventListener('click', handleSendInvites);
+}
+
+if (inviteFriendsModal) {
+    inviteFriendsModal.addEventListener('click', (e) => {
+        if (e.target === inviteFriendsModal) {
+            closeInviteFriendsModal();
+        }
+    });
+}
+
+/**
+ * Open invite friends modal
+ */
+async function openInviteFriendsModal() {
+    try {
+        // Check if user is authenticated
+        if (!auth.currentUser) {
+            showErrorModal('You must be logged in to invite friends');
+            return;
+        }
+
+        inviteFriendsModal.classList.add('active');
+        selectedFriendUids = [];
+        updateSelectedCount();
+        inviteError.textContent = '';
+
+        // Load friends list
+        const friends = await getFriends();
+
+        if (friends.length === 0) {
+            inviteFriendsList.innerHTML = '';
+            noFriendsToInviteMessage.style.display = 'block';
+            sendInvitesBtn.disabled = true;
+            return;
+        }
+
+        noFriendsToInviteMessage.style.display = 'none';
+
+        // Create friend checkboxes
+        inviteFriendsList.innerHTML = '';
+        friends.forEach(friend => {
+            const card = createInvitableFriendCard(friend);
+            inviteFriendsList.appendChild(card);
+        });
+    } catch (error) {
+        console.error('Error opening invite modal:', error);
+        showErrorModal('Error loading friends list');
+    }
+}
+
+/**
+ * Close invite friends modal
+ */
+function closeInviteFriendsModal() {
+    inviteFriendsModal.classList.remove('active');
+    selectedFriendUids = [];
+}
+
+/**
+ * Create invitable friend card with checkbox
+ */
+function createInvitableFriendCard(friend) {
+    const card = document.createElement('div');
+    card.className = 'friend-card';
+    card.style.cursor = 'pointer';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `friend-${friend.uid}`;
+    checkbox.className = 'friend-checkbox';
+    checkbox.addEventListener('change', (e) => {
+        handleFriendSelection(friend.uid, e.target.checked);
+    });
+
+    const label = document.createElement('label');
+    label.htmlFor = `friend-${friend.uid}`;
+    label.style.display = 'flex';
+    label.style.alignItems = 'center';
+    label.style.gap = '12px';
+    label.style.cursor = 'pointer';
+    label.style.width = '100%';
+
+    const info = document.createElement('div');
+    info.className = 'friend-info';
+    info.style.flex = '1';
+
+    const name = document.createElement('div');
+    name.className = 'friend-name';
+    name.textContent = friend.displayName || friend.firstName || 'Player';
+
+    const username = document.createElement('div');
+    username.className = 'friend-username';
+    username.textContent = `@${friend.username}`;
+
+    info.appendChild(name);
+    info.appendChild(username);
+
+    label.appendChild(checkbox);
+    label.appendChild(info);
+
+    card.appendChild(label);
+
+    return card;
+}
+
+/**
+ * Handle friend selection
+ */
+function handleFriendSelection(friendUid, isSelected) {
+    if (isSelected) {
+        if (!selectedFriendUids.includes(friendUid)) {
+            selectedFriendUids.push(friendUid);
+        }
+    } else {
+        selectedFriendUids = selectedFriendUids.filter(uid => uid !== friendUid);
+    }
+
+    updateSelectedCount();
+}
+
+/**
+ * Update selected friends count
+ */
+function updateSelectedCount() {
+    selectedFriendsCount.textContent = selectedFriendUids.length;
+    sendInvitesBtn.disabled = selectedFriendUids.length === 0;
+}
+
+/**
+ * Send game invites to selected friends
+ */
+async function handleSendInvites() {
+    try {
+        if (selectedFriendUids.length === 0) {
+            inviteError.textContent = 'Please select at least one friend';
+            return;
+        }
+
+        sendInvitesBtn.disabled = true;
+        sendInvitesBtn.textContent = 'Sending...';
+        inviteError.textContent = '';
+
+        // Send invites
+        await sendGameInvites(selectedFriendUids, gameCode);
+
+        // Close modal
+        closeInviteFriendsModal();
+
+        // Show success message
+        showNotification(
+            `Invites sent to ${selectedFriendUids.length} friend(s)!`,
+            'Invites Sent'
+        );
+
+        sendInvitesBtn.disabled = false;
+        sendInvitesBtn.textContent = `Send Invites (${selectedFriendUids.length})`;
+    } catch (error) {
+        console.error('Error sending invites:', error);
+        inviteError.textContent = error.message || 'Error sending invites';
+        sendInvitesBtn.disabled = false;
+        sendInvitesBtn.textContent = `Send Invites (${selectedFriendUids.length})`;
+    }
+}
+
+/**
+ * Show invite friends button for authenticated users with username
+ */
+async function checkAndShowInviteButton() {
+    try {
+        const user = auth.currentUser;
+        if (user && isHost) {
+            const hasUserUsername = await hasUsername();
+            if (hasUserUsername && inviteFriendsBtn) {
+                inviteFriendsBtn.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('Error checking invite button:', error);
+    }
+}
+
+// Check and show invite button when host status is determined
+// We'll call this in the game listener when we determine if user is host
 console.log('Lobby initialized successfully!');

@@ -651,6 +651,7 @@ function createCardElement(card) {
     const cardDiv = document.createElement('div');
     cardDiv.className = 'card';
     cardDiv.dataset.cardId = card.id;
+    cardDiv.dataset.rank = card.rank;
 
     // Check if card is wild (only add class if highlighting is enabled)
     if (highlightWilds && card.rank === currentWildRank) {

@@ -414,6 +414,11 @@
                 Active Games
                 <span id="activeGamesCount" style="margin-left: 8px; background: rgba(255, 215, 0, 0.2); padding: 2px 8px; border-radius: 12px; font-size: 14px;"></span>
             </button>
+
+            <button class="btn btn-secondary btn-large" id="friendsBtn" style="display: none;">
+                <span class="btn-icon">👥</span>
+                Friends
+            </button>
         </div>
 
         <!-- How to Play Link -->
@@ -599,6 +604,12 @@
                         </div>
 
                         <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Username</label>
+                            <input type="text" id="signupUsername" class="player-name-input" placeholder="card_master_99" maxlength="15" autocomplete="off">
+                            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Used to add friends</p>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
                             <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Email</label>
                             <input type="email" id="signupEmail" class="player-name-input" placeholder="your@email.com" autocomplete="email">
                         </div>
@@ -618,6 +629,12 @@
                         <div style="margin-bottom: 15px;">
                             <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">First Name</label>
                             <input type="text" id="signupPhoneFirstName" class="player-name-input" placeholder="Your name" autocomplete="given-name">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Username</label>
+                            <input type="text" id="signupPhoneUsername" class="player-name-input" placeholder="card_master_99" maxlength="15" autocomplete="off">
+                            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Used to add friends</p>
                         </div>
 
                         <div style="margin-bottom: 15px;">
@@ -685,13 +702,27 @@
                 <button class="close-btn" id="closeActiveGamesBtn">&times;</button>
             </div>
             <div class="modal-body">
-                <p class="modal-instruction" style="text-align: center; margin-bottom: 20px;">Your ongoing games</p>
-                <div id="activeGamesList" style="max-height: 400px; overflow-y: auto;">
-                    <!-- Active games will be populated here -->
+                <!-- Game Invites Section -->
+                <div id="gameInvitesSection" style="display: none; margin-bottom: 30px;">
+                    <h3 style="font-size: 16px; color: var(--gold); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span>📬 Game Invitations</span>
+                        <span id="invitesCountBadge2" class="tab-badge" style="display: none;">0</span>
+                    </h3>
+                    <div id="gameInvitesList" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
+                        <!-- Game invites will be populated here -->
+                    </div>
                 </div>
-                <p id="noActiveGamesMessage" style="text-align: center; color: var(--text-muted); padding: 40px 20px; display: none;">
-                    No active games found.
-                </p>
+
+                <!-- Active Games Section -->
+                <div id="activeGamesSection">
+                    <h3 style="font-size: 16px; color: var(--gold); margin-bottom: 12px;">Your Ongoing Games</h3>
+                    <div id="activeGamesList" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Active games will be populated here -->
+                    </div>
+                    <p id="noActiveGamesMessage" style="text-align: center; color: var(--text-muted); padding: 40px 20px; display: none;">
+                        No active games found.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -747,6 +778,137 @@
         </div>
     </div>
 
+    <!-- Username Setup Modal (for new/existing users without username) -->
+    <div class="modal" id="usernameModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h2>Choose Your Username</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-instruction" style="text-align: center; margin-bottom: 15px;">
+                    Choose a unique username to connect with friends
+                </p>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Username</label>
+                    <input type="text" id="usernameInput" class="player-name-input" placeholder="e.g., card_master_99" maxlength="15" autocomplete="off">
+                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">3-15 characters, letters, numbers, and underscores only</p>
+                </div>
+                <p class="error-message" id="usernameError"></p>
+                <button class="btn btn-primary btn-large" id="usernameSubmitBtn">Set Username</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Friends Modal -->
+    <div class="modal" id="friendsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>👥 Friends</h2>
+                <button class="close-btn" id="closeFriendsBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tab Navigation -->
+                <div class="friends-tabs">
+                    <button class="friends-tab active" data-tab="friends-list">
+                        <span>My Friends</span>
+                    </button>
+                    <button class="friends-tab" data-tab="friend-requests">
+                        <span>Requests</span>
+                        <span id="requestsCountBadge" class="tab-badge" style="display: none;">0</span>
+                    </button>
+                    <button class="friends-tab" data-tab="add-friend">
+                        <span>Add Friend</span>
+                    </button>
+                </div>
+
+                <!-- Tab Contents -->
+                <div class="friends-tab-content">
+                    <!-- Friends List Tab -->
+                    <div class="tab-pane active" id="friends-list">
+                        <div id="friendsList" style="max-height: 400px; overflow-y: auto;">
+                            <!-- Friends will be populated here -->
+                        </div>
+                        <p id="noFriendsMessage" style="text-align: center; color: var(--text-muted); padding: 40px 20px; display: none;">
+                            You haven't added any friends yet.<br>
+                            Search for friends by username in the "Add Friend" tab!
+                        </p>
+                    </div>
+
+                    <!-- Friend Requests Tab -->
+                    <div class="tab-pane" id="friend-requests">
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="font-size: 16px; color: var(--gold); margin-bottom: 12px;">Incoming Requests</h3>
+                            <div id="incomingRequestsList" style="max-height: 200px; overflow-y: auto;">
+                                <!-- Incoming requests will be populated here -->
+                            </div>
+                            <p id="noIncomingRequestsMessage" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                                No pending requests
+                            </p>
+                        </div>
+
+                        <div>
+                            <h3 style="font-size: 16px; color: var(--gold); margin-bottom: 12px;">Outgoing Requests</h3>
+                            <div id="outgoingRequestsList" style="max-height: 200px; overflow-y: auto;">
+                                <!-- Outgoing requests will be populated here -->
+                            </div>
+                            <p id="noOutgoingRequestsMessage" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                                No pending requests
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Add Friend Tab -->
+                    <div class="tab-pane" id="add-friend">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px;">Search by Username</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="friendSearchInput" class="player-name-input" placeholder="Enter username..." style="flex: 1;" autocomplete="off">
+                                <button class="btn btn-primary" id="searchFriendBtn" style="padding: 12px 24px;">Search</button>
+                            </div>
+                        </div>
+
+                        <p class="error-message" id="friendSearchError"></p>
+
+                        <div id="friendSearchResults" style="margin-top: 20px;">
+                            <!-- Search results will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Modal (Success/Info) -->
+    <div class="modal" id="notificationModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h2 id="notificationTitle">✓ Success</h2>
+            </div>
+            <div class="modal-body">
+                <p id="notificationMessage" style="text-align: center; color: var(--white); font-size: 16px; margin: 20px 0; line-height: 1.5;"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="notificationOkBtn" style="width: 100%;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal (Yes/No) -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h2 id="confirmTitle">Confirm Action</h2>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage" style="text-align: center; color: var(--white); font-size: 16px; margin: 20px 0; line-height: 1.5;"></p>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" id="confirmCancelBtn" style="flex: 1;">Cancel</button>
+                <button class="btn btn-primary" id="confirmOkBtn" style="flex: 1;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs (CDN) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -761,6 +923,10 @@
 
     <!-- Game Persistence -->
     <script src="js/game-persistence.js"></script>
+
+    <!-- Friends System -->
+    <script src="js/friends.js"></script>
+    <script src="js/invites.js"></script>
 
     <!-- Main App Logic -->
     <script src="js/app.js?v=7"></script>

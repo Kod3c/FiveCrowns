@@ -27,7 +27,8 @@ body.card-design-classic .card-content {
 }
 
 /* Show center content for joker cards */
-body.card-design-classic .card[data-rank="Joker"] .card-content {
+body.card-design-classic .card[data-rank="Joker"] .card-content,
+body.card-design-classic .hand-card[data-rank="Joker"] .card-content {
     display: flex;
 }
 
@@ -116,7 +117,8 @@ body.card-design-minimal .card-content {
 }
 
 /* Show center content for joker cards */
-body.card-design-minimal .card[data-rank="Joker"] .card-content {
+body.card-design-minimal .card[data-rank="Joker"] .card-content,
+body.card-design-minimal .hand-card[data-rank="Joker"] .card-content {
     display: flex;
 }
 

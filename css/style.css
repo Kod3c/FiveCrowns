@@ -180,6 +180,13 @@ body {
     margin-bottom: 40px;
 }
 
+.btn-large {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
 /* Buttons */
 .btn {
     font-family: 'Poppins', sans-serif;
@@ -643,5 +650,359 @@ body {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+    }
+}
+
+/* ========================================
+   Friends System Styles
+   ======================================== */
+
+/* Friends Modal Specific Overrides */
+#friendsModal .modal-content {
+    max-width: 520px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#friendsModal .modal-header {
+    flex-shrink: 0;
+}
+
+#friendsModal .modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Friends Tabs */
+.friends-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 6px;
+}
+
+.friends-tab {
+    padding: 10px 6px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    position: relative;
+    min-height: 60px;
+}
+
+.friends-tab > span:first-child {
+    text-align: center;
+    line-height: 1.2;
+}
+
+.friends-tab.active {
+    background: rgba(123, 63, 242, 0.6);
+    color: var(--gold);
+    box-shadow: 0 2px 8px rgba(123, 63, 242, 0.4);
+}
+
+.friends-tab:hover:not(.active) {
+    color: var(--white);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.tab-badge {
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    padding: 3px 7px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1;
+}
+
+/* Tab Content */
+.friends-tab-content {
+    min-height: 300px;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Section Headers in Request Tab */
+.tab-pane h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 12px;
+    margin-top: 0;
+}
+
+/* Empty State Messages */
+.tab-pane p[id*="Message"] {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 30px 20px;
+    margin: 0;
+}
+
+/* Friend Card */
+.friend-card {
+    background: rgba(45, 25, 80, 0.4);
+    border: 2px solid rgba(255, 215, 0, 0.2);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: all 0.3s ease;
+}
+
+.friend-card:hover {
+    border-color: var(--gold);
+    background: rgba(45, 25, 80, 0.6);
+    transform: translateY(-2px);
+}
+
+.friend-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.friend-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 2px;
+}
+
+.friend-username {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.friend-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.friend-action-btn {
+    padding: 8px 16px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 8px;
+    background: rgba(123, 63, 242, 0.3);
+    color: var(--white);
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.friend-action-btn:hover {
+    background: rgba(123, 63, 242, 0.6);
+    border-color: var(--gold);
+    transform: scale(1.05);
+}
+
+.friend-action-btn:active {
+    transform: scale(0.95);
+}
+
+.friend-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.friend-action-btn.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(123, 63, 242, 0.2);
+}
+
+.friend-action-btn.danger-btn {
+    background: rgba(239, 68, 68, 0.3);
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+.friend-action-btn.danger-btn:hover {
+    background: rgba(239, 68, 68, 0.6);
+    border-color: rgba(239, 68, 68, 0.8);
+}
+
+/* Friend Checkbox */
+.friend-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--royal-gold);
+}
+
+/* Add Friend Search Section */
+#add-friend label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--white);
+    margin-bottom: 8px;
+    display: block;
+}
+
+#add-friend > div:first-child {
+    margin-bottom: 0 !important;
+}
+
+#add-friend > div:first-child > div {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+#friendSearchInput {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 15px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--white);
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+#friendSearchInput:focus {
+    border-color: var(--gold);
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+#friendSearchInput::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+#searchFriendBtn {
+    padding: 12px 24px !important;
+    white-space: nowrap;
+    min-width: 100px;
+}
+
+/* Friend Search Results */
+#friendSearchResults {
+    margin-top: 20px !important;
+}
+
+/* Request Sections Spacing */
+#friend-requests > div {
+    margin-bottom: 24px;
+}
+
+#friend-requests > div:last-child {
+    margin-bottom: 0;
+}
+
+#friend-requests h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+/* Lists Containers */
+#incomingRequestsList,
+#outgoingRequestsList,
+#friendsList,
+#gameInvitesList,
+#inviteFriendsList {
+    margin-top: 0;
+}
+
+/* Username Modal */
+#usernameModal .modal-content {
+    max-width: 400px;
+}
+
+/* Text Muted */
+.text-muted {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Badge Styles for Friend Request Count */
+.btn-large span[id$="Count"] {
+    display: inline-block;
+}
+
+/* Modal Instruction Text */
+.modal-instruction {
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+    #friendsModal .modal-content {
+        max-width: 95vw;
+    }
+
+    .friends-tabs {
+        gap: 4px;
+        padding: 4px;
+    }
+
+    .friends-tab {
+        font-size: 11px;
+        padding: 8px 4px;
+        min-height: 55px;
+    }
+
+    .friend-action-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .friend-name {
+        font-size: 14px;
+    }
+
+    .friend-username {
+        font-size: 12px;
+    }
+
+    #searchFriendBtn {
+        padding: 12px 16px !important;
+        min-width: 80px;
     }
 }
