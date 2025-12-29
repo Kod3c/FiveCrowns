@@ -1514,22 +1514,6 @@ if (friendSearchInput) {
             handleFriendSearch();
         }
     });
-
-    // Add phone number formatting to friend search input
-    friendSearchInput.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 10) value = value.substring(0, 10);
-
-        if (value.length === 0) {
-            e.target.value = '';
-        } else if (value.length <= 3) {
-            e.target.value = '(' + value;
-        } else if (value.length <= 6) {
-            e.target.value = '(' + value.substring(0, 3) + ') ' + value.substring(3);
-        } else {
-            e.target.value = '(' + value.substring(0, 3) + ') ' + value.substring(3, 6) + '-' + value.substring(6);
-        }
-    });
 }
 
 /**
@@ -1798,12 +1782,17 @@ function createOutgoingRequestCard(request) {
  */
 async function handleFriendSearch() {
     try {
-        const friendSearchCountryCode = document.getElementById('friendSearchCountryCode');
-        const phoneDigits = friendSearchInput.value.replace(/\D/g, ''); // Extract only digits
-        const phoneNumber = friendSearchCountryCode.value + phoneDigits;
+        const phoneNumber = friendSearchInput.value.trim();
 
-        if (!phoneDigits || phoneDigits.length < 7) {
-            friendSearchError.textContent = 'Please enter a valid phone number';
+        if (!phoneNumber) {
+            friendSearchError.textContent = 'Please enter a phone number';
+            return;
+        }
+
+        // Validate E.164 format
+        const validation = validatePhoneNumber(phoneNumber);
+        if (!validation.valid) {
+            friendSearchError.textContent = validation.error;
             return;
         }
 
