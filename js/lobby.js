@@ -35,7 +35,15 @@ function showErrorModal(message, details = null) {
     errorMessage.textContent = message;
 
     if (details) {
-        errorDetails.textContent = details;
+        if (typeof details === 'object') {
+            let detailsHtml = '';
+            for (const [key, value] of Object.entries(details)) {
+                detailsHtml += `<strong>${key}:</strong> ${value}<br>`;
+            }
+            errorDetails.innerHTML = detailsHtml;
+        } else {
+            errorDetails.textContent = details;
+        }
         errorDetails.style.display = 'block';
     } else {
         errorDetails.style.display = 'none';
@@ -108,10 +116,10 @@ const errorMessage = document.getElementById('errorMessage');
 const errorDetails = document.getElementById('errorDetails');
 const errorOkBtn = document.getElementById('errorOkBtn');
 
-// Firebase References
-const gameRef = database.ref('games/' + gameCode);
-const playersRef = gameRef.child('players');
-const playerRef = playersRef.child(playerId);
+// Firebase References (null when there is no valid session)
+const gameRef = gameCode ? database.ref('games/' + gameCode) : null;
+const playersRef = gameRef ? gameRef.child('players') : null;
+const playerRef = (playersRef && playerId) ? playersRef.child(playerId) : null;
 
 // Local State
 let currentGameData = null;
@@ -120,8 +128,10 @@ let maxPlayers = 6;
 let isGameStarting = false; // Flag to prevent disconnect handlers from being re-registered during game start
 let disconnectHandlerSetup = false; // Flag to ensure we only set up disconnect handler once
 
-// Initialize
-init();
+// Initialize (only with a valid session; otherwise we already showed the error modal)
+if (gameRef) {
+    init();
+}
 
 function init() {
     console.log('Initializing lobby for game:', gameCode, 'Player:', playerId);
@@ -305,7 +315,9 @@ function listenToGameChanges() {
 function updateUI() {
     const players = currentGameData.players || {};
     const playerArray = Object.values(players);
-    const playerCountNum = playerArray.length;
+    // Invited-but-not-yet-accepted placeholders do not count as real players
+    const activePlayers = playerArray.filter(p => p && !p.isInvited);
+    const playerCountNum = activePlayers.length;
 
     // Update player count
     playerCount.textContent = `(${playerCountNum}/${maxPlayers})`;
@@ -522,8 +534,15 @@ function handleStartGame() {
     // CRITICAL: Set flag to prevent setupDisconnectHandler from re-registering handlers
     isGameStarting = true;
 
-    const players = currentGameData.players || {};
-    const playerCountNum = Object.values(players).length;
+    // Only real (accepted) players count toward the start requirement / dealing
+    const allPlayers = currentGameData.players || {};
+    const players = {};
+    Object.keys(allPlayers).forEach(pid => {
+        if (allPlayers[pid] && !allPlayers[pid].isInvited) {
+            players[pid] = allPlayers[pid];
+        }
+    });
+    const playerCountNum = Object.keys(players).length;
 
     if (playerCountNum < 2) {
         showErrorModal('Need at least 2 players to start the game!');
@@ -706,32 +725,10 @@ function hideLeaveModal() {
 }
 
 /**
- * Show error modal
- */
-function showErrorModal(message, details = null) {
-    errorMessage.textContent = message;
-
-    if (details) {
-        let detailsHtml = '';
-        for (const [key, value] of Object.entries(details)) {
-            detailsHtml += `<strong>${key}:</strong> ${value}<br>`;
-        }
-        errorDetails.innerHTML = detailsHtml;
-        errorDetails.style.display = 'block';
-    } else {
-        errorDetails.style.display = 'none';
-    }
-
-    errorModal.classList.add('active');
-}
-
-/**
  * Hide error modal
  */
 function hideErrorModal() {
     errorModal.classList.remove('active');
-    // Redirect to home after closing
-    window.location.href = 'index.html';
 }
 
 /**

@@ -54,7 +54,9 @@ if (typeof firebase === 'undefined') {
 }
 
 // Check if database is initialized
-if (typeof database === 'undefined') {
+// (avoid `typeof database` - `database` is a const, so when firebase-config.js
+// fails to init it is in the TDZ and `typeof` throws a ReferenceError)
+if (typeof firebase === 'undefined' || !firebase.apps || !firebase.apps.length) {
     console.error('Firebase database not initialized!');
     showErrorModal('Error: Database not initialized. Please refresh the page.');
 }
@@ -186,12 +188,15 @@ auth.onAuthStateChanged(async (user) => {
                 }, 100);
             }
 
-            // Check if there's a pending action after login
-            if (pendingAction === 'createGame') {
+            // Check if there's a pending action after login (persisted across the redirect)
+            const resumedAction = sessionStorage.getItem('pendingAction') || pendingAction;
+            if (resumedAction === 'createGame') {
                 pendingAction = null;
+                sessionStorage.removeItem('pendingAction');
                 handleCreateGame(currentUserFirstName);
-            } else if (pendingAction === 'joinGame') {
+            } else if (resumedAction === 'joinGame') {
                 pendingAction = null;
+                sessionStorage.removeItem('pendingAction');
                 openJoinModal();
             }
 
@@ -407,13 +412,6 @@ gameCodeInput.addEventListener('input', (e) => {
     joinError.textContent = ''; // Clear error on input
 });
 
-// Submit on Enter key
-playerNameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        handleNameSubmit();
-    }
-});
-
 if (joinNameInput) {
     joinNameInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -437,8 +435,9 @@ function handleCreateGameClick() {
     console.log('Create game clicked');
 
     if (!currentUser || !currentUserFirstName) {
-        // Store the intended action and redirect to login
+        // Store the intended action (survives the full-page redirect) and go to login
         pendingAction = 'createGame';
+        sessionStorage.setItem('pendingAction', 'createGame');
         window.location.href = 'login.html';
         return;
     }
@@ -459,17 +458,17 @@ function closeNameModal() {
  * Create a new game
  * Generates a unique 4-digit code and redirects to lobby
  */
-function handleCreateGame(playerName) {
+async function handleCreateGame(playerName) {
     console.log('=== CREATE GAME CLICKED ===');
 
     try {
         // Check Firebase is available
-        if (typeof firebase === 'undefined' || typeof database === 'undefined') {
+        if (typeof firebase === 'undefined' || !firebase.apps || !firebase.apps.length) {
             throw new Error('Firebase not available');
         }
 
         // Generate unique 4-digit code
-        const gameCode = generateGameCode();
+        const gameCode = await generateGameCode();
         console.log('Generated game code:', gameCode);
 
         // Store player as host
@@ -489,8 +488,9 @@ function handleCreateGame(playerName) {
  */
 function openJoinModal() {
     if (!currentUser || !currentUserFirstName) {
-        // Store the intended action and redirect to login
+        // Store the intended action (survives the full-page redirect) and go to login
         pendingAction = 'joinGame';
+        sessionStorage.setItem('pendingAction', 'joinGame');
         window.location.href = 'login.html';
         return;
     }
@@ -570,7 +570,23 @@ function showHowToPlay(e) {
 /**
  * Generate a unique 4-digit game code
  */
-function generateGameCode() {
+async function generateGameCode() {
+    // Retry until we find a code that isn't already in use, so creating a game
+    // can never silently overwrite another host's game.
+    for (let attempt = 0; attempt < 25; attempt++) {
+        const code = Math.floor(1000 + Math.random() * 9000).toString();
+        try {
+            const snapshot = await database.ref('games/' + code).once('value');
+            if (!snapshot.exists()) {
+                return code;
+            }
+        } catch (error) {
+            // If the existence check fails (offline/rules), fall back to this code
+            console.warn('Could not verify game code uniqueness:', error);
+            return code;
+        }
+    }
+    console.warn('Could not find an unused game code after 25 attempts; using a random one');
     return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
@@ -2119,8 +2135,11 @@ async function loadFriendsData() {
         await updateFriendsBadges();
         await loadActiveGames(); // Also load active games (includes invites)
 
-        // Set up periodic badge updates
-        setInterval(async () => {
+        // Set up periodic badge updates (keep a single interval - auth state fires repeatedly)
+        if (window._friendsBadgeInterval) {
+            clearInterval(window._friendsBadgeInterval);
+        }
+        window._friendsBadgeInterval = setInterval(async () => {
             await updateFriendsBadges();
             await loadActiveGames();
         }, 30000); // Update every 30 seconds

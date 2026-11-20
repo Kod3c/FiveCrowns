@@ -69,6 +69,21 @@ class CardHandManager {
     }
 
     /**
+     * Enable/disable wild-card highlighting and re-render
+     */
+    setHighlightWilds(enabled) {
+        this.options.highlightWilds = enabled !== false;
+        this.render();
+    }
+
+    /**
+     * Re-render the hand (alias used by callers in game.js)
+     */
+    renderHand() {
+        this.render();
+    }
+
+    /**
      * Set cards for a specific stack
      */
     setCards(cards, stackId = 'default', skipRender = false) {
@@ -182,13 +197,17 @@ class CardHandManager {
         const remainingCards = Array.from(cardMap.values());
         if (remainingCards.length > 0) {
             console.log('Found', remainingCards.length, 'cards not in saved state, adding to default stack');
-            const defaultStack = this.stacks.find(s => s.isDefault);
-            if (defaultStack) {
-                remainingCards.forEach(card => {
-                    card.stackId = defaultStack.id;
-                    defaultStack.cards.push(card);
-                });
+            let defaultStack = this.stacks.find(s => s.isDefault);
+            if (!defaultStack) {
+                // Saved state had no default stack - create one so leftover cards stay visible
+                console.log('No default stack after restore, creating one for leftover cards');
+                this.createDefaultStack();
+                defaultStack = this.stacks.find(s => s.isDefault);
             }
+            remainingCards.forEach(card => {
+                card.stackId = defaultStack.id;
+                defaultStack.cards.push(card);
+            });
         }
 
         // Ensure we have at least a default stack
@@ -211,7 +230,7 @@ class CardHandManager {
         }
 
         const stack = {
-            id: 'stack-' + Date.now(),
+            id: 'stack-' + Date.now() + '-' + this.stacks.length + '-' + Math.random().toString(36).slice(2, 8),
             name: name || `Stack ${this.stacks.length}`,
             cards: [],
             isDefault: false,
@@ -234,8 +253,11 @@ class CardHandManager {
         const stack = this.stacks[stackIndex];
         const defaultStack = this.stacks.find(s => s.isDefault);
 
-        // Move cards to default stack
-        defaultStack.cards.push(...stack.cards);
+        // Move cards to default stack (and repoint their stackId so they stay draggable)
+        stack.cards.forEach(card => {
+            card.stackId = defaultStack.id;
+            defaultStack.cards.push(card);
+        });
 
         // Remove stack
         this.stacks.splice(stackIndex, 1);
@@ -1049,7 +1071,7 @@ class CardHandManager {
         if (!stack) return null;
 
         // Get all card elements in this stack (excluding the dragging card and drop indicators)
-        const cardElements = Array.from(stackZone.querySelectorAll('.hand-card:not(.dragging):not(.drop-indicator)'));
+        const cardElements = Array.from(stackZone.querySelectorAll('.hand-card:not([style*="display: none"]):not(.card-placeholder)'));
 
         if (cardElements.length === 0) {
             // Empty stack - drop at beginning
@@ -1148,6 +1170,9 @@ class CardHandManager {
         // Add to target
         card.stackId = targetStackId;
         targetStack.cards.push(card);
+
+        // Clean up any stack left empty by the move
+        this.cleanupEmptyStacks();
 
         this.render();
         this.onCardMove(card, sourceStack.id, targetStack.id);

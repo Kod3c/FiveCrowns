@@ -118,7 +118,6 @@ async function getGameInvites() {
         const snapshot = await firestore.collection('gameInvites')
             .where('to.uid', '==', user.uid)
             .where('status', '==', 'pending')
-            .orderBy('timestamp', 'desc')
             .get();
 
         const invites = [];
@@ -132,6 +131,9 @@ async function getGameInvites() {
             });
         });
 
+        // Sort newest first in JS (avoids needing a Firestore composite index)
+        invites.sort((a, b) => (b.timestamp?.getTime?.() || 0) - (a.timestamp?.getTime?.() || 0));
+
         // Filter out expired invites
         const now = new Date();
         const validInvites = invites.filter(invite => invite.expiresAt > now);
@@ -141,6 +143,7 @@ async function getGameInvites() {
         expiredInvites.forEach(invite => {
             firestore.collection('gameInvites').doc(invite.id).delete()
                 .catch(err => console.error('Error deleting expired invite:', err));
+            removeInvitedPlaceholder(invite.gameCode, invite.to && invite.to.uid);
         });
 
         // Validate that games still exist and are joinable
@@ -188,6 +191,7 @@ async function getGameInvites() {
         invalidInvites.forEach(invite => {
             firestore.collection('gameInvites').doc(invite.id).delete()
                 .catch(err => console.error('Error deleting invalid invite:', err));
+            removeInvitedPlaceholder(invite.gameCode, invite.to && invite.to.uid);
         });
 
         return validatedInvites;
@@ -312,6 +316,9 @@ async function declineGameInvite(inviteId) {
             declinedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
+        // Remove the placeholder player this invite created in the host's lobby
+        await removeInvitedPlaceholder(inviteData.gameCode, inviteData.to && inviteData.to.uid);
+
         console.log('Game invite declined:', inviteId);
     } catch (error) {
         console.error('Error declining game invite:', error);
@@ -396,6 +403,31 @@ async function cleanupOldGameInvites() {
  * @param {function} callback - Callback function to call when invites change
  * @returns {function} Unsubscribe function
  */
+/**
+ * Remove the placeholder player that a game invite created in the host's lobby
+ * @param {string} gameCode - Game code
+ * @param {string} uid - Invited user's UID
+ */
+async function removeInvitedPlaceholder(gameCode, uid) {
+    if (!gameCode || !uid) return;
+    try {
+        const playersRef = database.ref('games/' + gameCode + '/players');
+        const snapshot = await playersRef.once('value');
+        const players = snapshot.val() || {};
+        const updates = {};
+        Object.keys(players).forEach(pid => {
+            if (players[pid] && players[pid].isInvited && players[pid].uid === uid) {
+                updates[pid] = null;
+            }
+        });
+        if (Object.keys(updates).length > 0) {
+            await playersRef.update(updates);
+        }
+    } catch (error) {
+        console.error('Error removing invited placeholder:', error);
+    }
+}
+
 function listenToGameInvites(callback) {
     const user = auth.currentUser;
     if (!user) {
@@ -408,7 +440,6 @@ function listenToGameInvites(callback) {
     const unsubscribe = firestore.collection('gameInvites')
         .where('to.uid', '==', user.uid)
         .where('status', '==', 'pending')
-        .orderBy('timestamp', 'desc')
         .onSnapshot(snapshot => {
             const invites = [];
             snapshot.forEach(doc => {
@@ -420,6 +451,9 @@ function listenToGameInvites(callback) {
                     expiresAt: data.expiresAt?.toDate() || new Date()
                 });
             });
+
+            // Sort newest first in JS (avoids needing a Firestore composite index)
+            invites.sort((a, b) => (b.timestamp?.getTime?.() || 0) - (a.timestamp?.getTime?.() || 0));
 
             // Filter out expired invites
             const now = new Date();

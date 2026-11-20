@@ -1,0 +1,2 @@
+# Normalize line endings so the working tree stays clean across checkouts.
+* text=auto eol=lf

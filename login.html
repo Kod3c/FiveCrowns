@@ -924,6 +924,21 @@
                 // Don't redirect if we're in the middle of verifying login
                 // (need to check Firestore account existence first)
                 if (!isVerifyingLogin) {
+                    // Make sure the account has a phone number before leaving the login
+                    // page (covers Google/Apple sign-in, whose popup resolves after this
+                    // listener already fired and would otherwise redirect away).
+                    try {
+                        const hasPhone = await currentUserHasPhoneNumber();
+                        if (!hasPhone) {
+                            console.log('User missing phone number - showing collection modal');
+                            loadingSpinner.classList.remove('show');
+                            showPhoneCollectionModal();
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Error checking phone number:', error);
+                    }
+
                     // Don't redirect in debug mode
                     if (debugMode) {
                         console.log('%c🔧 DEBUG: Would redirect to index.html but debug mode is on', 'background: #4CAF50; color: white; padding: 5px;');
@@ -1229,18 +1244,9 @@
             }
         });
 
-        // Enter key handlers
-        loginVerificationCode.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') loginBtn.click();
-        });
-
-        signupVerificationCode.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') signupBtn.click();
-        });
-
         // Helper function to show errors
         function showError(element, message, isError = true) {
-            element.innerHTML = message; // Changed from textContent to innerHTML to support links
+            element.textContent = message;
             element.classList.add('show');
             if (!isError) {
                 element.style.color = '#4ade80';

@@ -185,14 +185,16 @@ async function acceptFriendRequest(fromUid) {
             'friendRequests.incoming': firebase.firestore.FieldValue.arrayRemove(request)
         });
 
-        // Find and remove the outgoing request from sender
+        // Make the sender's side symmetric: always add myself to their friends list,
+        // and remove their outgoing request only if it still exists.
         const outgoingRequest = outgoingRequests.find(req => req.to === user.uid);
+        const senderUpdate = {
+            friends: firebase.firestore.FieldValue.arrayUnion(user.uid)
+        };
         if (outgoingRequest) {
-            await firestore.collection('users').doc(fromUid).update({
-                friends: firebase.firestore.FieldValue.arrayUnion(user.uid),
-                'friendRequests.outgoing': firebase.firestore.FieldValue.arrayRemove(outgoingRequest)
-            });
+            senderUpdate['friendRequests.outgoing'] = firebase.firestore.FieldValue.arrayRemove(outgoingRequest);
         }
+        await firestore.collection('users').doc(fromUid).update(senderUpdate);
 
         console.log('Friend request accepted from:', fromUid);
     } catch (error) {

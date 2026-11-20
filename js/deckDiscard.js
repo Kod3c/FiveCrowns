@@ -65,22 +65,16 @@ class DeckDiscardManager {
             this.setupDiscardDragListeners();
         }
 
-        // Listen for card drag events from CardHandManager
-        document.addEventListener('cardDragStart', (e) => {
-            this.handleCardDragStart(e.detail.card);
-        });
+        // Listen for card drag events from CardHandManager (stored so destroy() can remove them)
+        this._onCardDragStart = (e) => this.handleCardDragStart(e.detail.card);
+        this._onCardDragMove = (e) => this.handleCardDragMove(e.detail.x, e.detail.y);
+        this._onCardDragEnd = (e) => this.handleCardDragEnd(e);
+        this._onCardDragCleanup = () => this.handleCardDragCleanup();
 
-        document.addEventListener('cardDragMove', (e) => {
-            this.handleCardDragMove(e.detail.x, e.detail.y);
-        });
-
-        document.addEventListener('cardDragEnd', (e) => {
-            this.handleCardDragEnd(e);
-        });
-
-        document.addEventListener('cardDragCleanup', () => {
-            this.handleCardDragCleanup();
-        });
+        document.addEventListener('cardDragStart', this._onCardDragStart);
+        document.addEventListener('cardDragMove', this._onCardDragMove);
+        document.addEventListener('cardDragEnd', this._onCardDragEnd);
+        document.addEventListener('cardDragCleanup', this._onCardDragCleanup);
 
         console.log('DeckDiscardManager: Event listeners attached');
     }
@@ -174,6 +168,9 @@ class DeckDiscardManager {
 
         this.deckArea.addEventListener('pointerup', (e) => {
             if (isDragging && dragGhost) {
+                // Suppress the click/touchend that follows this drag
+                this._suppressClick = true;
+                setTimeout(() => { this._suppressClick = false; }, 400);
                 // Check if dropped over hand area
                 const isOverHand = this.isPointOverElement(e.clientX, e.clientY, this.handContainer);
 
@@ -253,6 +250,9 @@ class DeckDiscardManager {
 
         this.discardArea.addEventListener('pointerup', (e) => {
             if (isDragging && dragGhost) {
+                // Suppress the click/touchend that follows this drag
+                this._suppressClick = true;
+                setTimeout(() => { this._suppressClick = false; }, 400);
                 // Check if dropped over hand area
                 const isOverHand = this.isPointOverElement(e.clientX, e.clientY, this.handContainer);
 
@@ -328,6 +328,10 @@ class DeckDiscardManager {
     }
 
     handleDeckClick() {
+        if (this._suppressClick) {
+            console.log('DeckDiscardManager: Ignoring click after drag');
+            return;
+        }
         console.log('DeckDiscardManager: Deck clicked');
         console.log('  isDrawingEnabled:', this.isDrawingEnabled);
         console.log('  canDraw():', this.options.canDraw());
@@ -347,6 +351,10 @@ class DeckDiscardManager {
     }
 
     handleDiscardClick() {
+        if (this._suppressClick) {
+            console.log('DeckDiscardManager: Ignoring click after drag');
+            return;
+        }
         console.log('DeckDiscardManager: Discard pile clicked');
         console.log('  isDrawingEnabled:', this.isDrawingEnabled);
         console.log('  canDraw():', this.options.canDraw());
@@ -452,6 +460,11 @@ class DeckDiscardManager {
     }
 
     destroy() {
+        if (this._onCardDragStart) document.removeEventListener('cardDragStart', this._onCardDragStart);
+        if (this._onCardDragMove) document.removeEventListener('cardDragMove', this._onCardDragMove);
+        if (this._onCardDragEnd) document.removeEventListener('cardDragEnd', this._onCardDragEnd);
+        if (this._onCardDragCleanup) document.removeEventListener('cardDragCleanup', this._onCardDragCleanup);
+        this.currentDragElement = null;
         this.currentDraggedCard = null;
         this.dropZoneActive = false;
         console.log('DeckDiscardManager: Destroyed');

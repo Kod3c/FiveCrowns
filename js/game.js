@@ -400,8 +400,13 @@ function listenToGameState() {
         // Store host info
         isHost = (gameData.host === playerId);
 
-        // Get highlight wilds setting
-        highlightWilds = gameData.highlightWilds !== false; // Default to true
+        // Get highlight wilds setting (prefer the user's local preference in settings)
+        if (typeof settingsManager !== 'undefined' && settingsManager &&
+            typeof settingsManager.getHighlightWilds === 'function') {
+            highlightWilds = settingsManager.getHighlightWilds();
+        } else {
+            highlightWilds = gameData.highlightWilds !== false; // Default to true
+        }
 
         console.log('Game state updated:', currentGameState);
         console.log('Highlight wilds:', highlightWilds);
@@ -897,8 +902,13 @@ function canGoOut() {
 
     if (allCards.length === 0) return true; // Empty hand = can go out
 
-    // Try to find valid melds automatically, regardless of stack organization
-    return canFormValidMelds(allCards, wildRank);
+    // Fast path: the greedy check is a sufficient condition for a valid go-out.
+    if (canFormValidMelds(allCards, wildRank)) return true;
+
+    // Otherwise fall back to the same optimizer the scorer uses: the hand can go
+    // out when every card fits into valid sets/runs (score 0). This fixes cases
+    // the greedy algorithm rejects (e.g. two separate runs in one suit).
+    return findOptimalGrouping(allCards, wildRank).score === 0;
 }
 
 /**
@@ -2229,14 +2239,39 @@ async function handleGoOut() {
         // Save current hand for scoring before clearing
         const currentHand = currentGameState.playerHands[playerId] || [];
 
-        // Another player already went out - just clear this player's hand
-        gameStateRef.update({
+        // Another player already went out - clear this player's hand and finish
+        // their final turn (there is no discard left to advance the turn).
+        const updatedPlayersRemaining = (currentGameState.playersRemaining || []).filter(id => id !== playerId);
+
+        const goOutUpdates = {
             [`playerHands/${playerId}`]: [], // Clear hand - player went out
             [`playerHandsBeforeGoOut/${playerId}`]: currentHand // Save hand for scoring
-        })
+        };
+
+        if (updatedPlayersRemaining.length > 0) {
+            // More players still need their final turn
+            goOutUpdates['playersRemaining'] = updatedPlayersRemaining;
+            goOutUpdates['currentPlayer'] = updatedPlayersRemaining[0];
+            goOutUpdates['turnPhase'] = 'POST_GO_OUT';
+            goOutUpdates['previousPlayer'] = null;
+        } else {
+            // Everyone has had their final turn - open the go-out window, then end the round
+            goOutUpdates['playersRemaining'] = [];
+            goOutUpdates['turnPhase'] = 'WAITING_FOR_GO_OUT';
+            goOutUpdates['previousPlayer'] = playerId;
+        }
+
+        gameStateRef.update(goOutUpdates)
         .then(() => {
             console.log('Successfully went out during POST_GO_OUT phase');
-            // Turn will advance via normal discard flow
+            if (updatedPlayersRemaining.length === 0) {
+                setTimeout(() => {
+                    if (currentGameState?.turnPhase === 'WAITING_FOR_GO_OUT') {
+                        console.log('Round complete - ending round');
+                        endRound();
+                    }
+                }, 5000);
+            }
         })
         .catch((error) => {
             console.error('Error going out:', error);
@@ -2595,8 +2630,9 @@ function handleGameEnd() {
     let lowestScore = Infinity;
 
     for (const pid in playerScores) {
-        if (playerScores[pid] < lowestScore) {
-            lowestScore = playerScores[pid];
+        const score = normalizeScore(playerScores[pid]);
+        if (score < lowestScore) {
+            lowestScore = score;
             winner = pid;
         }
     }
@@ -2640,7 +2676,7 @@ function createFinalScoreTable(playerScores) {
     }
 
     // Sort by total score (best to worst)
-    const sortedPlayers = Object.keys(playerScores).sort((a, b) => playerScores[a] - playerScores[b]);
+    const sortedPlayers = Object.keys(playerScores).sort((a, b) => normalizeScore(playerScores[a]) - normalizeScore(playerScores[b]));
 
     let html = '<table class="score-table">';
     html += '<thead><tr>';
@@ -2650,7 +2686,7 @@ function createFinalScoreTable(playerScores) {
     html += '<tbody>';
 
     sortedPlayers.forEach((pid, index) => {
-        const totalScore = playerScores[pid];
+        const totalScore = normalizeScore(playerScores[pid]);
         const isYou = pid === playerId;
 
         html += '<tr>';
@@ -2941,14 +2977,16 @@ function showScores() {
     // Show modal
     roundEndModal.classList.add('active');
 
-    // Add click handler to close when clicking outside
-    const closeHandler = (e) => {
+    // Add click handler to close when clicking outside (replace any previous one)
+    if (window._roundEndOutsideHandler) {
+        roundEndModal.removeEventListener('click', window._roundEndOutsideHandler);
+    }
+    window._roundEndOutsideHandler = (e) => {
         if (e.target === roundEndModal) {
             roundEndModal.classList.remove('active');
-            roundEndModal.removeEventListener('click', closeHandler);
         }
     };
-    roundEndModal.addEventListener('click', closeHandler);
+    roundEndModal.addEventListener('click', window._roundEndOutsideHandler);
 }
 
 /**
@@ -2958,14 +2996,16 @@ function showRules() {
     closeGameMenu();
     rulesModal.style.display = 'flex';
 
-    // Add click handler to close when clicking outside
-    const closeHandler = (e) => {
+    // Add click handler to close when clicking outside (replace any previous one)
+    if (showRules._outsideHandler) {
+        rulesModal.removeEventListener('click', showRules._outsideHandler);
+    }
+    showRules._outsideHandler = (e) => {
         if (e.target === rulesModal) {
             closeRulesModal();
-            rulesModal.removeEventListener('click', closeHandler);
         }
     };
-    rulesModal.addEventListener('click', closeHandler);
+    rulesModal.addEventListener('click', showRules._outsideHandler);
 }
 
 /**
