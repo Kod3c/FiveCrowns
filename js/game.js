@@ -2310,9 +2310,10 @@ function handleRoundEnd() {
     const scoreTable = createScoreTable(roundScores, playerScores, currentRound);
     roundEndContent.innerHTML = scoreTable;
 
-    // Update message
-    const nextRoundWild = (currentRound + 1) + 2;
-    roundEndMessage.textContent = `Next: Round ${currentRound + 1} (${nextRoundWild}s Wild)`.replace(/\s+/g, ' ');
+    // Update message (use the real rank symbol, not a raw number: Qs/Ks, not 12s/13s)
+    const nextRoundNum = currentRound + 1;
+    const nextRoundWild = getWildRankForRound(nextRoundNum);
+    roundEndMessage.textContent = `Next: Round ${nextRoundNum} (${nextRoundWild}s Wild)`;
 
     // Show/hide buttons based on host status
     if (isHost) {
