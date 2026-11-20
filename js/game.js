@@ -1141,76 +1141,79 @@ function findOptimalGrouping(cards, wildRank) {
         return { groups: [], ungroupedCards: [], score: 0 };
     }
 
-    let bestSolution = {
-        groups: [],
-        ungroupedCards: [...cards],
-        score: cards.reduce((sum, card) => sum + getCardPointValue(card, wildRank), 0)
-    };
+    const n = cards.length;
 
-    // Try to find groups using backtracking
-    function backtrack(remainingCards, currentGroups) {
-        // Base case: no more cards to group
-        if (remainingCards.length === 0) {
-            const score = 0; // All cards grouped
-            if (score < bestSolution.score) {
-                bestSolution = {
-                    groups: [...currentGroups],
-                    ungroupedCards: [],
-                    score: 0
-                };
-            }
-            return;
-        }
+    // Safety valve: a player can never hold more than cardsPerPlayer+1 (14) cards,
+    // so this never fires; if it somehow did, don't try to enumerate 2^n subsets.
+    if (n > 16) {
+        console.warn('findOptimalGrouping: hand too large for exact search, treating as ungrouped', n);
+        return { groups: [], ungroupedCards: [...cards], score: cards.reduce((sum, card) => sum + getCardPointValue(card, wildRank), 0) };
+    }
 
-        // Calculate score for current solution (ungrouped cards)
-        const currentScore = remainingCards.reduce((sum, card) => sum + getCardPointValue(card, wildRank), 0);
+    // Pre-compute every valid group (a set or run of 3+) as a bitmask over `cards`,
+    // bucketed by its lowest-indexed card.
+    const groupsByFirst = {};
+    const total = 1 << n;
+    for (let mask = 1; mask < total; mask++) {
+        let count = 0;
+        for (let i = 0; i < n; i++) if (mask & (1 << i)) count++;
+        if (count < 3) continue;
 
-        // Update best solution if this is better
-        if (currentScore < bestSolution.score) {
-            bestSolution = {
-                groups: [...currentGroups],
-                ungroupedCards: [...remainingCards],
-                score: currentScore
-            };
-        }
+        const subset = [];
+        for (let i = 0; i < n; i++) if (mask & (1 << i)) subset.push(cards[i]);
 
-        // Try to form groups starting with the first remaining card
-        // This avoids duplicate combinations
-        if (remainingCards.length < 3) {
-            return; // Can't form any more groups
-        }
-
-        // Try all possible groups of size 3 to remaining.length that include the first card
-        const firstCard = remainingCards[0];
-        let foundValidGroupWithFirstCard = false;
-
-        for (let groupSize = 3; groupSize <= remainingCards.length; groupSize++) {
-            // Generate all combinations of size groupSize that include firstCard
-            const combinations = getCombinations(remainingCards, groupSize, firstCard);
-
-            for (const combo of combinations) {
-                // Check if this combination forms a valid group
-                if (isValidGroup(combo, wildRank)) {
-                    foundValidGroupWithFirstCard = true;
-                    // Remove these cards from remaining
-                    const newRemaining = remainingCards.filter(c => !combo.includes(c));
-
-                    // Recurse with this group added
-                    backtrack(newRemaining, [...currentGroups, combo]);
-                }
-            }
-        }
-
-        // Also try skipping the first card (don't group it)
-        // This ensures we explore all possibilities
-        const restOfCards = remainingCards.slice(1);
-        if (restOfCards.length >= 3) {
-            backtrack(restOfCards, currentGroups);
+        if (isValidGroup(subset, wildRank)) {
+            let first = 0;
+            while (!(mask & (1 << first))) first++;
+            (groupsByFirst[first] = groupsByFirst[first] || []).push(mask);
         }
     }
 
-    backtrack(cards, []);
-    return bestSolution;
+    // Memoised search over subsets. solve(mask) returns the best
+    // { score, groups, ungrouped } for exactly the cards in `mask`: the
+    // lowest-indexed card is either left ungrouped, or placed in one of the valid
+    // groups that contains it. Unlike the previous backtracking version, cards
+    // that are skipped stay accounted for, so the score is always correct.
+    const memo = new Map();
+
+    function solve(mask) {
+        if (mask === 0) return { score: 0, groups: [], ungrouped: [] };
+        if (memo.has(mask)) return memo.get(mask);
+
+        let first = 0;
+        while (!(mask & (1 << first))) first++;
+
+        // Option A: leave the first card ungrouped
+        const rest = solve(mask & ~(1 << first));
+        let best = {
+            score: getCardPointValue(cards[first], wildRank) + rest.score,
+            groups: rest.groups,
+            ungrouped: [first, ...rest.ungrouped]
+        };
+
+        // Option B: put the first card into a valid group
+        const candidates = groupsByFirst[first] || [];
+        for (const group of candidates) {
+            if ((group & mask) !== group) continue;
+            const sub = solve(mask & ~group);
+            if (sub.score < best.score) {
+                const indices = [];
+                for (let i = 0; i < n; i++) if (group & (1 << i)) indices.push(i);
+                best = { score: sub.score, groups: [indices, ...sub.groups], ungrouped: sub.ungrouped };
+            }
+        }
+
+        memo.set(mask, best);
+        return best;
+    }
+
+    const result = solve(total - 1);
+
+    return {
+        score: result.score,
+        groups: result.groups.map((indices) => indices.map((i) => cards[i])),
+        ungroupedCards: result.ungrouped.map((i) => cards[i])
+    };
 }
 
 /**
