@@ -4,8 +4,8 @@
   "description": "Five-Suited Rummy Card Game",
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#7B3FF2",
-  "background_color": "#7B3FF2",
+  "theme_color": "#140C1E",
+  "background_color": "#140C1E",
   "icons": [
     {
       "src": "favicon.ico",

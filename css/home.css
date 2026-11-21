@@ -1,0 +1,521 @@
+/* ==========================================================================
+   Five Crowns — home theme ("Royal Velvet")
+   Loaded AFTER css/style.css so it wins on equal specificity.
+   Scoped to index.html. Changes presentation only — never IDs or hooks.
+   ========================================================================== */
+
+:root {
+  --rv-bg:        #140c1e;
+  --rv-bg-2:      #1c1229;
+  --rv-surface:   #211633;
+  --rv-surface-2: #2a1c3f;
+  --rv-line:      rgba(255, 255, 255, .08);
+  --rv-ink:       #F6F2EA;
+  --rv-muted:     #C0B5CC;
+  --rv-gold:      #E7C275;
+  --rv-gold-deep: #C9A45C;
+  --rv-plum:      #5B2E86;
+  --rv-red:       #C0392B;
+  --rv-display:   "Fraunces", Georgia, "Times New Roman", serif;
+  --rv-ui:        "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --rv-nav-h:     68px;
+}
+
+/* ---------- page frame ---------- */
+body {
+  font-family: var(--rv-ui);
+  background: var(--rv-bg);
+  padding: 0;
+  align-items: stretch;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* velvet field: one soft radial bloom + a fine grain, no glossy gradient */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 52% at 50% -8%, #3A1F5C 0%, rgba(58, 31, 92, 0) 62%),
+    linear-gradient(180deg, var(--rv-bg-2) 0%, var(--rv-bg) 46%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: .5;
+  background-image: radial-gradient(rgba(255, 255, 255, .045) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 430px;
+  width: 100%;
+  min-height: 100dvh;
+  text-align: left;
+  padding: calc(env(safe-area-inset-top) + 18px) 0 calc(env(safe-area-inset-bottom) + var(--rv-nav-h) + 24px);
+  animation: none;
+}
+
+/* ---------- top strip ---------- */
+.rv-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 22px;
+}
+
+.rv-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--rv-gold);
+}
+
+.rv-pill {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--rv-muted);
+  border: 1px solid var(--rv-line);
+  border-radius: 999px;
+  padding: 6px 11px;
+  background: rgba(255, 255, 255, .03);
+}
+
+/* ---------- hero type ---------- */
+.logo-section { margin-bottom: 0; }
+
+.game-title {
+  display: block;
+  white-space: normal;
+  font-family: var(--rv-display);
+  font-weight: 600;
+  font-size: clamp(46px, 15vw, 62px);
+  line-height: .96;
+  letter-spacing: -.02em;
+  color: var(--rv-ink);
+  text-shadow: none;
+  margin: 20px 0 0;
+  padding: 0 22px;
+}
+
+.game-title .title-2 {
+  display: inline-block;
+  font-style: italic;
+  color: var(--rv-gold);
+  margin-left: -.05em;
+}
+
+.tagline {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--rv-muted);
+  max-width: 30ch;
+  margin: 16px 0 0;
+  padding: 0 22px;
+  text-wrap: balance;
+}
+
+/* the crown emoji is gone from the markup; keep the rule inert */
+.crown-icon { display: none; }
+
+/* ---------- fanned hand ---------- */
+.hero-fan {
+  position: relative;
+  height: 168px;
+  margin: 26px 0 4px;
+}
+
+.rv-card {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 86px;
+  height: 124px;
+  border-radius: 11px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F0EADF 100%);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, .45), 0 2px 0 rgba(0, 0, 0, .25);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  font-family: var(--rv-display);
+}
+
+.rv-card .rv-pip {
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1;
+  padding: 8px 0 0 10px;
+}
+
+.rv-card .rv-big {
+  position: absolute;
+  right: 9px;
+  bottom: 6px;
+  font-size: 30px;
+  line-height: 1;
+}
+
+/* z rises to the right so every corner index stays readable */
+.rv-s1 { transform: translateX(calc(-50% - 76px)) rotate(-20deg) translateY(18px); z-index: 1; }
+.rv-s2 { transform: translateX(calc(-50% - 38px)) rotate(-10deg) translateY(6px);  z-index: 2; }
+.rv-s3 { transform: translateX(calc(-50% - 1px))  rotate(-1deg);                   z-index: 3; }
+.rv-s4 { transform: translateX(calc(-50% + 36px)) rotate(9deg)  translateY(5px);   z-index: 4; }
+.rv-s5 { transform: translateX(calc(-50% + 72px)) rotate(19deg) translateY(15px);  z-index: 5; }
+
+.rv-ink   { color: #191320; }
+.rv-red   { color: var(--rv-red); }
+.rv-gold  { color: var(--rv-gold-deep); }
+
+.rv-card.rv-crown {
+  background: linear-gradient(180deg, #FFF6E2 0%, #F2DFB6 100%);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, .45), 0 0 0 1px rgba(201, 164, 92, .5);
+}
+
+/* ---------- primary actions ---------- */
+.hero-actions {
+  margin-top: auto;
+  padding: 0 22px;
+  display: grid;
+  gap: 11px;
+}
+
+.rv-btn {
+  width: 100%;
+  min-height: 56px;
+  border: 0;
+  border-radius: 14px;
+  cursor: pointer;
+  font-family: var(--rv-ui);
+  font-size: 16px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.rv-btn:active { transform: translateY(1px) scale(.995); }
+
+.rv-btn svg { width: 19px; height: 19px; flex: none; }
+
+.rv-btn-primary {
+  color: #1A1120;
+  background: linear-gradient(180deg, #F2D08A 0%, var(--rv-gold) 55%, #D8B269 100%);
+  box-shadow: 0 10px 24px rgba(201, 164, 92, .28), inset 0 1px 0 rgba(255, 255, 255, .55);
+}
+
+.rv-btn-primary:hover {
+  box-shadow: 0 12px 30px rgba(201, 164, 92, .4), inset 0 1px 0 rgba(255, 255, 255, .6);
+}
+
+.rv-btn-ghost {
+  color: var(--rv-ink);
+  background: rgba(255, 255, 255, .045);
+  border: 1px solid var(--rv-line);
+}
+
+.rv-btn-ghost:hover { background: rgba(255, 255, 255, .08); }
+
+.hero-hint {
+  text-align: center;
+  color: var(--rv-muted);
+  font-size: 12.5px;
+  margin: 12px 0 0;
+}
+
+.rv-btn:focus-visible,
+.nav-btn:focus-visible,
+.btn:focus-visible,
+.close-btn:focus-visible {
+  outline: 2px solid var(--rv-gold);
+  outline-offset: 2px;
+}
+
+/* ---------- bottom navigation ---------- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  gap: 2px;
+  padding: 8px 10px calc(env(safe-area-inset-bottom) + 10px);
+  background: linear-gradient(180deg, rgba(20, 12, 30, .55) 0%, rgba(20, 12, 30, .96) 42%);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 0;
+  border-top: 1px solid var(--rv-line);
+  border-radius: 0;
+  box-shadow: none;
+  z-index: 999;
+}
+
+.nav-btn {
+  height: auto;
+  min-height: 56px;
+  gap: 5px;
+  padding: 8px 2px;
+  border-right: 0;
+  border-radius: 12px;
+  color: var(--rv-muted);
+  font-family: var(--rv-ui);
+}
+
+.nav-btn:hover,
+.nav-btn:active {
+  background: rgba(255, 255, 255, .05);
+  color: var(--rv-ink);
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: inherit;
+  opacity: 1;
+}
+
+.nav-icon svg {
+  width: 23px;
+  height: 23px;
+  display: block;
+}
+
+.nav-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: none;
+  opacity: 1;
+}
+
+.nav-label-center {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: none;
+  color: inherit;
+  opacity: 1;
+}
+
+/* the floating purple centre block is replaced by the hero CTA */
+.nav-btn-center {
+  flex: 1;
+  height: auto;
+  min-height: 56px;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  box-shadow: none;
+  color: var(--rv-gold);
+}
+
+.nav-btn-center:hover {
+  background: rgba(231, 194, 117, .12);
+  border: 0;
+  transform: none;
+  box-shadow: none;
+}
+
+.nav-btn-center .nav-icon { color: var(--rv-gold); }
+
+.nav-badge {
+  top: 2px;
+  right: 6px;
+  background: var(--rv-red);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+}
+
+/* active tab */
+.nav-btn.rv-active { color: var(--rv-gold); }
+
+/* ---------- modals: velvet surfaces ---------- */
+.modal { background: rgba(8, 4, 14, .72); }
+
+.modal-content {
+  background: linear-gradient(180deg, var(--rv-surface-2) 0%, var(--rv-surface) 100%);
+  border: 1px solid var(--rv-line);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+}
+
+.modal-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--rv-line);
+}
+
+.modal-header h2 {
+  font-family: var(--rv-display);
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: -.01em;
+  color: var(--rv-ink);
+}
+
+.close-btn { color: var(--rv-muted); }
+
+.close-btn:hover { color: var(--rv-gold); }
+
+.modal-body { color: var(--rv-ink); }
+
+.modal-instruction { color: var(--rv-muted); }
+
+.btn {
+  font-family: var(--rv-ui);
+  font-size: 16.5px;
+  font-weight: 700;
+  border-radius: 14px;
+  border-width: 1px;
+  box-shadow: none;
+}
+
+.btn-large { min-height: 58px; font-size: 17px; }
+
+.btn-primary {
+  color: #1A1120;
+  background: linear-gradient(180deg, #F2D08A 0%, var(--rv-gold) 55%, #D8B269 100%);
+  border: 1px solid transparent;
+  box-shadow: 0 8px 20px rgba(201, 164, 92, .24), inset 0 1px 0 rgba(255, 255, 255, .5);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, #F7DA9C 0%, #EFCB84 55%, #DCB76E 100%);
+  box-shadow: 0 10px 26px rgba(201, 164, 92, .34), inset 0 1px 0 rgba(255, 255, 255, .55);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  color: var(--rv-ink);
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid var(--rv-line);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, .09);
+  border-color: rgba(255, 255, 255, .18);
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  font-size: inherit;
+}
+
+.btn-icon svg { width: 20px; height: 20px; }
+
+/* inputs */
+.player-name-input,
+.game-code-input,
+input[type="tel"],
+input[type="text"] {
+  font-family: var(--rv-ui);
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  color: var(--rv-ink);
+}
+
+.player-name-input:focus,
+.game-code-input:focus,
+input[type="tel"]:focus {
+  outline: none;
+  border-color: rgba(231, 194, 117, .55);
+  background: rgba(255, 255, 255, .09);
+}
+
+.error-message { color: #FCA5A5; }
+
+/* headings inside the friends / active-games modals */
+.modal-body h3 { color: var(--rv-gold) !important; }
+
+/* tabs in the friends modal */
+.friends-tab {
+  font-family: var(--rv-ui);
+  color: var(--rv-muted);
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid var(--rv-line);
+}
+
+.friends-tab.active {
+  color: #1A1120;
+  background: var(--rv-gold);
+  border-color: var(--rv-gold);
+}
+
+/* active-game cards */
+.active-game-card {
+  background: rgba(255, 255, 255, .035);
+  border: 1px solid var(--rv-line);
+  border-radius: 14px;
+}
+
+.active-game-card:hover {
+  background: rgba(255, 255, 255, .06);
+  border-color: rgba(231, 194, 117, .5) !important;
+  transform: translateY(-2px);
+}
+
+.active-game-code { color: var(--rv-gold); }
+
+.active-game-btn {
+  font-family: var(--rv-ui);
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid var(--rv-line);
+  color: var(--rv-ink);
+  border-radius: 10px;
+}
+
+.active-game-btn:hover {
+  background: rgba(231, 194, 117, .16);
+  border-color: var(--rv-gold);
+  transform: none;
+}
+
+.active-game-btn.danger { background: rgba(192, 57, 43, .22); }
+
+.active-game-btn.danger:hover { background: rgba(192, 57, 43, .4); }
+
+/* menu list inside the menu modal */
+.menu-item {
+  font-family: var(--rv-ui);
+  color: var(--rv-ink);
+}
+
+.menu-item:hover { background: rgba(231, 194, 117, .12); }
+
+.menu-item:active { background: rgba(231, 194, 117, .2); }
+
+.menu-divider { background: var(--rv-line); }
+
+/* scrollbars stay unobtrusive on the dark surface */
+.modal-body ::-webkit-scrollbar { width: 8px; }
+.modal-body ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .14);
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container, .modal, .modal-content { animation: none !important; }
+  .rv-btn, .btn { transition: none; }
+}
