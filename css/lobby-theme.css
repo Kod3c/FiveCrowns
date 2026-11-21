@@ -1,0 +1,450 @@
+/* ==========================================================================
+   Five Crowns - lobby theme (Royal Velvet)
+   Loaded AFTER css/lobby.css and css/velvet.css. Presentation only: no ids,
+   no hooks, no lobby behaviour touched.
+   ========================================================================== */
+
+/* ---------- page frame ---------- */
+body.lobby-page {
+  background: var(--rv-bg);
+  padding: 0;
+}
+
+body.lobby-page .container {
+  width: 100%;
+  max-width: 620px;
+  padding: calc(env(safe-area-inset-top) + 22px) 20px calc(env(safe-area-inset-bottom) + 34px);
+  box-sizing: border-box;
+}
+
+/* ---------- header ---------- */
+.lobby-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.back-btn {
+  flex: none;
+  font-family: var(--rv-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rv-ink);
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 11px;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, .1);
+  border-color: rgba(255, 255, 255, .24);
+}
+
+.back-btn span { display: inline-flex; align-items: center; gap: 6px; }
+
+.lobby-title {
+  flex: 1;
+  margin: 0;
+  font-family: var(--rv-display);
+  font-weight: 600;
+  font-size: 27px;
+  line-height: 1.1;
+  letter-spacing: -.01em;
+  color: var(--rv-ink);
+}
+
+.lobby-status { flex: none; }
+
+.status-indicator {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--rv-gold);
+  background: rgba(231, 194, 117, .12);
+  border: 1px solid rgba(231, 194, 117, .4);
+  border-radius: 999px;
+  padding: 6px 12px;
+  box-shadow: none;
+}
+
+/* ---------- game code card ---------- */
+.game-code-section {
+  background: rgba(255, 255, 255, .035);
+  border: 1px solid var(--rv-line);
+  border-radius: 20px;
+  padding: 22px 18px 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .32);
+  text-align: center;
+}
+
+.code-label {
+  margin: 0 0 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--rv-muted);
+}
+
+.game-code-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.code-value {
+  font-family: var(--rv-display);
+  font-weight: 600;
+  font-size: 52px;
+  line-height: 1;
+  letter-spacing: .14em;
+  color: var(--rv-gold);
+  text-shadow: none;
+  user-select: all;
+}
+
+.copy-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: inherit;
+  color: var(--rv-ink);
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background .2s ease, border-color .2s ease, transform .12s ease;
+}
+
+.copy-btn svg { width: 19px; height: 19px; display: block; }
+
+.copy-btn:hover {
+  background: rgba(231, 194, 117, .16);
+  border-color: rgba(231, 194, 117, .5);
+  color: var(--rv-gold);
+}
+
+.copy-btn:active { transform: translateY(1px); }
+
+.join-link-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.join-link-value {
+  /* UI font, not a monospace stack: the stack silently falls back to serif on
+     devices with no mono face installed, which is how it rendered */
+  font-family: var(--rv-ui);
+  font-size: 12.5px;
+  letter-spacing: .01em;
+  color: var(--rv-muted);
+  word-break: break-all;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, .25);
+  border: 1px solid var(--rv-line);
+  border-radius: 10px;
+}
+
+.join-link-value:hover { color: var(--rv-gold); }
+
+.copy-toast {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1A1120;
+  background: var(--rv-gold);
+  border-radius: 999px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .2s ease, transform .2s ease;
+  pointer-events: none;
+}
+
+.copy-toast.show { opacity: 1; transform: translateY(0); }
+
+#inviteFriendsContainer { margin-top: 18px; }
+
+#inviteFriendsBtn {
+  width: 100%;
+  min-height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* ---------- players ---------- */
+.players-section {
+  background: rgba(255, 255, 255, .035);
+  border: 1px solid var(--rv-line);
+  border-radius: 20px;
+  padding: 18px 16px;
+  margin-bottom: 18px;
+}
+
+.players-header { margin-bottom: 12px; }
+
+.players-header h3 {
+  text-align: left;
+  margin: 0;
+  font-family: var(--rv-display);
+  font-weight: 600;
+  font-size: 19px;
+  color: var(--rv-ink);
+}
+
+.player-count {
+  font-family: var(--rv-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rv-muted);
+}
+
+/* lobby.css gives .players-list its own violet-framed panel; the section is
+   the panel now, so flatten the list itself */
+.players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  max-height: 340px;
+  overflow-y: auto;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid var(--rv-line);
+  border-radius: 14px;
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.player-card:hover {
+  background: rgba(255, 255, 255, .07);
+  border-color: rgba(255, 255, 255, .2);   /* lobby.css hovers it violet */
+}
+
+.player-card.host  { border-color: rgba(231, 194, 117, .42); }
+.player-card.ready { border-color: rgba(246, 242, 234, .24); }
+
+.player-card.skeleton { opacity: .55; }
+
+.player-avatar {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--rv-display);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--rv-gold);
+  background: rgba(231, 194, 117, .12);
+  border: 1px solid rgba(231, 194, 117, .32);
+  border-radius: 50%;
+  box-shadow: none;
+}
+
+/* lobby.css makes .player-info a centred COLUMN; setting display:flex alone
+   does not undo the direction, which is what centred the name + badges */
+.player-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.player-name {
+  text-align: left;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--rv-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-start; }
+
+/* ---------- settings ---------- */
+.settings-section {
+  text-align: left;           /* lobby.css centres the whole section */
+  background: rgba(255, 255, 255, .035);
+  border: 1px solid var(--rv-line);
+  border-radius: 20px;
+  padding: 18px 16px;
+  margin-bottom: 18px;
+}
+
+.settings-section h3 {
+  text-align: left;
+  margin: 0 0 12px;
+  font-family: var(--rv-display);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--rv-ink);
+}
+
+/* lobby.css stacks this as a centred column; force a left label + right control */
+.setting-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rv-line);
+}
+
+.setting-item:last-child { border-bottom: 0; padding-bottom: 0; }
+
+.setting-item label { flex: 1 1 auto; text-align: left; font-size: 14.5px; color: var(--rv-muted); }
+
+.setting-select:hover,
+.setting-select:focus { border-color: rgba(231, 194, 117, .55); }
+
+.setting-select {
+  flex: 0 0 auto;
+  width: auto;            /* lobby.css sets width:100%, which wrapped the row */
+  min-width: 104px;
+  height: 44px;
+  padding: 0 32px 0 13px;
+  font-size: 15px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C0B5CC' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 13px 13px;
+}
+
+/* ---------- actions ---------- */
+.lobby-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin-top: 4px;
+}
+
+.lobby-actions .btn { width: 100%; min-height: 54px; }
+
+.lobby-actions .btn .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 9px;
+}
+
+.waiting-message {
+  margin-top: 16px;
+  padding: 16px 18px;
+  text-align: center;
+  background: rgba(231, 194, 117, .08);
+  border: 1px solid rgba(231, 194, 117, .28);
+  border-radius: 16px;
+}
+
+.waiting-message p { margin: 0; font-size: 14.5px; color: var(--rv-gold); }
+
+/* ---------- misc ---------- */
+.warning-text {
+  margin-top: 14px;
+  padding: 12px;
+  font-size: 13.5px;
+  color: #FFD9D2;
+  background: rgba(224, 107, 94, .12);
+  border: 1px solid rgba(224, 107, 94, .4);
+  border-radius: 10px;
+}
+
+#errorDetails {
+  color: #FFD9D2 !important;
+  background: rgba(0, 0, 0, .35) !important;
+  border: 1px solid rgba(224, 107, 94, .3) !important;
+}
+
+.error-message { color: #FCA5A5; }
+
+/* ---------- overrides for rules that lost on specificity ----------
+   lobby.css sets these on the SAME two-class selectors (.badge.host,
+   .player-card.host, ...), so a bare .badge rule is not enough: the
+   background has to be restated on the matching selector. */
+.badge.host    { background: rgba(231, 194, 117, .16); border-color: rgba(231, 194, 117, .55); color: var(--rv-gold); }
+.badge.ready   { background: rgba(246, 242, 234, .14); border-color: rgba(246, 242, 234, .5); color: #F6F2EA; }
+.badge.invited { background: rgba(255, 255, 255, .05); border-color: rgba(255, 255, 255, .18); color: var(--rv-muted); }
+.badge.waiting { background: rgba(255, 255, 255, .04); border-color: rgba(255, 255, 255, .12); color: var(--rv-muted); }
+
+.player-card.host  { background: rgba(231, 194, 117, .07); border-color: rgba(231, 194, 117, .42); }
+.player-card.ready { background: rgba(246, 242, 234, .05); border-color: rgba(246, 242, 234, .24); }
+
+/* the share-link block ships with a saturated violet border */
+.join-link-display {
+  padding: 10px;
+  background: rgba(0, 0, 0, .25);
+  border: 1px solid var(--rv-line);
+  border-radius: 14px;
+}
+
+.join-link-value { color: var(--rv-muted); }
+
+/* invite list */
+#inviteFriendsList .friend-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid var(--rv-line);
+  border-radius: 14px;
+}
+
+#inviteFriendsList .friend-checkbox {
+  accent-color: var(--rv-gold);
+  width: 18px;
+  height: 18px;
+  border-color: rgba(255, 255, 255, .28);
+}
+
+/* ---------- desktop ---------- */
+@media (min-width: 820px) {
+  .lobby-header { margin-bottom: 26px; }
+  .lobby-title { font-size: 32px; }
+  .code-value { font-size: 64px; }
+  .players-list { max-height: 440px; }
+  .lobby-actions { flex-direction: row; }
+  .lobby-actions .btn { flex: 1; }
+}

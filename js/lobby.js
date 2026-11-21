@@ -384,7 +384,10 @@ function createPlayerCard(player) {
     // Avatar
     const avatar = document.createElement('div');
     avatar.className = 'player-avatar';
-    avatar.textContent = player.isHost ? '👑' : '👤';
+    // Initials instead of an emoji: renders on every device, and the host is
+    // already called out by the 'Host' badge.
+    const initial = String(player.name || player.displayName || '?').trim().charAt(0).toUpperCase();
+    avatar.textContent = initial || '?';
 
     // Info container
     const info = document.createElement('div');
@@ -445,14 +448,14 @@ function copyGameCode() {
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(code)
             .then(() => {
-                showCopyToast('Code copied! 📋');
+                showCopyToast('Code copied!');
             })
             .catch((err) => {
                 console.error('Failed to copy:', err);
-                fallbackCopy(code, 'Code copied! 📋');
+                fallbackCopy(code, 'Code copied!');
             });
     } else {
-        fallbackCopy(code, 'Code copied! 📋');
+        fallbackCopy(code, 'Code copied!');
     }
 }
 
@@ -467,14 +470,14 @@ function copyJoinLink() {
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(joinLink)
             .then(() => {
-                showCopyToast('Link copied! 🔗');
+                showCopyToast('Link copied!');
             })
             .catch((err) => {
                 console.error('Failed to copy:', err);
-                fallbackCopy(joinLink, 'Link copied! 🔗');
+                fallbackCopy(joinLink, 'Link copied!');
             });
     } else {
-        fallbackCopy(joinLink, 'Link copied! 🔗');
+        fallbackCopy(joinLink, 'Link copied!');
     }
 }
 
@@ -503,7 +506,7 @@ function fallbackCopy(text, message) {
 /**
  * Show copy confirmation toast
  */
-function showCopyToast(message = 'Copied! 📋') {
+function showCopyToast(message = 'Copied!') {
     copyToast.textContent = message;
     copyToast.classList.add('show');
     setTimeout(() => {

@@ -1,0 +1,432 @@
+/* ==========================================================================
+   Five Crowns - game board theme (Royal Velvet)
+   Loaded AFTER css/game.css and css/card-designs.css.
+
+   DELIBERATELY does NOT touch .card / .card-* / .card-stack / .hand-card:
+   those are the game pieces, they are user-selectable designs, and their
+   geometry is what the drag-and-drop hit targets are measured against.
+   Surfaces, type, colour and radii only.
+   ========================================================================== */
+
+/* ---------- frame ---------- */
+body.game-page { background: var(--rv-bg); }
+
+.game-container {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 14px);
+  box-sizing: border-box;
+}
+
+/* ---------- header ---------- */
+.game-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  margin-bottom: 14px;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid var(--rv-line);
+  border-radius: 16px;
+}
+
+.round-info { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+
+.round-number {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--rv-muted);
+  white-space: nowrap;
+}
+
+.round-number strong { color: var(--rv-ink); font-weight: 700; }
+
+.wild-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--rv-gold);
+  background: rgba(231, 194, 117, .12);
+  border: 1px solid rgba(231, 194, 117, .36);
+  border-radius: 999px;
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+
+.player-score {
+  font-size: 13.5px;
+  color: var(--rv-muted);
+  white-space: nowrap;
+}
+
+.player-score strong { color: var(--rv-ink); font-weight: 700; }
+
+.menu-btn {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rv-ink);
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.menu-btn:hover {
+  background: rgba(255, 255, 255, .11);
+  border-color: rgba(255, 255, 255, .26);
+}
+
+/* ---------- table ---------- */
+.game-table { padding: 8px 0 14px; }
+
+.table-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 16px;
+  background: rgba(255, 255, 255, .028);
+  border: 1px solid var(--rv-line);
+  border-radius: 20px;
+}
+
+.deck-label,
+.discard-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--rv-muted);
+}
+
+.deck-count {
+  font-family: var(--rv-display);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--rv-gold);
+  background: rgba(0, 0, 0, .35);
+  border: 1px solid rgba(231, 194, 117, .3);
+  border-radius: 999px;
+  padding: 2px 11px;
+}
+
+/* draw affordances: colour + glow only, never size (drop targets) */
+.deck-area.drawable {
+  filter: drop-shadow(0 0 12px rgba(231, 194, 117, .35));
+}
+
+.deck-area.drawable:hover {
+  filter: drop-shadow(0 0 18px rgba(231, 194, 117, .6));
+}
+
+.discard-area.drop-target .discard-pile,
+.discard-area.draggable:hover .discard-pile {
+  outline: 2px solid rgba(231, 194, 117, .7);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.turn-instruction {
+  padding: 11px 16px;
+  text-align: center;
+  background: rgba(231, 194, 117, .09);
+  border: 1px solid rgba(231, 194, 117, .28);
+  border-radius: 999px;
+}
+
+.turn-instruction p {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--rv-gold);
+}
+
+/* ---------- your hand ---------- */
+.player-hand-section {
+  padding: 14px 14px 16px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid var(--rv-line);
+  border-radius: 20px;
+}
+
+.hand-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.hand-title {
+  font-family: var(--rv-display);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--rv-ink);
+}
+
+.hand-count { font-size: 12.5px; font-weight: 600; color: var(--rv-muted); }
+
+.hand-cards-container { margin-bottom: 14px; }
+
+.hand-actions { display: flex; gap: 10px; }
+
+.hand-actions .btn { flex: 1; min-height: 52px; }
+
+.hand-actions .btn.btn-disabled,
+.hand-actions .btn.btn-disabled:hover {
+  opacity: .45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* the turn marker used to be a 🎯 glyph; render it as a gold dot instead */
+.turn-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--rv-gold);
+  box-shadow: 0 0 10px rgba(231, 194, 117, .8);
+  flex: none;
+}
+
+/* ---------- opponents strip ---------- */
+.other-player-card {
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid var(--rv-line);
+  border-radius: 14px;
+}
+
+.other-player-card.active-turn {
+  border-color: rgba(231, 194, 117, .55);
+  box-shadow: 0 0 0 1px rgba(231, 194, 117, .2);
+}
+
+.other-player-name,
+.player-name-tag { font-size: 13px; font-weight: 600; color: var(--rv-ink); }
+
+.other-player-avatar { background: rgba(231, 194, 117, .14); color: var(--rv-gold); }
+
+.player-status { font-size: 11.5px; color: var(--rv-muted); }
+.player-status.active { color: var(--rv-gold); }
+
+/* ---------- game menu ---------- */
+.menu-option-btn {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  text-align: left;
+  font-family: var(--rv-ui);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--rv-ink);
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid var(--rv-line);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.menu-option-btn:hover {
+  background: rgba(231, 194, 117, .12);
+  border-color: rgba(231, 194, 117, .4);
+}
+
+.menu-option-btn.danger { color: #FFD9D2; border-color: rgba(224, 107, 94, .35); }
+.menu-option-btn.danger:hover { background: rgba(224, 107, 94, .2); border-color: rgba(224, 107, 94, .6); }
+
+.menu-option-btn svg { width: 18px; height: 18px; margin-right: 10px; vertical-align: -3px; }
+
+/* ---------- settings modal ---------- */
+.settings-section { margin-bottom: 22px; }
+
+.settings-section-title {
+  margin: 0 0 4px;
+  font-family: var(--rv-display);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--rv-ink);
+}
+
+.settings-section-description {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--rv-muted);
+}
+
+.card-design-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid var(--rv-line);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.card-design-option:hover { background: rgba(255, 255, 255, .07); }
+
+.card-design-option.selected {
+  background: rgba(231, 194, 117, .12);
+  border-color: rgba(231, 194, 117, .55);
+}
+
+.card-design-name { font-size: 14.5px; font-weight: 600; color: var(--rv-ink); }
+.card-design-description { font-size: 12.5px; color: var(--rv-muted); }
+
+.card-design-radio {
+  border: 1px solid rgba(255, 255, 255, .3);
+  border-radius: 50%;
+}
+
+.card-design-option.selected .card-design-radio { border-color: var(--rv-gold); }
+.card-design-option.selected .card-design-radio::after { background: var(--rv-gold); }
+
+.card-preview-label { font-size: 12px; font-weight: 600; color: var(--rv-muted); }
+
+/* toggle */
+.toggle-switch {
+  background: rgba(255, 255, 255, .14);
+  border: 1px solid var(--rv-line);
+}
+
+.toggle-switch::after { background: #CFC5DB; }
+
+.toggle-checkbox:checked + .toggle-switch {
+  background: rgba(231, 194, 117, .55);
+  border-color: rgba(231, 194, 117, .7);
+}
+
+.toggle-checkbox:checked + .toggle-switch::after { background: #FFF6E2; }
+
+.toggle-text { font-size: 14px; color: var(--rv-ink); }
+
+/* ---------- score tables (round + game end) ---------- */
+.score-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+.score-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--rv-muted);
+  border-bottom: 1px solid var(--rv-line);
+}
+
+.score-table td {
+  padding: 11px 12px;
+  color: var(--rv-ink);
+  border-bottom: 1px solid rgba(255, 255, 255, .05);
+}
+
+.score-table tbody tr:hover { background: rgba(255, 255, 255, .04); }
+
+.score-table .player-name.you { color: var(--rv-gold); font-weight: 700; }
+
+.score-table .score-value { font-variant-numeric: tabular-nums; }
+
+.score-table .total-row td {
+  border-top: 1px solid rgba(231, 194, 117, .35);
+  border-bottom: 0;
+  font-weight: 700;
+  color: var(--rv-gold);
+}
+
+.score-table .rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .08);
+  color: var(--rv-ink);
+}
+
+.score-table .rank-1 .rank-badge { background: var(--rv-gold); color: #1A1120; }
+.score-table .rank-2 .rank-badge { background: rgba(231, 194, 117, .45); color: #1A1120; }
+.score-table .rank-3 .rank-badge { background: rgba(231, 194, 117, .25); }
+
+.score-table .went-out { color: #A7E8C6; font-weight: 600; }
+
+/* score tooltip stays dark/parchment-free */
+.score-tooltip {
+  background: linear-gradient(180deg, var(--rv-surface-2) 0%, var(--rv-surface) 100%);
+  border: 1px solid var(--rv-line);
+  border-radius: 14px;
+  color: var(--rv-ink);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .6);
+}
+
+.score-tooltip-title,
+.score-tooltip-group-title { color: var(--rv-gold); }
+.score-tooltip-pts,
+.score-tooltip-total { color: var(--rv-ink); }
+.score-tooltip-ungrouped { color: var(--rv-muted); }
+
+/* ---------- rules prose ---------- */
+.rules-section { margin-bottom: 20px; }
+
+.rules-section h3 {
+  margin: 0 0 8px;
+  font-family: var(--rv-display);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--rv-gold);
+}
+
+.rules-section p,
+.rules-section li { font-size: 14px; line-height: 1.6; color: var(--rv-muted); }
+
+.rules-section strong { color: var(--rv-ink); }
+
+.rules-section li::before { color: var(--rv-gold); }
+
+/* new-stack affordance */
+.new-stack-button {
+  background: rgba(231, 194, 117, .12);
+  border: 1px dashed rgba(231, 194, 117, .5);
+  border-radius: 12px;
+  color: var(--rv-gold);
+}
+
+.new-stack-text { color: var(--rv-gold); font-weight: 600; }
+
+/* sort menu */
+.sort-menu {
+  background: linear-gradient(180deg, var(--rv-surface-2) 0%, var(--rv-surface) 100%);
+  border: 1px solid var(--rv-line);
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .6);
+}
+
+.sort-option { color: var(--rv-ink); font-size: 14px; }
+.sort-option:hover { background: rgba(231, 194, 117, .14); color: var(--rv-gold); }
+
+/* ---------- desktop ---------- */
+@media (min-width: 820px) {
+  .game-container { max-width: 900px; padding: 18px 22px 22px; }
+  .game-header { padding: 13px 18px; margin-bottom: 16px; }
+  .lobby-title, .lobby-title { font-size: 32px; }
+  .table-center { padding: 26px 22px; }
+  .player-hand-section { padding: 16px 18px 18px; }
+  .hand-actions .btn { flex: 0 1 auto; min-width: 190px; }
+}

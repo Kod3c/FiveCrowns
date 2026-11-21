@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#7B3FF2">
+    <meta name="theme-color" content="#140C1E">
     <title>Playing - Five Crowns</title>
     <link rel="icon" type="image/png" href="favicon.ico">
     <link rel="manifest" href="manifest.json">
@@ -18,11 +18,14 @@
     <link rel="stylesheet" href="css/style.css?v=nav95">
     <link rel="stylesheet" href="css/game.css?v=20250126d">
     <link rel="stylesheet" href="css/card-designs.css?v=20250126f">
+    <link rel="stylesheet" href="css/velvet.css?v=1">
+    <link rel="stylesheet" href="css/game-theme.css?v=1">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="game-page">
     <!-- Game Board Container -->
@@ -33,13 +36,13 @@
             <div class="round-info">
                 <span class="round-number">Round <strong id="roundNumber">1</strong></span>
                 <span class="wild-indicator">
-                    <span id="wildCard">3s</span> are wild ⭐
+                    <span id="wildCard">3s</span> are wild
                 </span>
             </div>
             <div class="player-score">
                 Score: <strong id="yourScore">0</strong>
             </div>
-            <button class="menu-btn" id="menuBtn">⋮</button>
+            <button class="menu-btn" id="menuBtn" aria-label="Game menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
         </div>
 
         <!-- Main Game Table -->
@@ -104,7 +107,7 @@
                     Discard Selected
                 </button>
                 <button class="btn btn-primary" id="goOutBtn">
-                    👑 Go Out
+                    Go Out
                 </button>
             </div>
         </div>
@@ -120,16 +123,16 @@
             </div>
             <div class="modal-body">
                 <button class="menu-option-btn" id="viewScoresBtn">
-                    📊 View Scores
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> View Scores
                 </button>
                 <button class="menu-option-btn" id="viewRulesBtn">
-                    📖 Game Rules
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H19v3H6.5A2.5 2.5 0 0 1 4 20.5z"/></svg> Game Rules
                 </button>
                 <button class="menu-option-btn" id="settingsMenuBtn">
-                    ⚙️ Settings
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9 2 2 0 1 1-2.8 2.8 1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2 2 2 0 1 1-2.8-2.8A1.7 1.7 0 0 0 3 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.2-2.9 2 2 0 1 1 2.8-2.8A1.7 1.7 0 0 0 9 4.1a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.9 1.2 2 2 0 1 1 2.8 2.8A1.7 1.7 0 0 0 19.9 11a2 2 0 1 1 0 4z"/></svg> Settings
                 </button>
                 <button class="menu-option-btn danger" id="leaveGameBtn">
-                    🚪 Leave Game
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l5-5-5-5M15 12H3"/></svg> Leave Game
                 </button>
             </div>
         </div>
@@ -139,7 +142,7 @@
     <div class="modal" id="settingsModal">
         <div class="modal-content small">
             <div class="modal-header">
-                <h2>⚙️ Settings</h2>
+                <h2>Settings</h2>
                 <button class="close-btn" id="closeSettingsBtn">&times;</button>
             </div>
             <div class="modal-body">
@@ -228,7 +231,7 @@
     <div class="modal" id="roundEndModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="roundEndTitle">🏁 Round Complete!</h2>
+                <h2 id="roundEndTitle">Round Complete!</h2>
             </div>
             <div class="modal-body">
                 <div id="roundEndContent" style="margin-bottom: 20px;">
@@ -251,7 +254,7 @@
     <div class="modal" id="gameEndModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>🎉 Game Over!</h2>
+                <h2>Game Over!</h2>
             </div>
             <div class="modal-body">
                 <div id="winnerMessage" style="text-align: center; font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 30px;">
@@ -271,7 +274,7 @@
     <div class="modal" id="rulesModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>📖 Five Crowns Rules</h2>
+                <h2>Five Crowns Rules</h2>
                 <button class="close-btn" id="closeRulesBtn">&times;</button>
             </div>
             <div class="modal-body">
@@ -323,7 +326,7 @@
     <div class="modal" id="errorModal">
         <div class="modal-content small">
             <div class="modal-header">
-                <h2>⚠️ Error</h2>
+                <h2>Error</h2>
                 <button class="close-btn" id="closeErrorBtn">&times;</button>
             </div>
             <div class="modal-body">

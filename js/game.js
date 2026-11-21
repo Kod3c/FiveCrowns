@@ -1446,12 +1446,12 @@ function renderOtherPlayers() {
         }
 
         playerCard.innerHTML = `
-            <div class="other-player-avatar">👤</div>
+            <div class="other-player-avatar">${String(playerDisplayName || '?').trim().charAt(0).toUpperCase()}</div>
             <div class="other-player-info">
                 <div class="other-player-name">${playerDisplayName}</div>
                 <div class="other-player-cards">${cardCount} card${cardCount !== 1 ? 's' : ''}</div>
             </div>
-            ${isTurn ? '<div class="turn-indicator">🎯</div>' : ''}
+            ${isTurn ? '<div class="turn-indicator" title="Their turn"></div>' : ''}
         `;
 
         otherPlayers.appendChild(playerCard);
@@ -1490,7 +1490,7 @@ function updateTurnIndicator() {
     // Check for WAITING_FOR_GO_OUT phase first
     const wasPreviousPlayer = currentGameState && currentGameState.previousPlayer === playerId;
     if (turnPhase === 'WAITING_FOR_GO_OUT' && wasPreviousPlayer) {
-        const message = '⏱️ Last chance!\nClick "Go Out" if you can!';
+        const message = 'Last chance!\nClick "Go Out" if you can!';
         const instructionParagraph = turnInstruction?.querySelector('p');
         if (instructionParagraph) {
             instructionParagraph.textContent = message;
@@ -1501,26 +1501,26 @@ function updateTurnIndicator() {
     }
 
     if (isMyTurn) {
-        let message = '🎯 Your turn!';
+        let message = 'Your turn!';
 
         // Check if we're in POST_GO_OUT phase
         if (turnPhase === 'POST_GO_OUT') {
-            message = '⏰ Final turn!\nDraw a card - last chance to go out!';
+            message = 'Final turn!\nDraw a card - last chance to go out!';
         } else if (turnPhase === 'POST_GO_OUT_CARD_DRAWN') {
-            message = '⏰ Final turn! Discard or go out now!';
+            message = 'Final turn! Discard or go out now!';
         } else {
             switch(turnPhase) {
                 case 'WAITING_FOR_DRAW':
-                    message = '🎯 Your turn! Draw a card';
+                    message = 'Your turn! Draw a card';
                     break;
                 case 'CARD_DRAWN':
-                    message = '🎯 Drag a card to discard pile';
+                    message = 'Drag a card to discard pile';
                     break;
                 case 'TURN_COMPLETE':
                     message = '⏳ Advancing turn...';
                     break;
                 case 'ROUND_ENDED':
-                    message = '🏁 Round ended - calculating scores...';
+                    message = 'Round ended - calculating scores...';
                     break;
             }
         }
@@ -1536,8 +1536,8 @@ function updateTurnIndicator() {
             // Show different message depending on whether current player went out
             const isPlayerWhoWentOut = (currentGameState.firstPlayerOut === playerId);
             const message = isPlayerWhoWentOut
-                ? '⏰ Others are taking their final turns...'
-                : '⏰ A player went out!<br>Others are taking their final turns...';
+                ? 'Others are taking their final turns...'
+                : 'A player went out!<br>Others are taking their final turns...';
             const instructionParagraph = turnInstruction?.querySelector('p');
             if (instructionParagraph) {
                 instructionParagraph.innerHTML = message;
@@ -1794,7 +1794,7 @@ async function handleDiscardCardDrop(card) {
         console.log('Player attempted to discard card from discard pile - resetting to draw phase');
 
         // Set custom message to prevent it from being overridden
-        customTurnMessage = '⚠️ You cannot discard the card you just drew from the discard pile. You must now draw again.';
+        customTurnMessage = 'You cannot discard the card you just drew from the discard pile. You must now draw again.';
 
         // Show message to player
         const instructionParagraph = turnInstruction?.querySelector('p');
@@ -2272,7 +2272,7 @@ function handleRoundEnd() {
     }
 
     // Update modal title
-    roundEndTitle.textContent = `🏁 Round ${currentRound} Complete!`;
+    roundEndTitle.textContent = `Round ${currentRound} Complete!`;
 
     // Build score table
     const scoreTable = createScoreTable(roundScores, playerScores, currentRound);
@@ -2399,7 +2399,7 @@ async function showHandTooltip(cellElement, round, playerId, isPersistent = fals
         // Show "Went out" message if score is 0 (even if there are groups)
         if (wentOut) {
             tooltipContent += `<div class="score-tooltip-group">`;
-            tooltipContent += `<span class="score-tooltip-group-title">✨ Went out successfully! 🎉</span>`;
+            tooltipContent += `<span class="score-tooltip-group-title">Went out successfully!</span>`;
             tooltipContent += `</div>`;
         }
 
@@ -2625,7 +2625,7 @@ function handleGameEnd() {
     }
 
     // Update winner message
-    winnerMessage.innerHTML = `🏆 ${winnerName}<br><span style="font-size: 18px; font-weight: 400;">with ${lowestScore} points</span>`;
+    winnerMessage.innerHTML = `${winnerName}<br><span style="font-size: 18px; font-weight: 400;">with ${lowestScore} points</span>`;
 
     // Build final scores table
     const scoreTable = createFinalScoreTable(playerScores);
@@ -2937,7 +2937,7 @@ function showScores() {
     const playerScores = currentGameState.playerScores || {};
 
     // Reuse the round end modal to show scores
-    roundEndTitle.textContent = `📊 Score Summary - Round ${currentRound}`;
+    roundEndTitle.textContent = `Score Summary - Round ${currentRound}`;
 
     // Build score table
     const scoreTable = createScoreTable(roundScores[`round${currentRound}`] || playerScores, playerScores, currentRound);

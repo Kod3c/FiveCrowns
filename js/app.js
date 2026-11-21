@@ -1253,12 +1253,12 @@ async function createActiveGameCard(game) {
 
     const rejoinBtn = document.createElement('button');
     rejoinBtn.className = 'active-game-btn';
-    rejoinBtn.textContent = '🎮 Rejoin';
+    rejoinBtn.textContent = 'Rejoin';
     rejoinBtn.onclick = () => rejoinGame(game);
 
     const removeBtn = document.createElement('button');
     removeBtn.className = 'active-game-btn danger';
-    removeBtn.textContent = '🗑️ Remove';
+    removeBtn.textContent = 'Remove';
     removeBtn.onclick = () => removeActiveGame(game.gameCode);
 
     actions.appendChild(rejoinBtn);
@@ -1385,7 +1385,7 @@ let confirmResolve = null;
  * @param {string} icon - Optional icon (defaults to "✓")
  */
 function showNotification(message, title = 'Success', icon = '✓') {
-    notificationTitle.textContent = `${icon} ${title}`;
+    notificationTitle.textContent = icon ? `${icon} ${title}` : title;
     notificationMessage.textContent = message;
     notificationModal.classList.add('active');
 }
@@ -1909,7 +1909,7 @@ async function handleSendFriendRequest(phoneNumber, button) {
         }, 500);
     } catch (error) {
         console.error('Error sending friend request:', error);
-        showNotification(error.message || 'Error sending friend request', 'Error', '⚠️');
+        showNotification(error.message || 'Error sending friend request', 'Error', '');
         button.disabled = false;
         button.textContent = 'Add Friend';
     }
@@ -1926,7 +1926,7 @@ async function handleAcceptFriendRequest(fromUid) {
         showNotification('Friend request accepted!', 'Success');
     } catch (error) {
         console.error('Error accepting friend request:', error);
-        showNotification(error.message || 'Error accepting friend request', 'Error', '⚠️');
+        showNotification(error.message || 'Error accepting friend request', 'Error', '');
     }
 }
 
@@ -1940,7 +1940,7 @@ async function handleDeclineFriendRequest(fromUid) {
         showNotification('Friend request declined', 'Declined');
     } catch (error) {
         console.error('Error declining friend request:', error);
-        showNotification(error.message || 'Error declining friend request', 'Error', '⚠️');
+        showNotification(error.message || 'Error declining friend request', 'Error', '');
     }
 }
 
@@ -1954,7 +1954,7 @@ async function handleCancelFriendRequest(toUid) {
         showNotification('Friend request cancelled', 'Cancelled');
     } catch (error) {
         console.error('Error cancelling friend request:', error);
-        showNotification(error.message || 'Error cancelling friend request', 'Error', '⚠️');
+        showNotification(error.message || 'Error cancelling friend request', 'Error', '');
     }
 }
 
@@ -1974,7 +1974,7 @@ async function handleRemoveFriend(friend) {
         showNotification('Friend removed', 'Removed');
     } catch (error) {
         console.error('Error removing friend:', error);
-        showNotification(error.message || 'Error removing friend', 'Error', '⚠️');
+        showNotification(error.message || 'Error removing friend', 'Error', '');
     }
 }
 
@@ -2074,7 +2074,7 @@ async function handleAcceptGameInvite(inviteId, gameCode) {
         closeFriendsModal();
     } catch (error) {
         console.error('Error accepting game invite:', error);
-        showNotification(error.message || 'Error joining game', 'Error', '⚠️');
+        showNotification(error.message || 'Error joining game', 'Error', '');
         await loadGameInvites();
     }
 }
@@ -2088,7 +2088,7 @@ async function handleDeclineGameInvite(inviteId) {
         await loadGameInvites();
     } catch (error) {
         console.error('Error declining game invite:', error);
-        showNotification(error.message || 'Error declining invite', 'Error', '⚠️');
+        showNotification(error.message || 'Error declining invite', 'Error', '');
     }
 }
 

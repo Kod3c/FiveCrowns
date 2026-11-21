@@ -76,7 +76,7 @@ body.card-design-classic .card-back {
 }
 
 body.card-design-classic .card-back::before {
-    content: '👑';
+    content: '★';
     font-size: 32px;
     opacity: 0.4;
 }
@@ -212,7 +212,7 @@ body.card-design-minimal .card-back {
 }
 
 body.card-design-minimal .card-back::before {
-    content: '👑';
+    content: '★';
     font-size: 32px;
     opacity: 0.4;
 }

@@ -1,0 +1,230 @@
+/* ==========================================================================
+   Five Crowns - Royal Velvet foundation
+   Shared by the lobby and the game board (index.html and login.html carry
+   their own equivalent for now; see the Brain note about consolidating).
+
+   Linked AFTER each page's own stylesheet but BEFORE its page theme, so the
+   theme file still wins where it needs to.
+
+   Page chrome is scoped to body.lobby-page / body.game-page on purpose - the
+   same rules must never leak onto another page that links this file.
+   ========================================================================== */
+
+:root {
+  --rv-bg:        #140c1e;
+  --rv-bg-2:      #1c1229;
+  --rv-surface:   #211633;
+  --rv-surface-2: #2a1c3f;
+  --rv-line:      rgba(255, 255, 255, .08);
+  --rv-ink:       #F6F2EA;
+  --rv-muted:     #C0B5CC;
+  --rv-gold:      #E7C275;
+  --rv-gold-deep: #C9A45C;
+  --rv-red:       #C0392B;
+  --rv-danger:    #E06B5E;
+  --rv-display:   "Fraunces", Georgia, "Times New Roman", serif;
+  --rv-ui:        "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ---------- page frame (scoped) ---------- */
+body.lobby-page,
+body.game-page {
+  font-family: var(--rv-ui);
+  background: var(--rv-bg);
+  color: var(--rv-ink);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body.lobby-page::before,
+body.game-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 52% at 50% -8%, #3A1F5C 0%, rgba(58, 31, 92, 0) 62%),
+    linear-gradient(180deg, var(--rv-bg-2) 0%, var(--rv-bg) 46%);
+}
+
+body.lobby-page::after,
+body.game-page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: .5;
+  background-image: radial-gradient(rgba(255, 255, 255, .045) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+body.lobby-page .container,
+body.game-page .game-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  font-family: var(--rv-ui);
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 14px;
+  border-width: 1px;
+  box-shadow: none;
+  letter-spacing: .01em;
+}
+
+.btn-primary {
+  color: #1A1120;
+  background: linear-gradient(180deg, #F2D08A 0%, var(--rv-gold) 55%, #D8B269 100%);
+  border: 1px solid transparent;
+  box-shadow: 0 10px 24px rgba(201, 164, 92, .26), inset 0 1px 0 rgba(255, 255, 255, .55);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #F7DA9C 0%, #EFCB84 55%, #DCB76E 100%);
+  box-shadow: 0 12px 30px rgba(201, 164, 92, .36), inset 0 1px 0 rgba(255, 255, 255, .6);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  color: var(--rv-ink);
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, .1);
+  border-color: rgba(255, 255, 255, .26);
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  color: #FFE9E5;
+  background: rgba(224, 107, 94, .16);
+  border: 1px solid rgba(224, 107, 94, .45);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: rgba(224, 107, 94, .28);
+  border-color: rgba(224, 107, 94, .7);
+  transform: translateY(-1px);
+}
+
+.btn:disabled,
+.btn:disabled:hover {
+  opacity: .45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-large { min-height: 58px; font-size: 17px; }
+
+.btn-icon svg { width: 20px; height: 20px; display: block; }
+
+/* ---------- modals ---------- */
+.modal { background: rgba(8, 4, 14, .74); }
+
+.modal-content {
+  background: linear-gradient(180deg, var(--rv-surface-2) 0%, var(--rv-surface) 100%);
+  border: 1px solid var(--rv-line);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+  color: var(--rv-ink);
+}
+
+.modal-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--rv-line);
+}
+
+.modal-header h2 {
+  font-family: var(--rv-display);
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: -.01em;
+  color: var(--rv-ink);
+}
+
+.close-btn { color: var(--rv-muted); }
+.close-btn:hover { color: var(--rv-gold); }
+
+.modal-instruction { color: var(--rv-muted); }
+
+.modal-footer .btn { min-height: 48px; }
+
+/* ---------- form controls ---------- */
+.setting-select,
+select,
+input[type="text"],
+input[type="tel"] {
+  font-family: var(--rv-ui);
+  color: var(--rv-ink);
+  background-color: rgba(255, 255, 255, .055);
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+}
+
+.setting-select:focus,
+select:focus,
+input:focus {
+  outline: none;
+  border-color: rgba(231, 194, 117, .6);
+  background-color: rgba(255, 255, 255, .085);
+}
+
+select option { background: #211633; color: var(--rv-ink); }
+
+/* ---------- badges / pills ---------- */
+.badge {
+  font-family: var(--rv-ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 4px 9px;
+  border: 1px solid var(--rv-line);
+  background: rgba(255, 255, 255, .05);
+  color: var(--rv-muted);
+}
+
+.badge.host    { border-color: rgba(231, 194, 117, .5); color: var(--rv-gold); }
+.badge.ready   { border-color: rgba(246, 242, 234, .38); color: #EFE9DC; }
+.badge.invited { border-color: rgba(255, 255, 255, .18); }
+.badge.waiting { border-color: rgba(255, 255, 255, .12); }
+
+/* ---------- scrollbars ---------- */
+.modal-body ::-webkit-scrollbar,
+.players-list::-webkit-scrollbar { width: 8px; height: 8px; }
+
+.modal-body ::-webkit-scrollbar-thumb,
+.players-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .14);
+  border-radius: 4px;
+}
+
+.modal-body ::-webkit-scrollbar-track,
+.players-list::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- focus ---------- */
+.btn:focus-visible,
+.close-btn:focus-visible,
+.setting-select:focus-visible,
+select:focus-visible,
+.menu-option-btn:focus-visible,
+.copy-btn:focus-visible,
+.back-btn:focus-visible,
+.menu-btn:focus-visible {
+  outline: 2px solid var(--rv-gold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn { transition: none; }
+}
