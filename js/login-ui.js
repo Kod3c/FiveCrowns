@@ -9,8 +9,8 @@
   var LOGIN_HTML = `<div class="auth-container">
             <!-- Login Form -->
             <div id="loginForm" class="auth-form">
-                <h2 class="auth-title">Welcome Back</h2>
-                <p class="auth-subtitle">Sign in to continue playing</p>
+                <h2 class="auth-brand">Five<span class="title-2">Crowns</span></h2>
+                <p class="auth-brand-sub">Five-Suited Rummy</p>
 
                 <!-- Phone Login Fields -->
                 <div id="phoneLoginFields">

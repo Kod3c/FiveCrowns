@@ -24,14 +24,8 @@
 </head>
 <body>
     <div class="container">
-        <!-- Logo and Title -->
-        <div class="logo-section">
-            <h1 class="game-title">Five<span class="title-2">Crowns</span></h1>
-            <p class="tagline">Five-Suited Rummy Card Game</p>
-        </div>
-
-        <!-- Login / signup UI comes from js/login-ui.js - the SAME module the app
-             uses for its login modal, so there is only ever one copy of this markup. -->
+        <!-- The brand header now lives INSIDE the card (js/login-ui.js), so it is
+             never duplicated between this page and the app's login modal. -->
         <div id="loginMount"></div>
     </div>
 
