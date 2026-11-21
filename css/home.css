@@ -111,6 +111,7 @@ body::after {
   text-shadow: none;
   margin: 20px 0 0;
   padding: 0 22px;
+  text-align: left;
 }
 
 .game-title .title-2 {
@@ -133,59 +134,6 @@ body::after {
 
 /* the crown emoji is gone from the markup; keep the rule inert */
 .crown-icon { display: none; }
-
-/* ---------- fanned hand ---------- */
-.hero-fan {
-  position: relative;
-  height: 168px;
-  margin: 26px 0 4px;
-}
-
-.rv-card {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: 86px;
-  height: 124px;
-  border-radius: 11px;
-  background: linear-gradient(180deg, #FFFFFF 0%, #F0EADF 100%);
-  box-shadow: 0 14px 26px rgba(0, 0, 0, .45), 0 2px 0 rgba(0, 0, 0, .25);
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  font-family: var(--rv-display);
-}
-
-.rv-card .rv-pip {
-  font-weight: 700;
-  font-size: 20px;
-  line-height: 1;
-  padding: 8px 0 0 10px;
-}
-
-.rv-card .rv-big {
-  position: absolute;
-  right: 9px;
-  bottom: 6px;
-  font-size: 30px;
-  line-height: 1;
-}
-
-/* z rises to the right so every corner index stays readable */
-.rv-s1 { transform: translateX(calc(-50% - 76px)) rotate(-20deg) translateY(18px); z-index: 1; }
-.rv-s2 { transform: translateX(calc(-50% - 38px)) rotate(-10deg) translateY(6px);  z-index: 2; }
-.rv-s3 { transform: translateX(calc(-50% - 1px))  rotate(-1deg);                   z-index: 3; }
-.rv-s4 { transform: translateX(calc(-50% + 36px)) rotate(9deg)  translateY(5px);   z-index: 4; }
-.rv-s5 { transform: translateX(calc(-50% + 72px)) rotate(19deg) translateY(15px);  z-index: 5; }
-
-.rv-ink   { color: #191320; }
-.rv-red   { color: var(--rv-red); }
-.rv-gold  { color: var(--rv-gold-deep); }
-
-.rv-card.rv-crown {
-  background: linear-gradient(180deg, #FFF6E2 0%, #F2DFB6 100%);
-  box-shadow: 0 14px 26px rgba(0, 0, 0, .45), 0 0 0 1px rgba(201, 164, 92, .5);
-}
 
 /* ---------- primary actions ---------- */
 .hero-actions {
@@ -253,6 +201,8 @@ body::after {
 }
 
 /* ---------- bottom navigation ---------- */
+.nav-brand { display: none; }   /* desktop-only, see the media query below */
+
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -517,6 +467,117 @@ input[type="tel"]:focus {
 .modal-body ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, .14);
   border-radius: 4px;
+}
+
+/* ==========================================================================
+   Desktop layout
+   The phone layout is a single column with a floating bottom bar. From 820px
+   up: the nav becomes a top bar and the page becomes a two-column hero, so the
+   screen is actually used instead of a phone stranded in the middle.
+   ========================================================================== */
+@media (min-width: 820px) {
+  body {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;   /* body centres by default; on a column that
+                                      pushes the top bar off-screen */
+  }
+
+  /* ---- nav: bottom bar -> top bar ---- */
+  .bottom-nav {
+    order: -1;
+    position: static;
+    left: auto;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    /* +32 matches .container's own side padding so the nav's edge lines up
+       with the actions panel below it */
+    padding: 12px max(32px, calc((100% - 1120px) / 2 + 32px));
+    justify-content: flex-end;
+    gap: 6px;
+    border-top: 0;
+    border-bottom: 1px solid var(--rv-line);
+    background: rgba(20, 12, 30, .72);
+  }
+
+  .nav-btn,
+  .nav-btn-center {
+    flex: 0 0 auto;
+    flex-direction: row;
+    gap: 9px;
+    min-height: 42px;
+    padding: 8px 14px;
+  }
+
+  .nav-brand {
+    display: block;
+    margin-right: auto;
+    font-family: var(--rv-display);
+    font-size: 19px;
+    letter-spacing: -.01em;
+    color: var(--rv-ink);
+  }
+
+  .nav-brand em { font-style: italic; color: var(--rv-gold); }
+
+  .nav-label,
+  .nav-label-center { font-size: 13px; }
+
+  .nav-icon svg { width: 18px; height: 18px; }
+
+  /* badges sit differently on a horizontal tab */
+  .nav-badge { top: 0; right: 2px; }
+
+  /* ---- two-column hero ---- */
+  .container {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(340px, .95fr);
+    align-items: center;
+    column-gap: 76px;
+    max-width: 1120px;
+    /* fill the space under the top bar and centre the block, instead of
+       leaving a dead band at the bottom of a tall window */
+    min-height: calc(100dvh - 68px);
+    align-content: center;
+    margin: 0 auto;
+    padding: 56px 32px;
+  }
+
+  .logo-section { margin: 0; }
+  .rv-top { padding: 0; justify-content: flex-start; }
+  .rv-pill { margin-left: 0; }   /* sit next to the eyebrow, not flung right */
+
+  .game-title {
+    font-size: clamp(64px, 6vw, 86px);
+    margin-top: 20px;
+    padding: 0;
+    text-align: left;   /* style.css centres .game-title; it was the only
+                           centred thing in an otherwise left-aligned hero */
+  }
+
+  .tagline {
+    padding: 0;
+    font-size: 16.5px;
+    max-width: 36ch;
+  }
+
+  /* +12px: the rotated end card's bbox overhangs 12px left of the copy's edge */
+  .hero-fan { margin: 38px 0 0 12px; }
+
+  /* the actions become a real panel on the right */
+  .hero-actions {
+    margin-top: 0;
+    padding: 30px 28px 26px;
+    background: rgba(255, 255, 255, .035);
+    border: 1px solid var(--rv-line);
+    border-radius: 22px;
+    box-shadow: 0 26px 64px rgba(0, 0, 0, .4);
+  }
+
+  .rv-btn { min-height: 58px; }
+
+  .hero-hint { margin-top: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

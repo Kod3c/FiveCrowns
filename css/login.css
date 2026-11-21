@@ -273,20 +273,20 @@
 
         /* Mobile Responsive Styles */
         @media (max-width: 480px) {
-            body {
+            body.page-login {
                 padding: 8px;
                 min-height: 100vh;
             }
 
-            .container {
+            body.page-login .container {
                 margin-top: 0;
             }
 
-            .logo-section {
+            body.page-login .logo-section {
                 margin-bottom: 15px;
             }
 
-            .game-title {
+            body.page-login .game-title {
                 font-size: 28px;
             }
 
@@ -294,7 +294,7 @@
                 font-size: 28px;
             }
 
-            .tagline {
+            body.page-login .tagline {
                 font-size: 12px;
                 margin-bottom: 0;
             }
@@ -362,19 +362,19 @@
         }
 
         @media (max-width: 360px) {
-            body {
+            body.page-login {
                 padding: 6px;
             }
 
-            .container {
+            body.page-login .container {
                 margin-top: 0;
             }
 
-            .logo-section {
+            body.page-login .logo-section {
                 margin-bottom: 12px;
             }
 
-            .game-title {
+            body.page-login .game-title {
                 font-size: 26px;
             }
 
@@ -382,7 +382,7 @@
                 font-size: 26px;
             }
 
-            .tagline {
+            body.page-login .tagline {
                 font-size: 11px;
             }
 
@@ -445,19 +445,19 @@
         }
 
         @media (max-width: 320px) {
-            body {
+            body.page-login {
                 padding: 4px;
             }
 
-            .container {
+            body.page-login .container {
                 margin-top: 0;
             }
 
-            .logo-section {
+            body.page-login .logo-section {
                 margin-bottom: 8px;
             }
 
-            .game-title {
+            body.page-login .game-title {
                 font-size: 22px;
             }
 
@@ -465,7 +465,7 @@
                 font-size: 22px;
             }
 
-            .tagline {
+            body.page-login .tagline {
                 font-size: 10px;
             }
 
@@ -596,7 +596,7 @@
 }
 
 /* ---------- page frame ---------- */
-body {
+body.page-login {
   font-family: var(--rv-ui);
   background: var(--rv-bg);
   padding: 0;
@@ -605,7 +605,7 @@ body {
   overflow-x: hidden;
 }
 
-body::before {
+body.page-login::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -616,7 +616,7 @@ body::before {
     linear-gradient(180deg, var(--rv-bg-2) 0%, var(--rv-bg) 46%);
 }
 
-body::after {
+body.page-login::after {
   content: "";
   position: fixed;
   inset: 0;
@@ -627,7 +627,7 @@ body::after {
   background-size: 3px 3px;
 }
 
-.container {
+body.page-login .container {
   position: relative;
   z-index: 1;
   display: flex;
@@ -640,14 +640,14 @@ body::after {
 }
 
 /* ---------- wordmark ---------- */
-.logo-section {
+body.page-login .logo-section {
   margin-top: auto;          /* auto margins centre the block when there is room */
   margin-bottom: 26px;
   padding: 0 22px;
   text-align: center;
 }
 
-.game-title {
+body.page-login .game-title {
   display: block;
   white-space: normal;
   font-family: var(--rv-display);
@@ -660,16 +660,16 @@ body::after {
   margin: 0;
 }
 
-.game-title .title-2 {
+body.page-login .game-title .title-2 {
   display: inline-block;
   font-style: italic;
   color: var(--rv-gold);
   margin-left: -.05em;
 }
 
-.crown-icon { display: none; }
+body.page-login .crown-icon { display: none; }
 
-.tagline {
+body.page-login .tagline {
   font-size: 13.5px;
   font-weight: 500;
   letter-spacing: .1em;
@@ -682,7 +682,7 @@ body::after {
 /* On the login page the mount is a direct child of .container; let it fill the
    column so the card's auto margins have free space to centre in. (In the modal
    the mount sits in .login-overlay-scroll, so this must not be global.) */
-.container > #loginMount {
+body.page-login .container > #loginMount {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -1001,6 +1001,73 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   .spinner { animation-duration: 2.4s; }
   .btn, .btn-social { transition: none; }
+}
+
+/* ==========================================================================
+   Desktop layout for the standalone login page
+   ========================================================================== */
+.login-aside {
+  display: none;       /* phones: the page is just the card */
+  text-align: left;    /* the page container centres; the aside must not */
+}
+
+.login-aside-line {
+  margin: 0 0 22px;
+  max-width: 26ch;
+  font-family: var(--rv-display);
+  font-size: 26px;
+  line-height: 1.3;
+  color: var(--rv-ink);
+}
+
+.login-aside-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 11px;
+}
+
+.login-aside-list li {
+  position: relative;
+  padding-left: 21px;
+  font-size: 14.5px;
+  color: #CFC5DB;
+}
+
+.login-aside-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: .48em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--rv-gold);
+}
+
+@media (min-width: 820px) {
+  body.page-login { align-items: stretch; }
+
+  body.page-login .container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(350px, 410px);
+    align-items: center;
+    column-gap: 84px;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 64px 32px;
+    min-height: 100dvh;
+  }
+
+  /* the mount no longer needs to fill/centre - the grid does it */
+  .container > #loginMount { display: block; flex: none; }
+
+  .auth-container { margin: 0; }
+  .auth-brand { font-size: 40px; }
+
+  .login-aside { display: block; }
+  .login-aside .hero-fan { margin: 0 0 62px 12px; }
 }
 
 /* ==========================================================================
