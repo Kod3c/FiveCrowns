@@ -377,8 +377,9 @@
 
     <!-- Home theme (Royal Velvet) - loaded last so it overrides css/style.css -->
     <link rel="stylesheet" href="css/home.css?v=1">
+    <link rel="stylesheet" href="css/login.css?v=2">
 </head>
-<body>
+<body class="auth-pending">
     <!-- Menu Modal (accessed from bottom nav menu button) -->
     <div class="modal" id="menuModal">
         <div class="modal-content small">
@@ -781,6 +782,14 @@
         </div>
     </div>
 
+    <!-- Login modal: shown over the app when there is no signed-in user.
+         Markup is injected by js/login-ui.js (shared with login.html). -->
+    <div class="login-overlay" id="loginModal">
+        <div class="login-overlay-scroll">
+            <div id="loginMount"></div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs (CDN) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -793,30 +802,79 @@
     <!-- Auth Service -->
     <script src="js/auth.js?v=8"></script>
 
-    <!-- Auth Check - Redirect if not logged in -->
+    <!-- Auth gate: signed-out users get the login MODAL over this page,
+         never a redirect (no flash-then-forward). -->
     <script>
-        // Check authentication state on page load
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                // User is not logged in, redirect to login page
-                console.log('User not authenticated, redirecting to login page');
-                window.location.href = 'login.html';
-            } else {
+        (function () {
+            var ui = null;
+            var overlay = document.getElementById('loginModal');
+
+            function revealApp() {
+                document.body.classList.remove('auth-pending');
+            }
+
+            function showOverlay() {
+                if (overlay) overlay.classList.add('show');
+            }
+
+            function hideOverlay() {
+                if (overlay) overlay.classList.remove('show');
+            }
+
+            // Mount the shared login UI lazily, in modal mode.
+            function ensureUI() {
+                if (!ui && window.FiveCrownsLogin) {
+                    ui = window.FiveCrownsLogin.mount('loginMount', {
+                        modal: true,
+                        onSuccess: function () {
+                            // the module already handled the phone step if needed
+                            hideOverlay();
+                            revealApp();
+                        }
+                    });
+                }
+                return ui;
+            }
+
+            // js/app.js calls this instead of navigating to login.html.
+            window.FiveCrownsAuthGate = {
+                requireLogin: function () { ensureUI(); showOverlay(); revealApp(); }
+            };
+
+            auth.onAuthStateChanged(async function (user) {
+                if (!user) {
+                    console.log('No user signed in - showing login modal');
+                    window.FiveCrownsAuthGate.requireLogin();
+                    return;
+                }
+
                 console.log('User authenticated:', user.uid);
 
-                // Check if user has a phone number (required for friends system)
+                // A signed-in account still needs a phone number for the friends system.
                 try {
-                    const hasPhone = await currentUserHasPhoneNumber();
+                    var hasPhone = await currentUserHasPhoneNumber();
                     if (!hasPhone) {
-                        console.log('User missing phone number, redirecting to add it');
-                        window.location.href = 'login.html?addPhone=true';
+                        console.log('User missing phone number - showing the collection modal');
+                        var mounted = ensureUI();
+                        showOverlay();
+                        if (mounted && mounted.showPhoneCollectionModal) {
+                            mounted.showPhoneCollectionModal();
+                        }
+                        revealApp();
+                        return;
                     }
                 } catch (error) {
                     console.error('Error checking phone number:', error);
                 }
-            }
-        });
+
+                hideOverlay();
+                revealApp();
+            });
+        })();
     </script>
+
+    <!-- Shared login UI (also used by login.html) -->
+    <script src="js/login-ui.js"></script>
 
     <!-- Game Persistence -->
     <script src="js/game-persistence.js"></script>

@@ -216,9 +216,22 @@ auth.onAuthStateChanged(async (user) => {
     } else {
         // No user logged in - redirect to login page
         console.log('No user logged in - redirecting to login page');
-        window.location.href = 'login.html';
+        gotoLogin();
     }
 });
+
+/**
+ * Send the user to sign in.
+ * On the app shell this opens the login modal (window.FiveCrownsAuthGate);
+ * on other pages it falls back to the login page as before.
+ */
+function gotoLogin() {
+    if (window.FiveCrownsAuthGate && typeof window.FiveCrownsAuthGate.requireLogin === 'function') {
+        window.FiveCrownsAuthGate.requireLogin();
+    } else {
+        window.location.href = 'login.html';
+    }
+}
 
 // Verify DOM elements loaded
 console.log('DOM elements:', {
@@ -275,14 +288,14 @@ if (menuButton) {
 if (menuSignIn) {
     menuSignIn.addEventListener('click', () => {
         closeMenuModal();
-        window.location.href = 'login.html';
+        gotoLogin();
     });
 }
 
 if (menuSignUp) {
     menuSignUp.addEventListener('click', () => {
         closeMenuModal();
-        window.location.href = 'login.html';
+        gotoLogin();
     });
 }
 
@@ -438,7 +451,7 @@ function handleCreateGameClick() {
         // Store the intended action (survives the full-page redirect) and go to login
         pendingAction = 'createGame';
         sessionStorage.setItem('pendingAction', 'createGame');
-        window.location.href = 'login.html';
+        gotoLogin();
         return;
     }
 
@@ -491,7 +504,7 @@ function openJoinModal() {
         // Store the intended action (survives the full-page redirect) and go to login
         pendingAction = 'joinGame';
         sessionStorage.setItem('pendingAction', 'joinGame');
-        window.location.href = 'login.html';
+        gotoLogin();
         return;
     }
 
