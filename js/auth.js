@@ -94,7 +94,12 @@ async function signInUser(email, password) {
                 emailVerified: true
             });
         } catch (updateError) {
-            // Document might not exist, create it
+            // Only create the document if it genuinely does not exist. Any other
+            // failure (offline, permission-denied) must NOT fall through to a
+            // full .set(), which would overwrite the user's friends and stats.
+            if (updateError.code !== 'not-found') {
+                throw updateError;
+            }
             console.log('User document does not exist on login, creating...');
             await firestore.collection('users').doc(user.uid).set({
                 uid: user.uid,
@@ -104,6 +109,8 @@ async function signInUser(email, password) {
                 emailVerified: true,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                friends: [],
+                friendRequests: { incoming: [], outgoing: [] },
                 stats: {
                     gamesPlayed: 0,
                     gamesWon: 0,
@@ -240,6 +247,11 @@ async function getUserFirstName(uid) {
                     userData.provider = 'phone';
                 }
 
+                if (!user || user.uid !== uid) {
+                    // Never write one account's identity under a different uid.
+                    console.warn('getUserFirstName: refusing to create a profile for a non-current uid', uid);
+                    return firstName;
+                }
                 await firestore.collection('users').doc(uid).set(userData);
                 console.log('User document created successfully with data:', userData);
                 return firstName;
@@ -431,8 +443,10 @@ async function phoneNumberHasFirestoreAccount(phoneNumber) {
         console.log('Firestore account exists:', exists);
         return exists;
     } catch (error) {
+        // Propagate: returning false here would sign a valid user out and tell
+        // them their account does not exist.
         console.error('Error checking Firestore account:', error);
-        return false;
+        throw error;
     }
 }
 
@@ -723,8 +737,12 @@ async function verifyAndAddPhoneToUser(confirmationResult, verificationCode) {
             throw linkError;
         }
 
-        // Verify we're still the same user
+        // Verify we're still the same user (currentUser can be null if the
+        // session was torn down while linking)
         const afterLinkUser = auth.currentUser;
+        if (!afterLinkUser) {
+            throw new Error('Session lost after linking the phone number');
+        }
         console.log('verifyAndAddPhoneToUser: User after linking:', afterLinkUser.uid);
         console.log('verifyAndAddPhoneToUser: UIDs match:', afterLinkUser.uid === currentUid);
 
@@ -853,8 +871,10 @@ async function currentUserHasPhoneNumber() {
         console.log('currentUserHasPhoneNumber: Result:', hasPhone);
         return hasPhone;
     } catch (error) {
+        // Propagate rather than returning false: callers redirect on false, so an
+        // error would bounce a registered user back into phone collection.
         console.error('Error checking if user has phone number:', error);
-        return false;
+        throw error;
     }
 }
 

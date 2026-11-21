@@ -179,10 +179,12 @@ async function acceptFriendRequest(fromUid) {
         const senderData = senderDoc.data();
         const outgoingRequests = senderData.friendRequests?.outgoing || [];
 
-        // Add to both users' friends arrays
+        // Add to both users' friends arrays. Remove EVERY incoming entry from this
+        // sender (not just one element) so a duplicated request can't leave a ghost.
+        const remainingIncoming = incomingRequests.filter(req => req.from !== fromUid);
         await firestore.collection('users').doc(user.uid).update({
             friends: firebase.firestore.FieldValue.arrayUnion(fromUid),
-            'friendRequests.incoming': firebase.firestore.FieldValue.arrayRemove(request)
+            'friendRequests.incoming': remainingIncoming
         });
 
         // Make the sender's side symmetric: always add myself to their friends list,
@@ -230,9 +232,10 @@ async function declineFriendRequest(fromUid) {
             throw new Error('Friend request not found');
         }
 
-        // Remove from incoming requests
+        // Remove every incoming entry from this sender (see acceptFriendRequest)
+        const remainingIncoming = incomingRequests.filter(req => req.from !== fromUid);
         await firestore.collection('users').doc(user.uid).update({
-            'friendRequests.incoming': firebase.firestore.FieldValue.arrayRemove(request)
+            'friendRequests.incoming': remainingIncoming
         });
 
         // Remove from sender's outgoing requests

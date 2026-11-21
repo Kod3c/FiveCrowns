@@ -59,9 +59,14 @@ async function sendGameInvite(friendUid, gameCode) {
 
         const inviteRef = await firestore.collection('gameInvites').add(inviteData);
 
-        // Add invited player to the lobby
+        // Add invited player to the lobby (reuse an existing placeholder for this
+        // friend rather than stacking duplicate 'Invited' seats)
         const gameData = gameSnapshot.val();
-        const invitedPlayerId = 'player_invited_' + friendUid + '_' + Date.now();
+        const existingPlaceholder = Object.keys(gameData.players || {}).find(pid => {
+            const p = gameData.players[pid];
+            return p && p.isInvited && p.uid === friendUid;
+        });
+        const invitedPlayerId = existingPlaceholder || ('player_invited_' + friendUid + '_' + Date.now());
 
         // Add player to game with invited status
         await gameRef.child('players/' + invitedPlayerId).set({
@@ -171,7 +176,7 @@ async function getGameInvites() {
                     continue;
                 }
 
-                const playerCount = gameData.players ? Object.keys(gameData.players).length : 0;
+                const playerCount = gameData.players ? Object.values(gameData.players).filter(p => p && !p.isInvited).length : 0;
                 if (playerCount >= 6) {
                     console.log('Game is full:', invite.gameCode);
                     invalidInvites.push(invite);
@@ -236,7 +241,7 @@ async function acceptGameInvite(inviteId) {
         const inviteData = inviteDoc.data();
 
         // Verify invite is for current user
-        if (inviteData.to.uid !== user.uid) {
+        if (!inviteData.to || inviteData.to.uid !== user.uid) {
             throw new Error('This invite is not for you');
         }
 
@@ -263,8 +268,9 @@ async function acceptGameInvite(inviteId) {
             throw new Error('This game has already started');
         }
 
-        // Verify game is not full (max 6 players)
-        const playerCount = gameData.players ? Object.keys(gameData.players).length : 0;
+        // Verify game is not full (max 6 players). Invited placeholders are not
+        // players yet, so they must not count toward capacity.
+        const playerCount = gameData.players ? Object.values(gameData.players).filter(p => p && !p.isInvited).length : 0;
         if (playerCount >= 6) {
             // Game is full, delete invite
             await firestore.collection('gameInvites').doc(inviteId).delete();
@@ -306,7 +312,7 @@ async function declineGameInvite(inviteId) {
         const inviteData = inviteDoc.data();
 
         // Verify invite is for current user
-        if (inviteData.to.uid !== user.uid) {
+        if (!inviteData.to || inviteData.to.uid !== user.uid) {
             throw new Error('This invite is not for you');
         }
 
@@ -347,7 +353,7 @@ async function deleteGameInvite(inviteId) {
         const inviteData = inviteDoc.data();
 
         // Verify invite is for current user
-        if (inviteData.to.uid !== user.uid) {
+        if (!inviteData.to || inviteData.to.uid !== user.uid) {
             throw new Error('This invite is not for you');
         }
 

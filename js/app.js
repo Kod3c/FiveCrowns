@@ -145,7 +145,7 @@ auth.onAuthStateChanged(async (user) => {
         // Show Active Games button immediately for logged-in users
         if (activeGamesBtn) {
             activeGamesBtn.style.display = 'flex';
-            activeGamesCount.textContent = '...'; // Loading indicator
+            if (activeGamesCount) activeGamesCount.textContent = '...'; // Loading indicator
         }
 
         // Active Games nav button is always visible, just update badge if needed
@@ -737,7 +737,7 @@ function checkGameExists(gameCode, playerName) {
 
                 // Check player count
                 const maxPlayers = gameData.maxPlayers || 6;
-                const playerCount = Object.keys(gameData.players || {}).length;
+                const playerCount = Object.values(gameData.players || {}).filter(p => p && !p.isInvited).length;
                 if (playerCount >= maxPlayers) {
                     showJoinError('Game is full');
                     return;
@@ -870,7 +870,7 @@ async function joinExistingGame(gameCode, playerName) {
                     if (playerData.isInvited && playerData.uid === user.uid) {
                         console.log('Removing invited placeholder:', pid);
                         await gameRef.child('players/' + pid).remove();
-                        break;
+                        // keep going: a re-invite can leave more than one placeholder
                     }
                 }
             }
@@ -928,7 +928,7 @@ async function loadActiveGames() {
         const totalCount = allGames.length + invites.length;
         if (totalCount > 0 && activeGamesBtn) {
             activeGamesBtn.style.display = 'flex';
-            activeGamesCount.textContent = totalCount;
+            if (activeGamesCount) activeGamesCount.textContent = totalCount;
         }
         // Update nav badge (button always visible)
         if (activeGamesNavBadge) {
@@ -947,7 +947,7 @@ async function loadActiveGames() {
         const finalCount = validGames.length + invites.length;
         if (finalCount > 0 && activeGamesBtn) {
             activeGamesBtn.style.display = 'flex';
-            activeGamesCount.textContent = finalCount;
+            if (activeGamesCount) activeGamesCount.textContent = finalCount;
         } else if (activeGamesBtn) {
             activeGamesBtn.style.display = 'none';
         }
