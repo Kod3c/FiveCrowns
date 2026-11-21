@@ -1,36 +1,84 @@
 {
-  "hosting": {
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**",
-      "todo.md",
-      "design-guide.md",
-      "test.html",
-      "test-validation.html"
-    ],
-    "headers": [
-      {
-        "source": "**/*.@(css|js)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=3600"
-          }
-        ]
-      },
-      {
-        "source": "**/*.@(jpg|jpeg|gif|png|svg|webp)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=86400"
-          }
-        ]
-      }
-    ],
-    "cleanUrls": true,
-    "trailingSlash": false
-  }
+  "hosting": [
+    {
+      "site": "fivecrowns",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        ".git",
+        ".git/**",
+        "**/.git/**",
+        ".firebase",
+        ".firebase/**",
+        "**/node_modules/**",
+        "todo.md",
+        "design-guide.md",
+        "test.html",
+        "test-validation.html"
+      ],
+      "headers": [
+        {
+          "source": "**/*.@(css|js)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=3600"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(jpg|jpeg|gif|png|svg|webp)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=86400"
+            }
+          ]
+        }
+      ],
+      "cleanUrls": true,
+      "trailingSlash": false
+    },
+    {
+      "site": "fivecrowns-9be7c",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        ".git",
+        ".git/**",
+        "**/.git/**",
+        ".firebase",
+        ".firebase/**",
+        "**/node_modules/**",
+        "todo.md",
+        "design-guide.md",
+        "test.html",
+        "test-validation.html"
+      ],
+      "headers": [
+        {
+          "source": "**/*.@(css|js)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=3600"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(jpg|jpeg|gif|png|svg|webp)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=86400"
+            }
+          ]
+        }
+      ],
+      "cleanUrls": true,
+      "trailingSlash": false
+    }
+  ]
 }
