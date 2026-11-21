@@ -20,85 +20,91 @@ async function saveActiveGame(gameCode, status = 'waiting') {
         console.log('Saving active game:', gameCode, 'Status:', status);
 
         const userRef = firestore.collection('users').doc(user.uid);
-        const userDoc = await userRef.get();
 
-        // Get player name from session storage
-        const playerName = sessionStorage.getItem('playerName') || 'Player';
-        let activeGames = [];
+        // Read-modify-write the activeGames array inside a transaction, so two tabs
+        // (or the 30s cleanup ticking at the same moment) can't clobber each other.
+        let totalGames = 0;
+        await firestore.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            const playerName = sessionStorage.getItem('playerName') || 'Player';
+            let activeGames = [];
 
-        if (!userDoc.exists) {
-            console.log('User document does not exist, creating with active game');
-            activeGames = [{
-                gameCode: gameCode,
-                status: status,
-                playerName: playerName,
-                lastUpdated: new Date(),
-                createdAt: new Date()
-            }];
-            await userRef.set({
-                uid: user.uid,
-                email: user.email,
-                firstName: user.displayName || 'Player',
-                displayName: user.displayName || 'Player',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                activeGames: activeGames
-            });
-        } else {
-            const userData = userDoc.data();
-            activeGames = userData.activeGames || [];
-
-            // Migrate old activeGame format to activeGames array
-            if (userData.activeGame && !userData.activeGames) {
-                console.log('Migrating old activeGame to activeGames array');
+            if (!userDoc.exists) {
+                console.log('User document does not exist, creating with active game');
                 activeGames = [{
-                    gameCode: userData.activeGame.gameCode,
-                    status: userData.activeGame.status,
+                    gameCode: gameCode,
+                    status: status,
                     playerName: playerName,
-                    lastUpdated: userData.activeGame.lastUpdated || new Date(),
+                    lastUpdated: new Date(),
                     createdAt: new Date()
                 }];
-            }
-
-            // Check if game already exists in array
-            const existingIndex = activeGames.findIndex(g => g.gameCode === gameCode);
-
-            if (existingIndex >= 0) {
-                // Update existing game entry
-                activeGames[existingIndex] = {
-                    gameCode: gameCode,
-                    status: status,
-                    playerName: playerName,
-                    lastUpdated: new Date(),
-                    createdAt: activeGames[existingIndex].createdAt || new Date()
-                };
+                transaction.set(userRef, {
+                    uid: user.uid,
+                    email: user.email,
+                    firstName: user.displayName || 'Player',
+                    displayName: user.displayName || 'Player',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    activeGames: activeGames
+                });
             } else {
-                // Add new game to array
-                activeGames.push({
-                    gameCode: gameCode,
-                    status: status,
-                    playerName: playerName,
-                    lastUpdated: new Date(),
-                    createdAt: new Date()
+                const userData = userDoc.data();
+                activeGames = userData.activeGames || [];
+
+                // Migrate old activeGame format to activeGames array
+                if (userData.activeGame && !userData.activeGames) {
+                    console.log('Migrating old activeGame to activeGames array');
+                    activeGames = [{
+                        gameCode: userData.activeGame.gameCode,
+                        status: userData.activeGame.status,
+                        playerName: playerName,
+                        lastUpdated: userData.activeGame.lastUpdated || new Date(),
+                        createdAt: new Date()
+                    }];
+                }
+
+                // Check if game already exists in array
+                const existingIndex = activeGames.findIndex(g => g.gameCode === gameCode);
+
+                if (existingIndex >= 0) {
+                    // Update existing game entry
+                    activeGames[existingIndex] = {
+                        gameCode: gameCode,
+                        status: status,
+                        playerName: playerName,
+                        lastUpdated: new Date(),
+                        createdAt: activeGames[existingIndex].createdAt || new Date()
+                    };
+                } else {
+                    // Add new game to array
+                    activeGames.push({
+                        gameCode: gameCode,
+                        status: status,
+                        playerName: playerName,
+                        lastUpdated: new Date(),
+                        createdAt: new Date()
+                    });
+                }
+
+                // Limit to 10 most recent games
+                if (activeGames.length > 10) {
+                    activeGames.sort((a, b) => {
+                        const aTime = a.lastUpdated?.getTime?.() || a.lastUpdated?.toMillis?.() || 0;
+                        const bTime = b.lastUpdated?.getTime?.() || b.lastUpdated?.toMillis?.() || 0;
+                        return bTime - aTime;
+                    });
+                    activeGames = activeGames.slice(0, 10);
+                }
+
+                transaction.update(userRef, {
+                    activeGames: activeGames,
+                    activeGame: firebase.firestore.FieldValue.delete() // Remove old field
                 });
             }
 
-            // Limit to 10 most recent games
-            if (activeGames.length > 10) {
-                activeGames.sort((a, b) => {
-                    const aTime = a.lastUpdated?.getTime?.() || a.lastUpdated?.toMillis?.() || 0;
-                    const bTime = b.lastUpdated?.getTime?.() || b.lastUpdated?.toMillis?.() || 0;
-                    return bTime - aTime;
-                });
-                activeGames = activeGames.slice(0, 10);
-            }
+            totalGames = activeGames.length;
+        });
 
-            await userRef.update({
-                activeGames: activeGames,
-                activeGame: firebase.firestore.FieldValue.delete() // Remove old field
-            });
-        }
-
-        console.log('Active game saved successfully! Total games:', activeGames.length);
+        console.log('Active game saved successfully! Total games:', totalGames);
     } catch (error) {
         console.error('Error saving active game:', error);
         // Non-critical error, don't throw
@@ -121,28 +127,32 @@ async function clearActiveGame(gameCode = null) {
         console.log('Clearing active game:', gameCode || 'ALL');
 
         const userRef = firestore.collection('users').doc(user.uid);
-        const userDoc = await userRef.get();
 
-        if (!userDoc.exists) {
-            console.log('User document does not exist');
-            return;
-        }
+        // Transaction so a concurrent save (another tab, or the 30s cleanup) isn't lost.
+        await firestore.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
 
-        const userData = userDoc.data();
-        let activeGames = userData.activeGames || [];
+            if (!userDoc.exists) {
+                console.log('User document does not exist');
+                return;
+            }
 
-        if (gameCode) {
-            // Remove specific game from array
-            activeGames = activeGames.filter(g => g.gameCode !== gameCode);
-            console.log(`Removed game ${gameCode}, ${activeGames.length} games remaining`);
-        } else {
-            // Clear all games
-            activeGames = [];
-            console.log('Cleared all active games');
-        }
+            const userData = userDoc.data();
+            let activeGames = userData.activeGames || [];
 
-        await userRef.update({
-            activeGames: activeGames
+            if (gameCode) {
+                // Remove specific game from array
+                activeGames = activeGames.filter(g => g.gameCode !== gameCode);
+                console.log(`Removed game ${gameCode}, ${activeGames.length} games remaining`);
+            } else {
+                // Clear all games
+                activeGames = [];
+                console.log('Cleared all active games');
+            }
+
+            transaction.update(userRef, {
+                activeGames: activeGames
+            });
         });
 
         console.log('Active game cleared successfully');
@@ -254,12 +264,22 @@ async function cleanupStaleGames() {
             }
         }
 
-        // Update user's active games with only valid ones
+        // Drop the stale entries in a transaction that re-reads first, so a game
+        // saved by another tab while we were checking isn't thrown away.
         if (validGames.length !== activeGames.length) {
             const user = auth.currentUser;
             if (user) {
-                await firestore.collection('users').doc(user.uid).update({
-                    activeGames: validGames
+                const validCodes = new Set(validGames.map(g => g.gameCode));
+                const userRef = firestore.collection('users').doc(user.uid);
+                await firestore.runTransaction(async (transaction) => {
+                    const snap = await transaction.get(userRef);
+                    if (!snap.exists) return;
+                    const currentGames = snap.data().activeGames || [];
+                    // Keep anything that is still valid, plus anything added since we
+                    // read (i.e. not part of the batch we checked).
+                    const checkedCodes = new Set(activeGames.map(g => g.gameCode));
+                    const kept = currentGames.filter(g => !checkedCodes.has(g.gameCode) || validCodes.has(g.gameCode));
+                    transaction.update(userRef, { activeGames: kept });
                 });
                 console.log(`Cleaned up ${activeGames.length - validGames.length} stale games`);
             }
