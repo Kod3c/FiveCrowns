@@ -1217,41 +1217,6 @@ function findOptimalGrouping(cards, wildRank) {
 }
 
 /**
- * Get all combinations of size k from array that include a required element
- * Helper function for findOptimalGrouping
- */
-function getCombinations(array, k, requiredElement) {
-    const results = [];
-
-    // If requiredElement is not in array, return empty
-    if (!array.includes(requiredElement)) {
-        return results;
-    }
-
-    // Get index of required element
-    const reqIndex = array.indexOf(requiredElement);
-
-    // Generate combinations that include the required element
-    function combine(start, combo) {
-        if (combo.length === k) {
-            results.push([...combo]);
-            return;
-        }
-
-        for (let i = start; i < array.length; i++) {
-            combo.push(array[i]);
-            combine(i + 1, combo);
-            combo.pop();
-        }
-    }
-
-    // Start with required element already in combo
-    combine(reqIndex + 1, [requiredElement]);
-
-    return results;
-}
-
-/**
  * Calculate score for a player's remaining cards
  * Returns 0 if player went out (empty hand or all cards in valid groups)
  * Returns sum of ungrouped/invalid cards otherwise
@@ -2641,15 +2606,22 @@ function handleGameEnd() {
         }
     }
 
-    // Get winner name from players object
+    // Get winner name from players object. If several players share the lowest
+    // total, they share the win rather than the first one iterated taking it.
     const players = currentGameData?.players || {};
+    const nameOf = (pid) => {
+        if (pid === playerId) return 'You';
+        const pd = players[pid];
+        return pd && pd.name ? pd.name : `Player ${pid.substring(0, 4)}`;
+    };
+    const tied = Object.keys(playerScores).filter(pid => normalizeScore(playerScores[pid]) === lowestScore);
     let winnerName;
-    if (winner === playerId) {
+    if (tied.length > 1) {
+        winnerName = `It's a tie! ${tied.map(nameOf).join(' & ')}`;
+    } else if (winner === playerId) {
         winnerName = 'You win!';
     } else {
-        const winnerData = players[winner];
-        const name = winnerData && winnerData.name ? winnerData.name : `Player ${winner.substring(0, 4)}`;
-        winnerName = `${name} wins!`;
+        winnerName = `${nameOf(winner)} wins!`;
     }
 
     // Update winner message
