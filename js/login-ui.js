@@ -6,7 +6,23 @@
 (function () {
   'use strict';
 
-  var LOGIN_HTML = `<div class="auth-container">
+  var LOGIN_HTML = `
+<aside class="login-aside" aria-hidden="true">
+    <div class="hero-fan">
+        <div class="rv-card rv-s1 rv-ink"><span class="rv-pip">7</span><span class="rv-big">♠</span></div>
+        <div class="rv-card rv-s2 rv-red"><span class="rv-pip">4</span><span class="rv-big">♥</span></div>
+        <div class="rv-card rv-s3 rv-ink"><span class="rv-pip">9</span><span class="rv-big">♣</span></div>
+        <div class="rv-card rv-s4 rv-red"><span class="rv-pip">Q</span><span class="rv-big">♦</span></div>
+        <div class="rv-card rv-s5 rv-crown rv-gold"><span class="rv-pip">K</span><span class="rv-big">★</span></div>
+    </div>
+    <p class="login-aside-line">Eleven rounds. Each one crowns a new wild rank. Lowest total wins.</p>
+    <ul class="login-aside-list">
+        <li>2&ndash;6 players, one phone each</li>
+        <li>Runs, sets, and a fifth suit</li>
+        <li>Pick a game back up from any device</li>
+    </ul>
+</aside>
+<div class="auth-container">
             <!-- Login Form -->
             <div id="loginForm" class="auth-form">
                 <h2 class="auth-brand">Five<span class="title-2">Crowns</span></h2>

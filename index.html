@@ -819,10 +819,13 @@
 
             function showOverlay() {
                 if (overlay) overlay.classList.add('show');
+                // on desktop this lets the login take over the page (see login.css)
+                document.body.classList.add('login-open');
             }
 
             function hideOverlay() {
                 if (overlay) overlay.classList.remove('show');
+                document.body.classList.remove('login-open');
             }
 
             // Mount the shared login UI lazily, in modal mode.

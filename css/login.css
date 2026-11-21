@@ -1050,24 +1050,59 @@ body.page-login .container > #loginMount {
   body.page-login { align-items: stretch; }
 
   body.page-login .container {
+    /* the mobile rule caps .container at 430px; the mount needs 1080 + padding */
+    max-width: 1144px;
+    min-height: 100dvh;
+    margin: 0 auto;
+    padding: 64px 32px;
+  }
+
+  /* The two columns live on the MOUNT, so the standalone page and the app's
+     signed-out view are laid out identically.
+     NOTE the two selectors: the mobile rule is `body.page-login .container >
+     #loginMount`, so a bare `#loginMount` here loses on specificity and the
+     page silently stays single-column. Match (or beat) the mobile selector. */
+  body.page-login .container > #loginMount,
+  .login-overlay #loginMount {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(350px, 410px);
     align-items: center;
     column-gap: 84px;
+    width: 100%;
     max-width: 1080px;
-    margin: 0 auto;
-    padding: 64px 32px;
-    min-height: 100dvh;
+    margin: auto;
+    flex: none;
+    min-height: 0;
   }
-
-  /* the mount no longer needs to fill/centre - the grid does it */
-  .container > #loginMount { display: block; flex: none; }
 
   .auth-container { margin: 0; }
   .auth-brand { font-size: 40px; }
 
   .login-aside { display: block; }
   .login-aside .hero-fan { margin: 0 0 62px 12px; }
+}
+
+/* On desktop the sign-in IS the page - a phone-style modal floating over a
+   blurred app is the wrong pattern when there is room for the real layout. */
+@media (min-width: 820px) {
+  body.login-open .container,
+  body.login-open .bottom-nav { display: none; }
+
+  body.login-open .login-overlay {
+    background: transparent;
+    padding: 0;
+  }
+
+  body.login-open .login-overlay::before { display: none; }   /* no scrim to blur */
+
+  body.login-open .login-overlay-scroll {
+    max-width: none;
+    max-height: 100dvh;
+    width: 100%;
+    padding: 64px 32px;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 /* ==========================================================================
