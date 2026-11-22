@@ -107,12 +107,23 @@ class SettingsManager {
             : SETTINGS_CONFIG.DEFAULTS.highlightWilds;
     }
 
-    // Set wild highlighting
+    // Set wild highlighting (an explicit choice by this user)
     setHighlightWilds(enabled) {
         this.settings.highlightWilds = enabled;
+        // Marks it as chosen, so it outranks the game-level setting the host
+        // picked in the lobby. Without this the two controls fight.
+        this.settings.highlightWildsSet = true;
         this.saveSettings();
         console.log(`🌟 Wild highlighting ${enabled ? 'enabled' : 'disabled'}`);
         return true;
+    }
+
+    /**
+     * This device's explicit choice, or undefined if the user never chose.
+     * undefined means "follow the game's setting".
+     */
+    getHighlightWildsOverride() {
+        return this.settings.highlightWildsSet ? this.settings.highlightWilds : undefined;
     }
 
     // Initialize settings on page load

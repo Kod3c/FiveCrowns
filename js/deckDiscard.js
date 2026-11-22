@@ -171,23 +171,26 @@ class DeckDiscardManager {
                 // Suppress the click/touchend that follows this drag
                 this._suppressClick = true;
                 setTimeout(() => { this._suppressClick = false; }, 400);
-                // Check if dropped over hand area
-                const isOverHand = this.isPointOverElement(e.clientX, e.clientY, this.handContainer);
+                // try/finally: the draw can throw (validation, Firebase write),
+                // and the ghost used to survive that and strand itself on screen
+                try {
+                    // Check if dropped over hand area
+                    const isOverHand = this.isPointOverElement(e.clientX, e.clientY, this.handContainer);
 
-                if (isOverHand) {
-                    // Execute the draw
-                    this.options.onDrawFromDeck();
-                }
+                    if (isOverHand) {
+                        // Execute the draw
+                        this.options.onDrawFromDeck();
+                    }
+                } finally {
+                    if (dragGhost.parentNode) {
+                        dragGhost.parentNode.removeChild(dragGhost);
+                    }
+                    dragGhost = null;
 
-                // Cleanup
-                if (dragGhost.parentNode) {
-                    dragGhost.parentNode.removeChild(dragGhost);
-                }
-                dragGhost = null;
-
-                // Release pointer capture if we had it
-                if (this.deckArea.hasPointerCapture(e.pointerId)) {
-                    this.deckArea.releasePointerCapture(e.pointerId);
+                    // Release pointer capture if we had it
+                    if (this.deckArea.hasPointerCapture(e.pointerId)) {
+                        this.deckArea.releasePointerCapture(e.pointerId);
+                    }
                 }
             }
 
@@ -253,23 +256,26 @@ class DeckDiscardManager {
                 // Suppress the click/touchend that follows this drag
                 this._suppressClick = true;
                 setTimeout(() => { this._suppressClick = false; }, 400);
-                // Check if dropped over hand area
-                const isOverHand = this.isPointOverElement(e.clientX, e.clientY, this.handContainer);
+                // try/finally: the draw can throw, and the ghost used to survive
+                // that and strand itself on screen
+                try {
+                    // Check if dropped over hand area
+                    const isOverHand = this.isPointOverElement(e.clientX, e.clientY, this.handContainer);
 
-                if (isOverHand) {
-                    // Execute the draw
-                    this.options.onDrawFromDiscard();
-                }
+                    if (isOverHand) {
+                        // Execute the draw
+                        this.options.onDrawFromDiscard();
+                    }
+                } finally {
+                    if (dragGhost.parentNode) {
+                        dragGhost.parentNode.removeChild(dragGhost);
+                    }
+                    dragGhost = null;
 
-                // Cleanup
-                if (dragGhost.parentNode) {
-                    dragGhost.parentNode.removeChild(dragGhost);
-                }
-                dragGhost = null;
-
-                // Release pointer capture if we had it
-                if (this.discardArea.hasPointerCapture(e.pointerId)) {
-                    this.discardArea.releasePointerCapture(e.pointerId);
+                    // Release pointer capture if we had it
+                    if (this.discardArea.hasPointerCapture(e.pointerId)) {
+                        this.discardArea.releasePointerCapture(e.pointerId);
+                    }
                 }
             }
 
@@ -288,6 +294,9 @@ class DeckDiscardManager {
     }
 
     createDragGhost(sourceElement, event) {
+        // Defensive: sweep any ghost stranded by an earlier interrupted drag
+        document.querySelectorAll('.drag-ghost').forEach(el => el.remove());
+
         // Find the card element to clone
         let cardElement = sourceElement.querySelector('.card');
 

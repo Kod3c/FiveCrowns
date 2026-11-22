@@ -175,9 +175,13 @@ function init() {
     console.log('Player ID:', playerId);
     console.log('Player Name:', playerName);
 
-    // Load wild highlighting preference from settings
+    // Provisional value until the game record arrives; the game-state listener
+    // re-resolves it with the host's game-level setting taken into account.
     if (settingsManager) {
-        highlightWilds = settingsManager.getHighlightWilds();
+        const override = typeof settingsManager.getHighlightWildsOverride === 'function'
+            ? settingsManager.getHighlightWildsOverride()
+            : undefined;
+        highlightWilds = override !== undefined ? override : settingsManager.getHighlightWilds();
         console.log('Loaded wild highlighting preference:', highlightWilds);
     }
 
@@ -191,6 +195,25 @@ function init() {
 
     // Don't show demo UI - wait for real Firebase data
     // This prevents double rendering which destroys event listeners
+}
+
+/**
+ * Reflect the EFFECTIVE highlight setting in the settings modal.
+ * Called when the modal is built and again whenever the resolved setting
+ * changes - the game record arrives after the modal has been initialised, so
+ * a one-off set left the toggle disagreeing with the board.
+ */
+function syncHighlightToggle() {
+    const toggle = document.getElementById('wildHighlightToggle');
+    if (!toggle) return;
+    if (toggle.checked === highlightWilds) return;   // avoid needless writes
+    toggle.checked = highlightWilds;
+    if (typeof settingsManager !== 'undefined' && settingsManager && settingsManager.settings) {
+        // keep the stored copy in step WITHOUT flagging it as an explicit
+        // choice, which would outrank the host's lobby setting forever
+        settingsManager.settings.highlightWilds = highlightWilds;
+        settingsManager.saveSettings();
+    }
 }
 
 /**
@@ -400,13 +423,25 @@ function listenToGameState() {
         // Store host info
         isHost = (gameData.host === playerId);
 
-        // Get highlight wilds setting (prefer the user's local preference in settings)
+        // Highlight-wilds precedence:
+        //   1. this device's explicit choice (the in-game toggle)
+        //   2. the host's game-level setting   <- the lobby dropdown writes this
+        //   3. default on
+        // It used to read only (1), so the lobby dropdown had no effect at all.
+        let resolvedHighlight = undefined;
         if (typeof settingsManager !== 'undefined' && settingsManager &&
-            typeof settingsManager.getHighlightWilds === 'function') {
-            highlightWilds = settingsManager.getHighlightWilds();
-        } else {
-            highlightWilds = gameData.highlightWilds !== false; // Default to true
+            typeof settingsManager.getHighlightWildsOverride === 'function') {
+            resolvedHighlight = settingsManager.getHighlightWildsOverride();
         }
+        if (resolvedHighlight === undefined) {
+            resolvedHighlight = gameData.highlightWilds !== undefined
+                ? (gameData.highlightWilds !== false)
+                : true;
+        }
+        highlightWilds = resolvedHighlight;
+
+        // the settings modal may already exist with a stale checkbox
+        syncHighlightToggle();
 
         console.log('Game state updated:', currentGameState);
         console.log('Highlight wilds:', highlightWilds);
@@ -3030,10 +3065,9 @@ function initializeSettingsUI() {
         cardDesignSelector.appendChild(option);
     });
 
-    // Initialize wild highlighting toggle
-    const highlightEnabled = settingsManager.getHighlightWilds();
-    wildHighlightToggle.checked = highlightEnabled;
-    highlightWilds = highlightEnabled;
+    // Initialize wild highlighting toggle from the EFFECTIVE setting (which may
+    // have come from the host's lobby choice), not the raw local preference.
+    syncHighlightToggle();
 
     // Add event listener for toggle
     wildHighlightToggle.addEventListener('change', (e) => {

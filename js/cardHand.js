@@ -24,6 +24,10 @@ class CardHandManager {
         this.currentWildRank = null;
         this.autoScrollInterval = null;
 
+        // Install the drag safety net here, not in renderHand(): renderHand is
+        // only called from the settings flow, so a net hooked there never runs.
+        this.installDragSafetyNet();
+
         // Callbacks
         this.onSelectionChange = options.onSelectionChange || (() => {});
         this.onStackChange = options.onStackChange || (() => {});
@@ -329,6 +333,12 @@ class CardHandManager {
      */
     render() {
         console.log('CardHandManager render() called');
+
+        // A re-render destroys the card elements. If a drag is in flight its
+        // pointer capture dies with the element, so pointerup/pointercancel
+        // never arrive and the ghost stays orphaned on document.body forever.
+        try { this.cleanupDrag(); } catch (e) { console.warn('Drag cleanup during render failed:', e); }
+
         this.container.innerHTML = '';
 
         const stacksContainer = document.createElement('div');
@@ -683,6 +693,14 @@ class CardHandManager {
     startDrag(card, cardEl, event) {
         console.log('Starting drag for card:', card.id);
 
+        // Defensive: if a previous drag never got its pointerup, its ghost is
+        // still in the DOM and this.dragState would be overwritten below,
+        // losing the only reference to it.
+        if (this.dragState) {
+            try { this.cleanupDrag(); } catch (e) { console.warn('Stale drag cleanup failed:', e); }
+        }
+        this.removeStrayDragGhosts();
+
         // Clear any selected cards when starting a drag
         this.clearSelection();
 
@@ -787,6 +805,7 @@ class CardHandManager {
 
         console.log('Ending drag');
 
+        try {
         // Get final drop position
         const dropInfo = this.dragState.currentDropInfo || this.getDropPosition(event.clientX, event.clientY);
 
@@ -812,9 +831,42 @@ class CardHandManager {
             // Invalid drop - return to original position
             console.log('Invalid drop - returning to original position');
         }
+        } finally {
+            // Clean up even if a drop handler threw - otherwise the ghost is
+            // stranded on the page with no way to remove it.
+            this.cleanupDrag();
+        }
+    }
 
-        // Clean up
-        this.cleanupDrag();
+    /**
+     * Remove any drag ghost left behind by an interrupted drag.
+     * The ghost lives on document.body, so it survives a hand re-render.
+     */
+    removeStrayDragGhosts() {
+        const strays = document.querySelectorAll('.drag-ghost');
+        if (strays.length) {
+            console.warn('Removing', strays.length, 'orphaned drag ghost(s)');
+            strays.forEach(el => el.remove());
+        }
+    }
+
+    /**
+     * Safety net for drags whose element was destroyed mid-gesture (the hand
+     * re-renders on every remote update). Bubble phase on purpose: the card's
+     * own handler must run first so a normal drop still completes.
+     */
+    installDragSafetyNet() {
+        if (this._dragSafetyNet) return;
+        this._dragSafetyNet = true;
+        const sweep = () => {
+            if (!this.dragState) return;
+            console.warn('Drag safety net: cleaning up a drag that never ended');
+            try { this.cleanupDrag(); } catch (e) { console.warn('Safety-net cleanup failed:', e); }
+            this.removeStrayDragGhosts();
+        };
+        document.addEventListener('pointerup', sweep, { passive: true });
+        document.addEventListener('pointercancel', sweep, { passive: true });
+        window.addEventListener('blur', sweep);
     }
 
     /**
